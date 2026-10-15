@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 
 import yaml
 from pydantic import (
+    AliasChoices,
     BaseModel,
     ConfigDict,
     Field,
@@ -28,14 +29,17 @@ class StrictModel(BaseModel):
 
 
 class AutomaticCheck(StrictModel):
-    type: Literal['substring', 'regex', 'valid_json']
-    value: str | None = None
+    type: Literal['substring', 'regex', 'valid_json', 'max_words']
+    value: str | StrictInt | None = Field(default=None, validation_alias=AliasChoices('value', 'pattern'))
     case_sensitive: bool = True
 
     @model_validator(mode='after')
     def check_value(self):
-        if self.type != 'valid_json' and not self.value:
-            raise ValueError('Substring and regex checks require a non-empty value')
+        if self.type == 'max_words':
+            if type(self.value) is not int or self.value < 0:
+                raise ValueError('max_words requires a nonnegative integer value')
+        elif self.type != 'valid_json' and (not isinstance(self.value, str) or not self.value):
+            raise ValueError('Substring and regex checks require a non-empty string value')
         if self.type == 'regex':
             re.compile(self.value)
         return self
@@ -154,7 +158,14 @@ class LocalConfig(StrictModel):
 
 
 class Thinking(StrictModel):
-    budget: Annotated[StrictInt, Field(ge=0, le=0)]
+    budget: Annotated[StrictInt, Field(ge=0, le=0)] | None = None
+    thinking_level: Literal['low', 'medium', 'high'] | None = None
+
+    @model_validator(mode='after')
+    def one_control(self):
+        if (self.budget is None) == (self.thinking_level is None):
+            raise ValueError('Set exactly one thinking control: budget: 0 or thinking_level')
+        return self
 
 
 class Pricing(StrictModel):
@@ -172,6 +183,12 @@ class GeminiConfig(StrictModel):
     api_key_env: Name = 'GEMINI_API_KEY'
     thinking: Thinking
     pricing: Pricing
+
+    @model_validator(mode='after')
+    def model_thinking_control(self):
+        if self.model == 'gemini-3.8-flash' and self.thinking.thinking_level is None:
+            raise ValueError('gemini-3.8-flash requires thinking_level; thinking cannot be disabled')
+        return self
 
 
 class Config(StrictModel):

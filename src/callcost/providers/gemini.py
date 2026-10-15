@@ -23,7 +23,8 @@ class GeminiProvider:
 
     def generate(self, prompt, raw_directory, call_id):
         setting = self.configuration.thinking
-        thinking = {'thinkingBudget': setting.budget}
+        thinking = ({'thinkingLevel': setting.thinking_level} if setting.thinking_level is not None
+                    else {'thinkingBudget': setting.budget})
         payload = {
             'contents': [{'role': 'user', 'parts': [{'text': render_prompt(prompt)}]}],
             'generationConfig': {'temperature': self.run.temperature,

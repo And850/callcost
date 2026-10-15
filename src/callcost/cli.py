@@ -21,12 +21,19 @@ def main(argv=None):
         sub.add_argument('--config', type=Path, required=True)
         if name == 'run':
             sub.add_argument('--output', type=Path, required=True, help='New directory; never overwritten')
+            sub.add_argument('--resume', action='store_true', help='Resume the specified output from durable checkpoints')
             sub.add_argument('--pilot-only', action='store_true', help='One excluded thinking-off pilot per configuration')
+    report = commands.add_parser('report', help='Report from saved checkpoints, no model calls')
+    report.add_argument('--run', type=Path, required=True)
     models = commands.add_parser('models', help='Read installed models without loading them')
     models.add_argument('--base-url', default='http://127.0.0.1:1234')
     models.add_argument('--api-key-env')
     args = parser.parse_args(argv)
     try:
+        if args.command == 'report':
+            from callcost.report import report_run
+            print(report_run(args.run))
+            return 0
         if args.command == 'models':
             settings = LMStudioSettings(base_url=args.base_url, api_key_env=args.api_key_env)
             key = os.environ.get(settings.api_key_env) if settings.api_key_env else None
@@ -50,7 +57,7 @@ def main(argv=None):
                   f'{config.run.repeats} measured repeats. Files and provider access are checked at run time.')
             return 0
         meta = run_experiment(config, dataset, args.output, pilot_only=args.pilot_only,
-                              input_files=[file_identity(args.config), file_identity(args.prompts)])
+                              input_files=[file_identity(args.config), file_identity(args.prompts)], resume=args.resume)
         print(f'Run {meta["status"]}: {meta["completed_measured_calls"]} completed measured calls; {args.output.resolve()}')
         if not args.pilot_only:
             for row in meta['variation']['summary']:

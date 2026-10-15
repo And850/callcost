@@ -96,3 +96,17 @@ def test_resume_recovers_checkpoint_even_if_csv_was_not_written(tmp_path):
     resumed.close()
     rows = list(csv.DictReader((path / 'calls.csv').open()))
     assert [r['answer'] for r in rows] == ['first', 'second']
+
+
+def test_supplied_summary_checks_accept_max_words_and_regex_pattern():
+    from callcost.schemas import AutomaticCheck, Dataset
+    check = AutomaticCheck.model_validate({'type': 'max_words', 'value': 80})
+    assert check.value == 80
+    for value in (-1, True, '80'):
+        with pytest.raises(ValueError):
+            AutomaticCheck.model_validate({'type': 'max_words', 'value': value})
+    assert AutomaticCheck.model_validate({'type': 'regex', 'pattern': 'abc'}).value == 'abc'
+    with pytest.raises(ValueError):
+        AutomaticCheck.model_validate({'type': 'regex', 'pattern': 'abc', 'value': 'different'})
+    dataset = Dataset.model_validate(load_document(__import__('pathlib').Path('prompts/summarisation.yaml')))
+    assert len(dataset.prompts) == 10 and {p.task_type for p in dataset.prompts} == {'summarisation'}

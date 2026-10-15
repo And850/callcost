@@ -23,7 +23,7 @@ from callcost.providers.lmstudio import LMStudioProvider
 from callcost.schemas import LocalConfig, Prompt
 from callcost.signals import defer_termination
 from callcost.storage import RunStore
-from callcost.thinking import verify_thinking_off
+from callcost.thinking import verify_cloud_thinking, verify_thinking_off
 from callcost.variation import answer_hash, variation_report
 
 PILOT = Prompt.model_validate({
@@ -105,7 +105,10 @@ def measured_call(provider, prompt, config, store, phase, repeat, load, files, p
         result.error = 'Interrupted by user'
     swap = swap_delta(swap_before, swap_after)
     try:
-        evidence = verify_thinking_off(result, require_answer=phase in ('pilot', 'smoke'))
+        if setting.provider == 'gemini' and setting.thinking.thinking_level is not None:
+            evidence = verify_cloud_thinking(result, setting.thinking.thinking_level, require_answer=phase in ('pilot', 'smoke'))
+        else:
+            evidence = verify_thinking_off(result, require_answer=phase in ('pilot', 'smoke'))
     except ValueError as error:
         result.status = 'error'
         result.error = result.error or str(error)
@@ -207,7 +210,7 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
                 continue
             current_id = setting.id
             status()
-            progress(f'{setting.id}: preparing model and thinking-off pilot', flush=True)
+            progress(f'{setting.id}: preparing model and thinking-control pilot', flush=True)
             provider = make_provider(setting, config, client, store.directory / 'raw')
             # Finish recording an accepted load before delivering a terminal signal.
             with defer_termination():
@@ -255,7 +258,8 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
                     if phase in ('pilot', 'smoke') and evidence is not None:
                         metadata['thinking_verification'][setting.id] = dict(
                             evidence, call_id=row['call_id'],
-                            method='reasoning: off' if isinstance(setting, LocalConfig) else 'thinkingConfig.thinkingBudget: 0')
+                            method='reasoning: off' if isinstance(setting, LocalConfig) else
+                                    f'thinkingConfig.thinkingLevel: {setting.thinking.thinking_level}' if setting.thinking.thinking_level else 'thinkingConfig.thinkingBudget: 0')
                         store.write_metadata(metadata)
                 if row['error'] == 'Interrupted by user':
                     raise KeyboardInterrupt

@@ -183,3 +183,23 @@ def test_captured_mlx_pilot_stream_verifies_zero_thinking(tmp_path):
     assert verify_thinking_off(result)['verified']
     assert result.thinking_tokens == 0 and result.output_tokens == 68 and result.input_tokens == 38
     assert result.answer.endswith('Answer: 12')
+
+
+def test_gemini_level_is_sent_without_budget_and_thoughts_are_billed(config_data, prompt_data, tmp_path):
+    config_data['configurations'][0]['thinking'] = {'thinking_level': 'low'}
+    config_data['configurations'][0]['model'] = 'gemini-3.8-flash'
+    config = Config.model_validate(config_data)
+    def handle(request):
+        payload = json.loads(request.content)
+        assert payload['generationConfig']['thinkingConfig'] == {'thinkingLevel': 'low'}
+        event = {'candidates': [{'content': {'parts': [{'thought': True, 'text': 'reasoning'},
+                                                        {'text': 'Answer: 4'}]}, 'finishReason': 'STOP'}],
+                 'usageMetadata': {'promptTokenCount': 10, 'candidatesTokenCount': 4,
+                                   'thoughtsTokenCount': 6, 'totalTokenCount': 20}}
+        return httpx.Response(200, stream=Fragments(sse([event])))
+    with httpx.Client(transport=httpx.MockTransport(handle)) as client:
+        result = GeminiProvider(config.configurations[0], config.run, client, 'key').generate(
+            Dataset.model_validate(prompt_data).prompts[0], tmp_path, 'level')
+    assert result.answer == 'Answer: 4' and result.reasoning_content_observed
+    assert result.thinking_tokens == 6 and result.billable_output_tokens == 10
+    assert result.list_price_cost == '0.000045'
