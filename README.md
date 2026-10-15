@@ -25,11 +25,19 @@ These rules are recorded before the first full run. Any later amendment must be 
 - Quality per configuration: mean score across prompts for that task type. Average repeated scores within each prompt first, so each prompt has equal weight.
 - Knee: the first step down in quantisation where quality falls by at least 10 percentage points AND at least twice the drop of the previous step, while the same step saves less than 20% in median latency and less than 20% in peak memory.
 - Boundary convention: the first step down establishes the previous-drop reference and cannot itself qualify as a knee.
-- Memory convention: memory savings use the median of per-call sampled RSS peaks.
+- Memory convention, amended 15 October 2026: memory savings use exact encoded tensor payload bytes for the loaded model. Sampled physical footprint and RSS remain secondary measurements, not inputs to the knee rule.
 - Variance kill: if, for adjacent quantisation levels, the interquartile ranges of per-call latency overlap AND the quality difference is under 5 percentage points, the levels are treated as indistinguishable.
 - If no step meets the knee definition for a task type, report **no knee found** for that task type.
 
 Compare adjacent levels within the same local model family, ordered from highest to lowest precision. Gemini and Fairy's production model are reference points outside the four converted levels in the quantisation sequence. Percentage-point quality changes are distinct from relative percentage savings in latency and memory.
+
+### Pre-registration amendment, 15 October 2026
+
+Before any scored benchmark data, physical footprint was tested with Darwin `proc_pid_rusage`, `RUSAGE_INFO_V0`, `ri_phys_footprint`, sampled over the same LM Studio process group as RSS. Complete contemporaneous process-group samples were required. Valid 3-, 4- and 6-bit pilot peaks were 5,356,283,032, 6,471,723,096 and 8,655,694,824 bytes. They exceeded encoded weight bytes and increased with precision. Both 8-bit attempts lost process coverage during at least one in-call sample, so neither supplied a valid peak. Full validation therefore failed. The [validation record](docs/data/physical-footprint-validation.json) retains both attempts, errors and swap counters. These held-out calls are instrumentation checks, not benchmark results.
+
+The knee memory clause now uses **loaded weight bytes**, defined exactly as the sum of encoded tensor payload lengths in the selected safetensors files, excluding headers, tokenizers and configuration files. This is a static weight-footprint proxy, not measured peak runtime memory. For the four text-only levels it is 3,918,948,864, 5,038,041,600, 7,276,227,072 and 9,514,412,544 bytes. Context length and cache settings remain fixed across levels; this proxy does not measure runtime cache or activation allocation. Keep sampled physical footprint and RSS in separately labelled columns with missing-value reasons. Fairy retains 912,020,960 encoded vision-weight bytes and remains outside the knee sequence.
+
+Record whole-machine `vm_stat` swap-ins, swap-outs and pageouts around every call, in pages and bytes. Flag a call if any counter increases. Retain and report these calls, but exclude them from every quantity used in knee analysis, including latency, quality and variance. Missing or reset counters also make a call ineligible, with a separate unknown count. Report eligible counts per prompt and configuration; do not treat missing prompts or an empty eligible group as zero quality or evidence of no knee. All validation pilots recorded swap activity, so a fresh, quiet launch remains necessary.
 
 ### Kill criteria
 
@@ -46,7 +54,9 @@ If running the tool on Andrii's own projects changes no decision, with no model 
 | Tokens | Provider-reported input, output and reasoning counts, with their source retained. |
 | Decode tokens/s | Provider-reported generation rate where available. A client delivery estimate must be separately labelled. |
 | Model load time | Explicit load-request duration, recorded separately from call latency and linked to calls by load event. |
-| LM Studio RSS peak, sampled | Largest sampled sum of resident memory across identified LM Studio and inference-worker processes. |
+| Loaded weight bytes, knee proxy | Exact encoded safetensors tensor payload bytes, not runtime peak memory. |
+| LM Studio physical footprint peak, sampled, secondary | Largest complete contemporaneous process-group sum of `ri_phys_footprint`; invalid when process coverage is incomplete. |
+| LM Studio RSS peak, sampled, secondary | Largest sampled sum of resident memory across identified LM Studio and inference-worker processes. |
 | Payload bytes | Serialized request and received response body sizes, including streaming framing, excluding headers and transport overhead. |
 | List-price equivalent | Input and billable output tokens multiplied by the prices recorded in config. Thinking tokens count when billed as output. |
 | Energy, estimate, whole-machine delta | Integrated on-device power above an idle baseline, with the actual measured power domains recorded. |
@@ -99,7 +109,7 @@ LM Studio must already be running with its local server enabled and existing mod
 
 Energy is optional by default. If you want power measurement, run `sudo -v` yourself immediately before the benchmark. CallCost invokes only the collector through `sudo -n`; it never prompts for a password and the benchmark stays unprivileged. Without access or supported samples, energy remains unavailable. `required_powermetrics` stops the run when collection cannot start or establish a baseline. See [measurement details](docs/methodology.md) for coverage and scope limits.
 
-Before a full run, review the [completed preparation and its measurement limits](docs/model-preparation.md), resolve memory attribution and 8-bit headroom, fill in exact model identifiers and verified Gemini prices, fix the thinking setting, supply the ten real summaries and their checklists, and validate the complete 40-prompt dataset. Credentials are read from environment variables and never committed.
+Before a full run, review the [completed preparation and its measurement limits](docs/model-preparation.md), use the registered weight proxy and check 8-bit headroom, fill in exact model identifiers and verified Gemini prices, fix the thinking setting, supply the ten real summaries and their checklists, and validate the complete 40-prompt dataset. Credentials are read from environment variables and never committed.
 
 The committed [GSM8K sample](datasets/gsm8k/prompts.json) records original zero-based test-row indices. Rebuild it with `python3 scripts/prepare_gsm8k.py`. The [selection manifest](datasets/gsm8k/selection.json) pins the source commit, source SHA-256, row indices and stable hash-ranking procedure using seed 2027. Its upstream licence is retained alongside the sample. The ten private summaries still need to be supplied and merged into a 40-prompt file before a full run.
 

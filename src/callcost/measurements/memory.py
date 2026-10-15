@@ -1,22 +1,59 @@
-"""Sample the LM Studio process group, including resident model weights."""
+"""Sample the LM Studio process group, with RSS and macOS physical footprint."""
 
+import ctypes
 import json
+import os
+import sys
 import threading
 import time
 
 import psutil
 
 
+class RusageInfoV0(ctypes.Structure):
+    # Darwin SDK sys/resource.h, RUSAGE_INFO_V0. Times are not used here.
+    _fields_ = [('ri_uuid', ctypes.c_uint8 * 16)] + [(name, ctypes.c_uint64) for name in (
+        'ri_user_time', 'ri_system_time', 'ri_pkg_idle_wkups', 'ri_interrupt_wkups',
+        'ri_pageins', 'ri_wired_size', 'ri_resident_size', 'ri_phys_footprint',
+        'ri_proc_start_abstime', 'ri_proc_exit_abstime')]
+
+
+_LIBPROC = None
+
+
+def physical_footprint(pid):
+    global _LIBPROC
+    if sys.platform != 'darwin':
+        raise OSError('Physical footprint requires macOS')
+    if _LIBPROC is None:
+        _LIBPROC = ctypes.CDLL('/usr/lib/libproc.dylib', use_errno=True)
+        _LIBPROC.proc_pid_rusage.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_void_p]
+        _LIBPROC.proc_pid_rusage.restype = ctypes.c_int
+    info = RusageInfoV0()
+    if _LIBPROC.proc_pid_rusage(pid, 0, ctypes.byref(info)) != 0:
+        code = ctypes.get_errno()
+        raise OSError(code, os.strerror(code))
+    return info.ri_phys_footprint
+
+
 def peak_rss(samples, start, end):
+    return peak_process_sum(samples, start, end, 'rss')
+
+
+def peak_footprint(samples, start, end):
+    return peak_process_sum(samples, start, end, 'footprint')
+
+
+def peak_process_sum(samples, start, end, metric):
     selected = [s for s in samples if start <= s.get('started', s['time']) <= s['time'] <= end]
     if not selected:
         return None, 'No memory samples inside call window'
-    if any(s['error'] or not s['rss'] for s in selected):
+    if any(s['error'] or not s.get(metric) or (metric == 'footprint' and s.get('footprint_error')) for s in selected):
         return None, 'Incomplete process group or failed memory sample'
-    identities = [set(s['rss']) for s in selected]
+    identities = [set(s[metric]) for s in selected]
     if any(group != identities[0] for group in identities):
         return None, 'Process group changed during call'
-    return max(sum(s['rss'].values()) for s in selected), None
+    return max(sum(s[metric].values()) for s in selected), None
 
 
 def process_role(executable, arguments):
@@ -69,11 +106,15 @@ class MemorySampler:
     def _collect(self):
         with self.path.open('w', encoding='utf-8') as stream:
             while not self.stop_event.is_set():
-                sample = {'started': time.perf_counter(), 'rss': {}, 'processes': [], 'error': None}
+                sample = {'started': time.perf_counter(), 'rss': {}, 'footprint': {}, 'footprint_error': None, 'processes': [], 'error': None}
                 try:
                     for process in discover_processes(self.process_ids):
                         identity = f'{process.pid}:{process.create_time()}'
                         sample['rss'][identity] = process.memory_info().rss
+                        try:
+                            sample['footprint'][identity] = physical_footprint(process.pid)
+                        except OSError as error:
+                            sample['footprint_error'] = str(error)
                         sample['processes'].append({'pid': process.pid, 'created': process.create_time(),
                                                     'executable': process.exe()})
                 except (psutil.Error, ValueError, OSError) as error:

@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-15",
+  "scope": "Held-out instrumentation pilots, no scored benchmark data",
+  "method": "RUSAGE_INFO_V0 ri_phys_footprint, contemporaneous process-group sum; complete stable process coverage required",
+  "decision": "Loaded encoded weight bytes for knee; measured physical footprint and RSS secondary",
+  "reason": "Both 8-bit attempts lost process coverage during at least one in-call sample. Other levels exceed encoded weights and increase with precision, but a complete four-level validation was not obtained. All pilots recorded system swap activity.",
+  "calls": [
+    {
+      "call_id": "f114d26af4a7452f948c48de1339b13b",
+      "configuration_id": "converted-6bit",
+      "status": "completed",
+      "loaded_weight_bytes": "7276227072",
+      "memory_peak_footprint_bytes": "8655694824",
+      "footprint_missing_reason": null,
+      "memory_peak_rss_bytes": "432914432",
+      "swapping_occurred": "True",
+      "swapins_pages": "10616",
+      "swapouts_pages": "0",
+      "pageouts_pages": "140",
+      "run": "footprint-validation-001"
+    },
+    {
+      "call_id": "8bba76dbf6af470585aedc630957674d",
+      "configuration_id": "converted-8bit",
+      "status": "completed",
+      "loaded_weight_bytes": "9514412544",
+      "memory_peak_footprint_bytes": null,
+      "footprint_missing_reason": "Incomplete process group or failed memory sample",
+      "memory_peak_rss_bytes": null,
+      "swapping_occurred": "True",
+      "swapins_pages": "275260",
+      "swapouts_pages": "192688",
+      "pageouts_pages": "545",
+      "run": "footprint-validation-001"
+    },
+    {
+      "call_id": "10df61319de343e6a01f13914dc4b21c",
+      "configuration_id": "converted-4bit",
+      "status": "completed",
+      "loaded_weight_bytes": "5038041600",
+      "memory_peak_footprint_bytes": "6471723096",
+      "footprint_missing_reason": null,
+      "memory_peak_rss_bytes": "4857905152",
+      "swapping_occurred": "True",
+      "swapins_pages": "1648",
+      "swapouts_pages": "0",
+      "pageouts_pages": "1",
+      "run": "footprint-validation-001"
+    },
+    {
+      "call_id": "d155a3796c354d95bbe5ebe09163f68b",
+      "configuration_id": "converted-3bit",
+      "status": "completed",
+      "loaded_weight_bytes": "3918948864",
+      "memory_peak_footprint_bytes": "5356283032",
+      "footprint_missing_reason": null,
+      "memory_peak_rss_bytes": "1491451904",
+      "swapping_occurred": "True",
+      "swapins_pages": "1467",
+      "swapouts_pages": "0",
+      "pageouts_pages": "0",
+      "run": "footprint-validation-001"
+    },
+    {
+      "call_id": "9002c371f95a47459db94609cdb7cc2b",
+      "configuration_id": "converted-8bit",
+      "status": "completed",
+      "loaded_weight_bytes": "9514412544",
+      "memory_peak_footprint_bytes": null,
+      "footprint_missing_reason": "Incomplete process group or failed memory sample",
+      "memory_peak_rss_bytes": null,
+      "swapping_occurred": "True",
+      "swapins_pages": "255321",
+      "swapouts_pages": "144272",
+      "pageouts_pages": "500",
+      "run": "footprint-validation-8bit-002"
+    }
+  ]
+}

@@ -14,7 +14,8 @@ import httpx
 
 from callcost.measurements.energy import SCOPE, PowerCollector, baseline_assessment
 from callcost.measurements.machine import command, conditions, machine_metadata
-from callcost.measurements.memory import MemorySampler
+from callcost.measurements.memory import MemorySampler, peak_footprint
+from callcost.measurements.swap import snapshot, swap_delta
 from callcost.measurements.weights import inspect_weights
 from callcost.providers.gemini import GeminiProvider
 from callcost.providers.lmstudio import LMStudioProvider
@@ -67,6 +68,7 @@ def measured_call(provider, prompt, config, store, phase, repeat, load, files, p
                                 config.measurement.memory_sample_ms,
                                 config.measurement.lmstudio_process_ids)
         sampler.start()
+    swap_before = snapshot()
     interrupted = False
     result = None
     try:
@@ -81,6 +83,8 @@ def measured_call(provider, prompt, config, store, phase, repeat, load, files, p
                 if result is None:
                     raise
                 interrupted = True
+    swap_after = snapshot()
+    swap = swap_delta(swap_before, swap_after)
     start, end = result.started_monotonic, result.ended_monotonic
     memory = energy = None
     memory_reason = 'Memory collection interrupted' if sampler else 'LM Studio process memory is not applicable to Gemini'
@@ -103,6 +107,7 @@ def measured_call(provider, prompt, config, store, phase, repeat, load, files, p
         result.status = 'error'
         result.error = result.error or str(error)
         evidence = None
+    footprint, footprint_reason = peak_footprint(sampler.samples, start, end) if sampler else (None, 'Local process memory is not applicable to Gemini')
     row = dict(asdict(result), call_id=call_id, configuration_id=setting.id,
                configuration_label=getattr(setting, 'label', None) or setting.id,
                comparison_role=getattr(setting, 'comparison_role', 'cloud_reference'), provider=setting.provider,
@@ -111,6 +116,11 @@ def measured_call(provider, prompt, config, store, phase, repeat, load, files, p
                load_id=load['load_id'] if load else None, model_files=files,
                quantisation=getattr(setting, 'expected_quantisation', None),
                memory_peak_rss_bytes=memory, memory_missing_reason=memory_reason,
+               memory_peak_footprint_bytes=footprint, footprint_missing_reason=footprint_reason,
+               loaded_weight_bytes=inspect_weights(setting.model_files)['tensor_payload_bytes'] if sampler else None,
+               **{k: v for k, v in swap.items() if k != 'missing_reason'},
+               swap_missing_reason=swap['missing_reason'],
+               knee_eligible=result.status == 'completed' and swap['swapping_occurred'] is False,
                energy_j=energy, energy_missing_reason=energy_reason, energy_scope=SCOPE,
                conditions={'before': before, 'after': after}, answer_sha256=answer_hash(result.answer),
                varies_from_first_answer=None, raw_request=f'raw/{call_id}.request.json',

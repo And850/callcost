@@ -82,3 +82,27 @@ def test_native_node_worker_identity_and_sampling_boundaries():
     assert process_role(node, f'{node} -e wrapper {app}') == (False, True)
     assert process_role('/usr/bin/python3', 'my-llmworker.js') == (False, False)
     assert peak_rss([{'started': .9, 'time': 1.1, 'rss': {'a': 100}, 'error': None}], 1, 2)[0] is None
+
+
+def test_footprint_peak_sums_same_instant_and_requires_complete_processes():
+    from callcost.measurements.memory import peak_footprint
+    samples = [{'time': 1.1, 'footprint': {'a': 100, 'b': 20}, 'error': None},
+               {'time': 1.2, 'footprint': {'a': 20, 'b': 110}, 'error': None}]
+    assert peak_footprint(samples, 1, 2) == (130, None)
+    samples[1]['footprint'] = {'a': 200}
+    assert peak_footprint(samples, 1, 2)[0] is None
+
+
+def test_swap_deltas_do_not_confuse_pageins_with_swapins():
+    from callcost.measurements.swap import parse_vm_stat, swap_delta
+    first = parse_vm_stat('Mach Virtual Memory Statistics: (page size of 16384 bytes)\n'
+                          'Pageins: 20.\nPageouts: 4.\nSwapins: 6.\nSwapouts: 8.\n')
+    second = dict(first, pageins=99, swapins=8)
+    result = swap_delta(first, second)
+    assert result['swapins_pages'] == 2 and result['swapins_bytes'] == 32768
+    assert result['pageouts_pages'] == 0 and result['swapping_occurred'] is True
+    assert swap_delta(first, dict(first, pageins=99))['swapping_occurred'] is False
+    assert swap_delta(first, dict(first, pageouts=5))['swapping_occurred'] is True
+    assert swap_delta(first, dict(first, swapins=5))['swapping_occurred'] is None
+    assert swap_delta(first, None)['swapping_occurred'] is None
+    assert parse_vm_stat('Pageouts: 0.') is None

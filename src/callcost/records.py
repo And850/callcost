@@ -34,9 +34,12 @@ class CallResult:
 
 
 CALL_FIELDS = [
-    'call_id', 'configuration_id', 'configuration_label', 'comparison_role', 'provider', 'prompt_id', 'task_type', 'repeat',
+    'call_id', 'schedule_index', 'segment_id', 'configuration_id', 'configuration_label', 'comparison_role', 'provider', 'prompt_id', 'task_type', 'repeat',
     'phase', 'cache_stratum', 'load_id', 'model_files', 'quantisation',
     *CallResult.__dataclass_fields__, 'memory_peak_rss_bytes', 'memory_missing_reason',
+    'memory_peak_footprint_bytes', 'footprint_missing_reason', 'loaded_weight_bytes',
+    'swapins_pages', 'swapouts_pages', 'pageouts_pages', 'swapins_bytes', 'swapouts_bytes', 'pageouts_bytes',
+    'swapping_occurred', 'swap_missing_reason', 'knee_eligible',
     'energy_j', 'energy_missing_reason', 'energy_scope', 'conditions',
     'answer_sha256', 'varies_from_first_answer', 'raw_request', 'raw_response',
 ]
