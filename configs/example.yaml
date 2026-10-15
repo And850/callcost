@@ -1,0 +1,47 @@
+# Schema proposal. Not runnable until identifiers, prices and thinking are filled.
+schema_version: 1
+run:
+  repeats: 5
+  warmup_runs: 2
+  temperature: 0
+  max_output_tokens: 1024
+  shuffle_seed: 2027
+measurement:
+  memory_sample_ms: 100
+  energy:
+    mode: optional_powermetrics
+    sample_ms: 250
+    idle_baseline_seconds: 10
+lmstudio:
+  base_url: http://127.0.0.1:1234
+  context_length: 4096
+  cache_policy: disable_if_supported_else_split
+configurations:
+  - id: local-q8
+    provider: lmstudio
+    model_key: null
+    expected_quantisation: Q8_0
+  - id: local-q6
+    provider: lmstudio
+    model_key: null
+    expected_quantisation: Q6_K
+  - id: local-q4
+    provider: lmstudio
+    model_key: null
+    expected_quantisation: Q4_K_M
+  - id: local-q3
+    provider: lmstudio
+    model_key: null
+    expected_quantisation: Q3_K_M
+  - id: cloud
+    provider: gemini
+    model: null
+    api_key_env: GEMINI_API_KEY
+    # Set exactly one supported choice: {budget: <integer>} or {level: <string>}.
+    thinking: null
+    pricing:
+      currency: USD
+      input_per_million: null
+      output_per_million: null
+      source_url: https://ai.google.dev/gemini-api/docs/pricing
+      checked_on: null

@@ -1,0 +1,35 @@
+# Illustrative format only. These are not the real experiment's prompts.
+schema_version: 1
+prompts:
+  - id: example-summary
+    task_type: summarisation
+    prompt: Summarise this note in two sentences.
+    input: |
+      The meeting moved from Tuesday to Thursday.
+      Send the revised slides by Wednesday at 17:00.
+    scoring:
+      type: checklist
+      items:
+        - id: mentions_thursday
+          description: Contains the word Thursday.
+          automatic:
+            type: substring
+            value: Thursday
+            case_sensitive: false
+        - id: correct_deadline
+          description: Correctly states Wednesday at 17:00 as the deadline.
+          human: true
+        - id: faithful
+          description: Adds no unsupported facts.
+          human: true
+  - id: example-maths
+    task_type: maths
+    prompt: |
+      Four crates contain 12 apples each. After selling 18 apples,
+      the remainder is divided equally among three baskets.
+      How many apples are in each basket?
+      End with exactly: Answer: <number>
+    scoring:
+      type: numeric_final_line
+      expected: "10"
+      absolute_tolerance: "0"
