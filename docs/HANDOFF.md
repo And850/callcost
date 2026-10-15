@@ -58,3 +58,5 @@ This writes `report.json` and `report.md`. Human scores remain pending until rev
 - Independent review identified: incomplete collection could yield knee conclusions; hard-kill pilot verification metadata recovery; costs hidden by pending scores; human-readable reporting omissions. Fix these in separate commits before live validation.
 - Fixed incomplete-collection conclusions: report checks completed checkpoint identities against the full saved schedule and completed run status. Swap-excluded repeats do not need replacement; eligible prompt counts remain visible. Regression includes a complete schedule with reduced eligible repeats.
 - First fix verified with 70 tests and Ruff; no inference. No launcher run or benchmark data collected.
+
+- Fixed hard-kill pilot metadata recovery: resume revalidates completed pilot/smoke checkpoints and restores verification with the original call ID before continuing. Offline regression proves no completed call is repeated. Verified: 71 tests and Ruff.

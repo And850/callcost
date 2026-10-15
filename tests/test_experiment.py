@@ -195,3 +195,36 @@ def test_interrupt_in_post_call_swap_snapshot_does_not_repeat_finished_inference
         assert len(saved) == 1 and saved[0]['status'] == 'completed'
         final = run_experiment(config, dataset, tmp_path / 'run', client=client, resume=True)
     assert calls == 8 and final['status'] == 'completed'
+
+
+def test_resume_recovers_pilot_verification_without_repeating_completed_call(tmp_path, config_data, prompt_data, monkeypatch):
+    monkeypatch.setenv('GEMINI_API_KEY', 'key')
+    monkeypatch.setattr('callcost.experiment.machine_metadata', lambda: {'platform': 'Darwin'})
+    monkeypatch.setattr('callcost.experiment.conditions', dict)
+    config_data['measurement'] = {'energy': {'mode': 'off'}}
+    config_data['run'] = {'warmup_runs': 0}
+    config = Config.model_validate(config_data)
+    dataset = Dataset.model_validate(prompt_data)
+    count = 0
+
+    def handler(request):
+        nonlocal count
+        count += 1
+        return httpx.Response(200, stream=httpx.ByteStream(
+            ('data: ' + json.dumps(response('Answer: 4')) + '\n\n').encode()))
+
+    directory = tmp_path / 'run'
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        run_experiment(config, dataset, directory, client=client, pilot_only=True)
+        metadata = json.loads((directory / 'metadata.json').read_text())
+        pilot = next((directory / 'checkpoints').glob('*.json'))
+        pilot_id = json.loads(pilot.read_text())['call_id']
+        # Reproduce death after pilot checkpoint but before its metadata update.
+        metadata['thinking_verification'] = {}
+        metadata['status'] = 'running'
+        (directory / 'metadata.json').write_text(json.dumps(metadata))
+        resumed = run_experiment(config, dataset, directory, client=client, pilot_only=True, resume=True)
+    assert resumed['status'] == 'completed'
+    assert count == 1
+    assert resumed['thinking_verification']['cloud']['verified'] is True
+    assert resumed['thinking_verification']['cloud']['call_id'] == pilot_id

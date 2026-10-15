@@ -20,6 +20,7 @@ from callcost.measurements.swap import snapshot, swap_delta
 from callcost.measurements.weights import inspect_weights
 from callcost.providers.gemini import GeminiProvider
 from callcost.providers.lmstudio import LMStudioProvider
+from callcost.records import CallResult
 from callcost.schemas import LocalConfig, Prompt
 from callcost.signals import defer_termination
 from callcost.storage import RunStore
@@ -202,6 +203,22 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
     client = client or httpx.Client(trust_env=False)
     provider = power = None
     try:
+        if resume:
+            # A hard kill may occur after the durable pilot checkpoint but before
+            # its metadata update. Verify that observation again, never repeat it.
+            for row in rows:
+                if row['phase'] not in ('pilot', 'smoke') or row['status'] != 'completed':
+                    continue
+                setting = next(s for s in settings if s.id == row['configuration_id'])
+                result = CallResult(**{key: row[key] for key in CallResult.__dataclass_fields__ if key in row})
+                if setting.provider == 'gemini' and setting.thinking.thinking_level is not None:
+                    evidence = verify_cloud_thinking(result, setting.thinking.thinking_level)
+                else:
+                    evidence = verify_thinking_off(result)
+                metadata['thinking_verification'][setting.id] = dict(
+                    evidence, call_id=row['call_id'],
+                    method='reasoning: off' if isinstance(setting, LocalConfig) else
+                            f'thinkingConfig.thinkingLevel: {setting.thinking.thinking_level}' if setting.thinking.thinking_level else 'thinkingConfig.thinkingBudget: 0')
         store.write_metadata(metadata)
         if resume:
             recover_owned_instances(metadata, config, client, store.directory / 'raw')
