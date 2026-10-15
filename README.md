@@ -170,3 +170,11 @@ MIT. See [LICENSE](LICENSE). Third-party datasets retain their own licence notic
 `configs/experiment.yaml` contains all five local configurations and `gemini-3.8-flash` with `thinking: {thinking_level: low}`. Cloud thinking cannot be disabled for this model, unlike the local models. Thinking tokens are logged separately and included once in billable output. The requested level is recorded; the API does not expose proof of its internal reasoning depth. This difference limits direct interpretation of the cloud reference. See Google's [thinking documentation](https://ai.google.dev/gemini-api/docs/thinking).
 
 The configured standard prices are USD 0.75 per million input tokens and USD 3.75 per million output tokens, including thinking. The run uses the free tier and reports a list-price equivalent. These rates apply through 31 December 2026 and double on 1 January 2027; update the config before a later run. Source: [Google pricing](https://ai.google.dev/gemini-api/docs/pricing), checked 15 October 2026. The launcher inherits `GEMINI_API_KEY` from Terminal; its presence was confirmed in an interactive login shell without printing it.
+
+## Resuming after a run
+
+Read `runs/LATEST`, then the named run's `status.json`, then `run.log`. The launcher is still WIP and has not had its live smoke test; follow [HANDOFF.md](docs/HANDOFF.md) before the first full run. LATEST may not exist yet. Resume an interrupted launcher run with `./scripts/run_full.sh --resume`. To produce a saved-run report without inference, from the repository root run:
+
+```sh
+PYTHONPATH=src .venv/bin/python -m callcost report --run "runs/$(cat runs/LATEST)"
+```
