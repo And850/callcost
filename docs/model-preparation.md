@@ -1,6 +1,6 @@
 # Qwen3.5-9B MLX preparation
 
-Decision recorded on 15 October 2026: use Qwen3.5-9B, MLX at 3, 4, 6 and 8 bits, with thinking off. The owner selected reproducible conversion of all four levels from one pinned source after the published 3-bit candidate proved empty. No weights have been downloaded or converted by CallCost.
+Decision recorded on 15 October 2026: use Qwen3.5-9B, MLX at 3, 4, 6 and 8 bits, with thinking off. The owner selected reproducible conversion of all four levels from one pinned source after the published 3-bit candidate proved empty. The owner approved the source download and all four conversions on 15 October 2026. Download is in progress; converted outputs and pilot results will be recorded below.
 
 ## Inspected published candidates
 
@@ -50,7 +50,7 @@ python3.13 -m venv .venv-convert
 
 The environment was installed and its CLI help verified on this Mac. No model weights were downloaded. The converter CLI does not expose a revision flag, so download the exact revision to a local directory first, then convert with Hub access disabled. This avoids accidentally resolving `main` during conversion.
 
-The exact source download command is in [download_qwen_source.sh](../scripts/download_qwen_source.sh). It checks at least 45 GB free before downloading and writes a SHA-256 manifest of the local source. **Owner confirmation is required before running it**, as explicitly requested on 15 October 2026.
+The exact source download command is in [download_qwen_source.sh](../scripts/download_qwen_source.sh). It checks at least 45 GB free before downloading and writes a SHA-256 manifest of the local source. **Owner confirmation was received on 15 October 2026**, authorising the download and four conversions.
 
 ```sh
 bash scripts/download_qwen_source.sh
@@ -75,3 +75,23 @@ Inspect all output layer settings for the requested bit counts and common group 
 Start with the highest precision to inspect available RAM, swap growth and model/runtime RSS under the intended context length and output budget. The published multimodal 8-bit candidate's 10.43 GB file size does not predict the new text-only output or establish comfortable RAM headroom. Conversion feasibility and runtime headroom are separate checks. Resolve substantial memory pressure before collecting full-run results.
 
 The installed production reference passed functional thinking-off and RSS collection pilots. Those pilot rows are excluded from the experimental dataset. See [pilot validation](pilot-validation.md).
+
+## Conversion memory monitoring
+
+Before download the Mac had about 2.6 GB available RAM, 12.7 GB swap usage and substantial compression. The owner was asked to close memory-heavy apps before conversion. Download and metadata preparation can continue while waiting.
+
+Run the committed conversion commands through the preparation monitor:
+
+```sh
+.venv/bin/python scripts/monitor_conversion.py \
+  --output models/provenance/conversion-memory-001.jsonl \
+  -- bash scripts/convert_qwen_mlx.sh
+```
+
+The monitor samples process-tree RSS, available system memory and swap every two seconds, and keeps process IDs and each active converter output path. This is preparation telemetry, not a benchmark result. As a guard against sustained thrashing, it terminates only its own conversion process group if available memory stays below 512 MiB while swap has grown by more than 4 GiB for at least ten seconds. This operational cutoff does not change experiment scoring or knee definitions. Failed partial outputs and logs must be retained under a separate attempt path before any retry.
+
+## Fairy production vision-weight footprint
+
+A header-only inspection of the installed safetensors found **912,020,960 encoded bytes** of `vision_tower.*` tensors, including their scales and biases. Total tensor payload is **5,950,062,560 bytes**; vision therefore accounts for **15.3279%** of that payload. Language tensors account for 5,038,041,600 bytes. Safetensors file size, including headers, is 5,950,221,142 bytes.
+
+The [component report](data/fairy-production-weight-components.json) retains per-file counts and method. Run metadata records the same component breakdown for every local configuration. This measures encoded weight storage, not the resident/allocated memory attributable to vision. Do not subtract 912 MB from process RSS or infer a vision-only load duration. Fairy's RSS and load time include its original vision-capable architecture, runtime and file-cache state; comparisons to the text-only series carry that caveat.

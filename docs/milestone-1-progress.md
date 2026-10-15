@@ -45,3 +45,8 @@ The owner explicitly selected official-source independent MLX conversions using 
 Prepared mlx-lm 0.32.0 with locked dependencies under Python 3.13.2. Exact commands and pins are in `scripts/download_qwen_source.sh`, `scripts/convert_qwen_mlx.sh` and `docs/model-preparation.md`. Disk availability after environment setup was 192.78 GB against approximately 45 GB planned. No source weights or converted weights were downloaded. The owner explicitly requires confirmation before downloading; the code and commands are committed first for review.
 
 Final conversion review also identified a missing source-integrity check. The preparation script now verifies exact file sets, lengths and SHA-256 hashes before converting, with regressions for modified, extra and missing source files. No model script was run.
+
+
+### Approved conversion execution
+
+The owner approved the approximately 19.33 GB download and all four conversions, requested memory monitoring and per-output pilots, and required a measured vision-weight caveat for Fairy's production reference. Started the pinned download through the committed script. Current memory pressure prompted a request to close memory-heavy apps before conversion. Header-only component accounting measured 912,020,960 vision payload bytes out of 5,950,062,560 total, or 15.3279%; runtime attribution remains explicitly unavailable. Added a two-second conversion resource monitor with a documented sustained-thrashing stop condition. The four quantisation commands and their settings are unchanged.

@@ -15,6 +15,7 @@ import httpx
 from callcost.measurements.energy import SCOPE, PowerCollector, baseline_assessment
 from callcost.measurements.machine import command, conditions, machine_metadata
 from callcost.measurements.memory import MemorySampler
+from callcost.measurements.weights import inspect_weights
 from callcost.providers.gemini import GeminiProvider
 from callcost.providers.lmstudio import LMStudioProvider
 from callcost.schemas import LocalConfig, Prompt
@@ -120,6 +121,8 @@ def measured_call(provider, prompt, config, store, phase, repeat, load, files, p
 def run_experiment(config, dataset, directory, *, pilot_only=False, client=None, input_files=None,
                    progress=print):
     files = preflight(config)
+    components = {s.id: inspect_weights(s.model_files)
+                  for s in config.configurations if isinstance(s, LocalConfig)}
     machine = machine_metadata()
     if machine['platform'] != 'Darwin':
         raise ValueError('Milestone 1 runs are supported only on macOS')
@@ -140,6 +143,9 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
                 'started_at': datetime.now(timezone.utc).isoformat(), 'machine': machine,
                 'config': config.model_dump(mode='json'), 'dataset': dataset.model_dump(mode='json'),
                 'input_files': input_files or [], 'model_files': files,
+                'model_weight_components': components,
+                'production_reference_caveat': 'Fairy retains vision weights; encoded component bytes are not a runtime RSS subtraction or a load-time attribution'
+                    if any(getattr(s, 'comparison_role', None) == 'production_reference' for s in config.configurations) else None,
                 'software': {name: version(name) for name in ('callcost', 'httpx', 'pydantic', 'PyYAML', 'psutil')},
                 'git': {'commit': command(['git', 'rev-parse', 'HEAD']),
                         'status': command(['git', 'status', '--porcelain'])},

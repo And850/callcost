@@ -1,0 +1,56 @@
+{
+  "scope": "encoded safetensors payload bytes, not runtime resident or allocated memory",
+  "classification": {
+    "vision_prefixes": [
+      "vision_tower.",
+      "model.visual.",
+      "visual."
+    ],
+    "language_prefixes": [
+      "language_model.",
+      "model.language_model."
+    ]
+  },
+  "file_bytes": 5950221142,
+  "tensor_payload_bytes": 5950062560,
+  "vision_payload_bytes": 912020960,
+  "language_payload_bytes": 5038041600,
+  "other_payload_bytes": 0,
+  "vision_fraction_of_tensor_payload": 0.1532792219919113,
+  "files": [
+    {
+      "name": "model-00001-of-00002.safetensors",
+      "file_bytes": 5349771292,
+      "header_and_prefix_bytes": 157756,
+      "payload_bytes_by_component": {
+        "vision": 912020960,
+        "language": 4437592576,
+        "other": 0
+      },
+      "tensor_counts_by_component": {
+        "vision": 333,
+        "language": 920,
+        "other": 0
+      }
+    },
+    {
+      "name": "model-00002-of-00002.safetensors",
+      "file_bytes": 600449850,
+      "header_and_prefix_bytes": 826,
+      "payload_bytes_by_component": {
+        "vision": 0,
+        "language": 600449024,
+        "other": 0
+      },
+      "tensor_counts_by_component": {
+        "vision": 0,
+        "language": 7,
+        "other": 0
+      }
+    }
+  ],
+  "unavailable_reason": null,
+  "model": "lmstudio-community/Qwen3.5-9B-MLX-4bit",
+  "measured_on": "2026-10-15",
+  "method": "Read 8-byte little-endian header length, parse JSON headers, sum data_offset differences for vision_tower tensor names, including weight/scales/biases"
+}
