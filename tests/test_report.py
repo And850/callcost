@@ -86,3 +86,30 @@ def test_partial_schedule_cannot_establish_knee_even_when_every_prompt_is_scored
     assert result['collection']['complete'] is True
     assert result['knee'][0]['finding'] == 'no knee found'
     assert all(g['knee_eligible']['calls'] == 1 for g in result['groups'] if g['cache_stratum'] == 'all')
+
+
+def test_pending_quality_keeps_all_adjacent_costs_and_secondary_footprints():
+    configurations = [dict(id=str(i), comparison_role='quantisation_series', expected_quantisation=f'{i}bit')
+                      for i in (8, 6, 4, 3)]
+    groups = [dict(configuration_id=str(i), task_type='summarisation', cache_stratum='all',
+                   knee_eligible=dict(quality={'score': None}, calls=5,
+                                      latency_s={'p50': i, 'p95': i * 2, 'q1': i - .1, 'q3': i + .1},
+                                      loaded_weight_bytes={'p50': i * 100},
+                                      memory_peak_footprint_bytes={'n': 5, 'p50': i * 110, 'p95': i * 120}))
+              for i in (8, 6, 4, 3)]
+    finding = knee_findings(groups, configurations, ['summarisation'])[0]
+    assert finding['finding'] == 'insufficient data or pending human review'
+    assert finding['knee'] is None
+    assert len(finding['steps']) == 3
+    first = finding['steps'][0]
+    assert first['weight_byte_saving'] == .25
+    assert first['latency_p50_saving'] == .25
+    assert first['latency_p95_saving'] == .25
+    assert first['upper_footprint_bytes']['p50'] == 880
+    assert first['lower_footprint_bytes']['p50'] == 660
+    assert all(s['qualifies'] is None for s in finding['steps'])
+    # Absent configurations still leave the registered adjacent steps visible.
+    missing = knee_findings(groups[:-1], configurations, ['summarisation'])[0]
+    assert len(missing['steps']) == 3
+    assert missing['steps'][-1]['weight_byte_saving'] is None
+    assert missing['steps'][-1]['cost_missing_reasons']['weight_byte_saving']

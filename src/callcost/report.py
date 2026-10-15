@@ -114,31 +114,44 @@ def knee_findings(groups, configurations, tasks):
     for task in tasks:
         levels = [next((g for g in groups if g['configuration_id'] == c['id'] and g['task_type'] == task
                         and g['cache_stratum'] == 'all'), None) for c in sequence]
-        if len(levels) != 4 or any(g is None or g['knee_eligible']['quality']['score'] is None for g in levels):
-            findings.append(dict(task_type=task, finding='insufficient data or pending human review'))
-            continue
+        ready = len(levels) == 4 and all(
+            g is not None and g['knee_eligible']['quality']['score'] is not None
+            and all(g['knee_eligible']['latency_s'].get(k) is not None for k in ('p50', 'q1', 'q3'))
+            for g in levels)
         steps, previous_drop = [], None
-        for upper, lower in zip(levels, levels[1:]):
-            a, b = upper['knee_eligible'], lower['knee_eligible']
-            if any(g[m]['p50'] is None for g in (a, b) for m in ('latency_s',)):
-                break
-            drop = Fraction(a['quality'].get('score_fraction', str(a['quality']['score']))) - Fraction(b['quality'].get('score_fraction', str(b['quality']['score'])))
-            latency_saving = 1 - Fraction(str(b['latency_s']['p50'])) / Fraction(str(a['latency_s']['p50'])) if a['latency_s']['p50'] else None
-            memory_saving = 1 - Fraction(str(b['loaded_weight_bytes']['p50'])) / Fraction(str(a['loaded_weight_bytes']['p50'])) if a['loaded_weight_bytes']['p50'] else None
-            overlap = max(a['latency_s']['q1'], b['latency_s']['q1']) <= min(a['latency_s']['q3'], b['latency_s']['q3'])
-            indistinguishable = overlap and abs(drop) < Fraction(1, 20)
+        for index, (upper, lower) in enumerate(zip(levels, levels[1:])):
+            a = upper['knee_eligible'] if upper else {}
+            b = lower['knee_eligible'] if lower else {}
+            costs, reasons = {}, {}
+            for name, metric, quantile in (
+                ('latency_p50_saving', 'latency_s', 'p50'),
+                ('latency_p95_saving', 'latency_s', 'p95'),
+                ('weight_byte_saving', 'loaded_weight_bytes', 'p50'),
+            ):
+                before, after = a.get(metric, {}).get(quantile), b.get(metric, {}).get(quantile)
+                costs[name] = (float(1 - Fraction(str(after)) / Fraction(str(before)))
+                               if before is not None and before > 0 and after is not None else None)
+                if costs[name] is None:
+                    reasons[name] = 'Missing eligible observations or nonpositive upper baseline'
+            qa, qb = a.get('quality', {}), b.get('quality', {})
+            drop = (Fraction(qa.get('score_fraction') or str(qa['score']))
+                    - Fraction(qb.get('score_fraction') or str(qb['score']))
+                    if qa.get('score') is not None and qb.get('score') is not None else None)
+            overlap = (max(a['latency_s']['q1'], b['latency_s']['q1'])
+                       <= min(a['latency_s']['q3'], b['latency_s']['q3'])) if ready else None
+            indistinguishable = overlap and abs(drop) < Fraction(1, 20) if ready else None
             qualifies = (previous_drop is not None and drop >= Fraction(1, 10) and drop >= 2 * previous_drop
-                         and not indistinguishable)
-            steps.append(dict(upper=upper['configuration_id'], lower=lower['configuration_id'],
-                              quality_drop=float(drop), latency_p50_saving=None if latency_saving is None else float(latency_saving),
-                              latency_p95_saving=(None if not a['latency_s'].get('p95') or b['latency_s'].get('p95') is None else
-                                                  1-b['latency_s']['p95']/a['latency_s']['p95']),
-                              weight_byte_saving=None if memory_saving is None else float(memory_saving),
+                         and not indistinguishable) if ready else None
+            steps.append(dict(upper=sequence[index]['id'], lower=sequence[index + 1]['id'],
+                              quality_drop=None if drop is None else float(drop), **costs,
+                              cost_missing_reasons=reasons,
+                              upper_footprint_bytes=a.get('memory_peak_footprint_bytes', distribution([])),
+                              lower_footprint_bytes=b.get('memory_peak_footprint_bytes', distribution([])),
                               indistinguishable=indistinguishable, qualifies=qualifies))
             previous_drop = drop
         knee = next((s for s in steps if s['qualifies']), None)
-        findings.append(dict(task_type=task, finding='knee found' if knee else
-                             'no knee found' if len(steps) == 3 else 'insufficient data', knee=knee, steps=steps))
+        findings.append(dict(task_type=task, finding='insufficient data or pending human review' if not ready else
+                             'knee found' if knee else 'no knee found', knee=knee, steps=steps))
     return findings
 
 

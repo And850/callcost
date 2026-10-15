@@ -60,3 +60,5 @@ This writes `report.json` and `report.md`. Human scores remain pending until rev
 - First fix verified with 70 tests and Ruff; no inference. No launcher run or benchmark data collected.
 
 - Fixed hard-kill pilot metadata recovery: resume revalidates completed pilot/smoke checkpoints and restores verification with the original call ID before continuing. Offline regression proves no completed call is repeated. Verified: 71 tests and Ruff.
+
+- Fixed step-cost suppression: all three adjacent comparisons retain available eligible weight/latency savings and secondary footprint distributions while scores are pending. Missing costs have reasons. Quality and variance rules are unchanged. Verified: 72 tests and Ruff.
