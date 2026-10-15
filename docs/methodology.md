@@ -109,3 +109,11 @@ On LM Studio 0.4.24, the models endpoint listed a `@4bit` variant alias that the
 ## Weight components for the production reference
 
 For local safetensors models, inspect headers without loading arrays. Sum encoded tensor payload lengths by vision/language prefixes, including quantisation weights, scales and biases. Keep per-file byte counts and explicit scope in `metadata.json.model_weight_components`. Fairy's production reference retains vision weights while the four mlx-lm conversions are text-only. Its memory and load observations must carry this caveat. Encoded vision-weight bytes do not measure incremental runtime RSS, and cannot be subtracted from measured RSS to create a comparable text-only value. See [the measured component report](data/fairy-production-weight-components.json).
+
+## Pre-registration amendment, 15 October 2026
+
+The knee is the first step after the baseline step where task quality falls by at least 10 percentage points and at least twice the previous step's drop. The first step establishes the baseline drop and cannot qualify. Cost is not a gate. Report each step's weight-byte memory saving and p50 and p95 latency savings, with measured physical footprint as a secondary column.
+
+The original memory and latency gates were removed before scored benchmark data and before the unattended launcher smoke test. Every adjacent weight-byte saving exceeds 20%, making the original memory gate unsatisfiable for this series. A measured-footprint gate would depend on fixed overhead, and memory bandwidth may make latency fall proportionally with weight size. These are design reasons, not findings from the task dataset. Earlier excluded instrumentation pilots exist. The revised hypothesis is nearly flat quality followed by a sharp drop, while cost falls by a roughly steady amount per step. The variance rule and both kill criteria in the README are unchanged.
+
+Swap-active calls remain reported but are excluded from knee inputs. Missing or reset swap counters also exclude calls and are counted separately. Insufficient eligible prompts or pending human scores cannot establish either a knee or no knee.
