@@ -6,7 +6,7 @@ CallCost is a Python command-line project comparing local models served by LM St
 
 ## Status
 
-Milestone 1 runners and logging are implemented and tested with offline fixtures. A held-out pilot on the installed Qwen3.5-9B MLX 4-bit model verified streaming, loading/unloading, zero reasoning tokens and process RSS sampling. Gemini and energy validation are pending. Aggregation, quality scoring and blind review are later milestones. No benchmark results have been collected.
+Local and Gemini runners, durable checkpoints/resume, automatic scoring, percentile aggregation and saved-run reports are implemented. Launcher/report review and offline regression fixes are complete; 75 tests and Ruff passed on 15 October 2026. The six-configuration live smoke, deliberate interruption/resume and privileged energy validation remain pending. No scored benchmark results or launcher smoke data have been collected. Human review tooling and charts remain unfinished. Follow [HANDOFF.md](docs/HANDOFF.md) for operational readiness and permissions.
 
 The local family is Qwen3.5-9B in MLX format, with thinking off. The 3-, 4-, 6- and 8-bit variants have been independently converted from pinned official Qwen weights using mlx-lm 0.32.0 and group size 64. Each loads in LM Studio and passes a held-out thinking-off pilot. Fairy's existing 4-bit model is a fifth local configuration, labelled "Fairy's production model" and treated as a separate reference. See [model preparation](docs/model-preparation.md) for the inspected published candidates and conversion pins. The experiment config selects Gemini 3.8 Flash at thinking level low, with standard list prices checked on 15 October 2026. The 8-bit pilots had less than 1 GB available RAM, and sampled process RSS did not track total model memory; resolve these limits before a full benchmark.
 
@@ -64,7 +64,7 @@ If running the tool on Andrii's own projects changes no decision, with no model 
 | Tokens | Provider-reported input, output and reasoning counts, with their source retained. |
 | Decode tokens/s | Provider-reported generation rate where available. A client delivery estimate must be separately labelled. |
 | Model load time | Explicit load-request duration, recorded separately from call latency and linked to calls by load event. |
-| Loaded weight bytes, knee proxy | Exact encoded safetensors tensor payload bytes, not runtime peak memory. |
+| Loaded weight bytes, descriptive | Exact encoded safetensors tensor payload bytes, not runtime peak memory. |
 | LM Studio physical footprint peak, sampled, secondary | Largest complete contemporaneous process-group sum of `ri_phys_footprint`; invalid when process coverage is incomplete. |
 | LM Studio RSS peak, sampled, secondary | Largest sampled sum of resident memory across identified LM Studio and inference-worker processes. |
 | Payload bytes | Serialized request and received response body sizes, including streaming framing, excluding headers and transport overhead. |
@@ -102,18 +102,20 @@ Use Python 3.12 or newer on macOS:
 ```sh
 python3 -m venv .venv
 .venv/bin/python -m pip install '.[dev]'
-.venv/bin/callcost models
-.venv/bin/callcost validate --prompts datasets/gsm8k/prompts.json --config configs/private/experiment.yaml
-.venv/bin/callcost run --prompts datasets/gsm8k/prompts.json --config configs/private/experiment.yaml --output runs/pilot-001 --pilot-only
-.venv/bin/callcost run --prompts prompts/private/dataset.yaml --config configs/private/experiment.yaml --output runs/experiment-001
+PYTHONPATH=src .venv/bin/python -m callcost models
+PYTHONPATH=src .venv/bin/python -m callcost validate --prompts datasets/gsm8k/prompts.json --config configs/private/experiment.yaml
+PYTHONPATH=src .venv/bin/python -m callcost run --prompts datasets/gsm8k/prompts.json --config configs/private/experiment.yaml --output runs/pilot-001 --pilot-only
+PYTHONPATH=src .venv/bin/python -m callcost run --prompts prompts/private/dataset.yaml --config configs/private/experiment.yaml --output runs/experiment-001
 .venv/bin/pytest -q
 ```
 
 See the [pilot validation record](docs/pilot-validation.md) for what has and has not been exercised on this Mac.
 
+Commands above use the current checkout source. A previously installed `.venv/bin/callcost` can contain an older packaged version; the launcher also explicitly uses checkout source.
+
 Copy `configs/example.yaml` to `configs/private/experiment.yaml` and fill every placeholder. Quote `"off"` in YAML. Supply exact LM Studio keys and quantisation names from `callcost models`; list all model weight, configuration, tokenizer and template files so they can be hashed. Relative file paths resolve against the config directory. The REST API does not prove that this supplied file list belongs to the selected model; check that mapping against the installed directory before a run.
 
-The output directory must not exist. Each run saves `calls.csv`, `metadata.json`, exact request/response bodies and instrument samples under `raw/`. It prints progress and the answer-variation count per configuration/task. The p50/p95 cost-quality table is milestone 2. Pilot and warm-up rows are retained but excluded from measured repeats. Any provider or thinking-verification failure stops the run, preserves partial evidence and returns non-zero; calls are never retried silently.
+The output directory must not exist. Each run saves `calls.csv`, `metadata.json`, exact request/response bodies and instrument samples under `raw/`. It prints progress and the answer-variation count per configuration/task. Saved-run reports include p50/p95 costs, eligible quality and adjacent step comparisons; human checklist scores remain pending. Pilot and warm-up rows are retained but excluded from measured repeats. Any provider or thinking-verification failure stops the run, preserves partial evidence and returns non-zero; calls are never retried silently.
 
 LM Studio must already be running with its local server enabled and existing model instances unloaded. CallCost only unloads the instance it loaded. Set the configured Gemini credential environment variable before running; credentials are not written to run artifacts. Input and output text are saved locally, so treat run directories as private unless deliberately publishing them.
 
@@ -121,7 +123,7 @@ Energy is optional by default. If you want power measurement, run `sudo -v` your
 
 Before a full run, review the [completed preparation and its measurement limits](docs/model-preparation.md), use the registered weight proxy and check 8-bit headroom, fill in exact model identifiers and verified Gemini prices, fix the thinking setting, complete owner review of the ten invented-text summaries and their checklists, and validate the complete 40-prompt dataset. Credentials are read from environment variables and never committed.
 
-The committed [GSM8K sample](datasets/gsm8k/prompts.json) records original zero-based test-row indices. Rebuild it with `python3 scripts/prepare_gsm8k.py`. The [selection manifest](datasets/gsm8k/selection.json) pins the source commit, source SHA-256, row indices and stable hash-ranking procedure using seed 2027. Its upstream licence is retained alongside the sample. The ten Fairy-style prompts written for the benchmark (invented texts) are in `prompts/summarisation.yaml`. They require owner review before inference and are combined with the pinned maths file by the full launcher.
+The committed [GSM8K sample](datasets/gsm8k/prompts.json) records original zero-based test-row indices. Rebuild it with `python3 scripts/prepare_gsm8k.py`. The [selection manifest](datasets/gsm8k/selection.json) pins the source commit, source SHA-256, row indices and stable hash-ranking procedure using seed 2027. Its upstream licence is retained alongside the sample. The ten Fairy-style prompts written for the benchmark (invented texts) are in `prompts/summarisation.yaml`. They require owner review before inference and must be combined with the pinned maths file into the private input only after owner review. The launcher validates a complete input; it does not merge files. The current ignored `prompts/private/full.yaml` is an incomplete staging file containing only the 30 pinned maths prompts and is rejected for a full run.
 
 Run artifacts and private prompt files are ignored by Git by default. Publish only deliberately selected artifacts.
 

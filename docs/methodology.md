@@ -1,6 +1,6 @@
 # Measurement method
 
-Milestone 1 implements collection and exact-answer variation. Quality scoring, percentile aggregation and blind review below remain specifications for later milestones. Provider streams are tested with synthetic fixtures and one captured LM Studio 0.4.24 MLX stream. The installed 4-bit pilot verified loading, thinking off and process RSS collection. Gemini and privileged power validation remain pending. See [pilot validation](pilot-validation.md).
+Collection, exact-answer variation, automatic quality checks, percentile aggregation and saved-run reports are implemented. Human checklist scores remain pending; blind review tooling is not implemented. Offline tests and source review do not establish unattended readiness. Gemini inference, six-configuration live interruption/resume and privileged power validation remain pending. See [HANDOFF.md](HANDOFF.md) for current state and [pilot validation](pilot-validation.md) for earlier evidence.
 
 ## Timing and tokens
 
@@ -22,7 +22,7 @@ Sample process RSS every 100 ms using psutil. For each timestamp, sum the RSS of
 
 The column label is `LM Studio RSS peak, sampled`. Keep sampling timestamps and process identities in raw JSONL; pre/post-call available system memory and swap are in conditions. Raw sample timestamps expose actual gaps. Include resident weights in the peak. This is not exact model-owned memory: shared pages, unified memory and sampling resolution limit attribution.
 
-The knee calculation uses the median of the per-call peaks for each configuration and task type. Report memory savings relative to the preceding, higher-precision level.
+The knee uses quality only, as amended on 15 October 2026. Exact encoded weight bytes are the descriptive memory measure; sampled physical footprint and RSS remain secondary columns. Report adjacent weight-byte savings and p50/p95 latency savings independently of pending quality. Exclude swap-active and swap-unknown calls from knee inputs and show eligible counts per prompt. A complete saved schedule and completed run status are required before a definitive knee conclusion; fewer eligible repeats after registered swap exclusions do not require replacement calls.
 
 ## Energy, estimate, whole-machine delta
 

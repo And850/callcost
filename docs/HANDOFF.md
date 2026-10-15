@@ -2,67 +2,64 @@
 
 ## Done
 
-- Four pinned MLX conversions and Fairy's production reference passed held-out preparation pilots. Fairy retains vision weights and is outside the knee sequence.
-- The dated quality-only knee amendment is committed and pushed. Cost is reported per step, not a gate. No scored benchmark or launcher smoke data exists; excluded instrumentation pilots do exist.
-- Physical-footprint validation failed to obtain complete coverage at 8-bit. Exact encoded weight bytes are the descriptive memory measure; footprint and RSS remain secondary. Swap counters and exclusions are implemented.
-- Durable call checkpoints, CSV recovery, writer locking, resume input/source checks and live status are implemented. Interrupted attempts are retained.
-- Launcher and report are committed as WIP. Launcher includes preflight, sudo keepalive, caffeinate, logging, notifications and LATEST handling.
-- `max_words` and regex `pattern` alias are implemented. Ten Fairy-style prompts written for the benchmark (invented texts) are committed and schema-validated. No model has seen them; owner review is pending.
-- `configs/experiment.yaml` contains five local configurations and Gemini 3.8 Flash at thinking level low. Prices are USD 0.75/3.75 per million input/output tokens, including thinking. Update rates for runs from 1 January 2027, when they double.
-- Key presence was confirmed in an interactive login shell without printing it, and an authenticated model-metadata GET succeeded. This was not an inference test. LM Studio was last started with `--run-as-service`.
+- Four pinned text-only MLX conversions and Fairy's production reference passed held-out preparation pilots. Fairy retains vision weights and is outside the knee sequence.
+- Quality-only knee and local/cloud thinking amendments are committed and pushed before benchmark or launcher smoke data. Earlier excluded preparation/instrumentation pilots exist; no scored benchmark or launcher smoke data exists.
+- Local thinking is off. Gemini 3.8 Flash runs at thinking level low; thinking tokens are reported separately and included once in billable output. Cloud is outside the knee sequence.
+- Physical-footprint validation lacked complete 8-bit coverage. Exact encoded weight bytes are descriptive memory; physical footprint/RSS are secondary. Swap-active/unknown observations remain reported but are excluded from knee inputs.
+- Durable call checkpoints, CSV recovery, writer locking, resume input/source checks and live status are implemented. Failed/interrupted attempts are retained; completed checkpoints must not be repeated.
+- Launcher includes preflight, sudo keepalive, caffeinate, logging, notifications and LATEST handling. Live integration remains unverified.
+- Launcher/report independent source review completed. Separate fixes committed and pushed: incomplete collection cannot yield knee conclusions; resume restores pilot verification from checkpoints; pending quality does not suppress step costs; reports show metric counts/reasons, secondary footprint/RSS, tokens, billable output, payloads, list-price costs, energy qualifications and eligible counts; standalone LM Studio daemon roots join the sampled process group.
+- Fresh offline verification after code fixes: 75 tests passed; Ruff passed. Independent follow-up found no remaining source-level blockers in reviewed changes. These checks do not establish unattended readiness.
+- Ignored `prompts/private/full.yaml` now contains exactly the pinned 30 GSM8K problems, including IDs, source records and scoring rules. Source CLI validation passed for six configurations and 30 prompts. Full-dataset guard correctly refuses this incomplete file. No summaries have been added or sent to a model.
+- `max_words` and regex `pattern` alias are implemented. `prompts/summarisation.yaml` remains under owner review; concurrent owner edits were preserved and excluded from assistant commits.
+- Config contains five local configurations and Gemini 3.8 Flash at low thinking. Recorded standard USD prices are 0.75/3.75 per million input/output tokens, including thinking. Update rates for runs from 1 January 2027, when they double.
+- Earlier key-presence and authenticated metadata GET succeeded without printing credentials; this was not inference. LM Studio was last started with `--run-as-service`.
 
-## Not done
+## Permissions
 
-- No six-configuration live launcher smoke or deliberate interruption/resume test. No Gemini inference, full benchmark, blind review UI, charts or CI budget mode.
-- Launcher accepts one prompt file. Default config is `configs/experiment.yaml`; default prompts are `prompts/private/full.yaml`, which has not been created.
-- Reporting needs review for complete per-step cost presentation, secondary footprint columns, incomplete data and quality-only knee behavior. JSON currently contains more metrics than the terminal table. Independent final code review is outstanding.
-- README retains older milestone instructions; this file is the current operational state.
+- Owner authorizes repository reads, code/docs edits, test suite and small commits/pushes.
+- Ask before every model call (local or Gemini), any download, system-setting changes and any run longer than a few minutes.
+- Summaries require explicit owner approval before any model sees them. No model calls were made during this review.
+- Do not auto-commit benchmark artifacts. Never force-push or rewrite history.
 
-## Untested or limited evidence
+## Remaining full-run blockers, in order
 
-- Last recorded automated result: 69 tests passed and Ruff passed, before the final config and launcher-default edit. Those final changes were not rechecked. No known failing existing test was left at that point. This is not fresh verification.
-- Real preflight/server startup, sudo keepalive, privileged powermetrics, caffeinate, notifications and live resume remain unverified together. Unit tests are not evidence of unattended readiness.
-- Full preflight requires 10 GiB available RAM and 10 GiB free disk; smoke uses 4 GiB RAM. These entry guards do not prove 8-bit fits without swapping. Last observed available RAM was about 5.6 GiB; instrumentation pilots recorded swap activity.
-- Owner authorized code/docs review, fixes, tests and small commits/pushes on 15 October. Ask before every model call, any download, system-setting changes or runs longer than a few minutes. Summary prompts remain unapproved.
+1. Obtain approval for the held-out six-configuration smoke and deliberate interruption/resume. No summaries in smoke. Verify counts, checkpoints, local load/unload, thinking/token accounting, cleanup, status/logs, notifications, caffeinate and energy authentication or explicit decline. Commit any resulting fixes before a full run.
+2. Obtain owner confirmation of summary review, then add the ten approved summaries to the private input. Validate exactly 30 maths + 10 summaries, pinned maths identity, IDs and scoring rules. The full launcher currently rejects the maths-only staging file.
+3. Request separate approval for the full run. Restart, close other apps, keep charger and lid open, inherit credentials from Terminal, and satisfy preflight. Keep Terminal open; Codex may quit.
 
-## Next steps, in order
+Human review tooling, reviewed summary scores and charts are still required for final results by 22 November 2026. They do not need to precede raw collection; pending human scores must remain insufficient data for summary knee conclusions. CI budget mode remains a later milestone.
 
-1. If `runs/LATEST` exists, read its referenced `status.json`, then `run.log` before doing anything else with a run. LATEST may be absent because the launcher has not run. A hard kill can leave stale status; check the recorded process before assuming it is still active. Checkpoints are authoritative.
-2. Obtain Andrii's confirmation that `prompts/summarisation.yaml` has been reviewed. Do not send those prompts to any model before confirmation. Obtain authorization to lift the wrap-up restriction before further tests or model runs.
-3. Merge `datasets/gsm8k/prompts.json` and `prompts/summarisation.yaml` into ignored `prompts/private/full.yaml`, retaining IDs, source records and scoring rules. Validate 30 maths and 10 summarisation prompts.
-4. Finish launcher/report review and resolve the gaps above. Run the existing suite and Ruff once authorized. Complete independent review before claiming readiness.
-5. With approval, test six configurations on one held-out prompt each, one call each, including deliberate interruption and `--resume`. Never use the summaries for this smoke. Verify checkpoints, counts, logs, cleanup and notifications, and energy authentication or explicit decline. Commit fixes before a real run.
-6. Request approval for the full run. Restart, close other apps, keep charger and lid open, use Terminal with the inherited key, and satisfy preflight. Keep Terminal open; Codex can quit. Do not auto-commit results.
+## Untested limits and command caveats
 
-## Run command, only once ready and authorized
+- Full preflight needs 10 GiB available RAM and 10 GiB free disk; smoke needs 4 GiB RAM. These entry guards do not prove swap-free 8-bit inference. Earlier available RAM was about 5.6 GiB and instrumentation pilots recorded swap activity.
+- Resume checks RAM before owned-instance recovery. If a prior run left a large model loaded, explicitly unload that recorded instance before resuming; never silently unload another client's model.
+- Actual headless worker process identity, privileged powermetrics schema and all launcher facilities together remain live-smoke checks. Secondary measurements can be unavailable with reasons.
+- `.venv/bin/callcost` currently loads an older installed package and rejects the current thinking-level config. Use `PYTHONPATH=src .venv/bin/python -m callcost` for current source. The launcher already sets its own source path. No packages were installed or downloaded during this review.
+- README older milestone status and methodology RSS-knee wording were updated to match the committed amendments. The registered thresholds and exclusions were not changed.
+
+## Run state and commands
+
+`runs/LATEST` is absent as of this review. Before future run work, read LATEST if present, its referenced `status.json`, then the end of `run.log`. A hard kill can leave stale status; check the recorded process. Checkpoints are authoritative.
+
+Held-out smoke command, only when separately authorized:
+
+```sh
+cd /Users/andreyryzhanskiy/Documents/CallCost/callcost && ./scripts/run_full.sh --smoke --config configs/experiment.yaml
+```
+
+Full command, only after summary approval, complete input, live validation and separate full-run approval:
 
 ```sh
 cd /Users/andreyryzhanskiy/Documents/CallCost/callcost && ./scripts/run_full.sh --config configs/experiment.yaml --prompts prompts/private/full.yaml
 ```
 
-## Resuming after a run
+Resume an authorized interrupted launcher run with `./scripts/run_full.sh --resume`; it uses saved inputs and refuses changed input/source files. Completed checkpoints are not repeated; an interrupted request without a completed checkpoint may need a new attempt.
 
-Read `runs/LATEST`, then the referenced `status.json`, then `run.log`. From the repo root, `./scripts/run_full.sh --resume` uses saved inputs and refuses changed files/source. Completed checkpoints must not be repeated; an interrupted request without a completed checkpoint may need a new attempt.
-
-To generate a saved-run report without model calls:
+Saved-run reporting without model calls:
 
 ```sh
 PYTHONPATH=src .venv/bin/python -m callcost report --run "runs/$(cat runs/LATEST)"
 ```
 
-This writes `report.json` and `report.md`. Human scores remain pending until reviewed; missing eligible prompts mean insufficient data. Results stay ignored by Git.
-
-## Launcher/report review follow-up, 15 October 2026
-
-- README thinking amendment and GitHub account instruction committed and pushed before review.
-- Independent review identified: incomplete collection could yield knee conclusions; hard-kill pilot verification metadata recovery; costs hidden by pending scores; human-readable reporting omissions. Fix these in separate commits before live validation.
-- Fixed incomplete-collection conclusions: report checks completed checkpoint identities against the full saved schedule and completed run status. Swap-excluded repeats do not need replacement; eligible prompt counts remain visible. Regression includes a complete schedule with reduced eligible repeats.
-- First fix verified with 70 tests and Ruff; no inference. No launcher run or benchmark data collected.
-
-- Fixed hard-kill pilot metadata recovery: resume revalidates completed pilot/smoke checkpoints and restores verification with the original call ID before continuing. Offline regression proves no completed call is repeated. Verified: 71 tests and Ruff.
-
-- Fixed step-cost suppression: all three adjacent comparisons retain available eligible weight/latency savings and secondary footprint distributions while scores are pending. Missing costs have reasons. Quality and variance rules are unchanged. Verified: 72 tests and Ruff.
-
-- Completed human-readable reporting: adjacent cost steps, secondary footprint/RSS, metric observation counts and missing reasons, eligible quality/counts, visible/thinking/billable tokens, payloads, list-price currency, energy baseline qualifications and production caveat. Empty expected groups remain unavailable. Independent follow-up found one additional daemon-memory coverage gap to fix. Verified: 73 tests and Ruff.
-
-- Fixed standalone headless daemon memory coverage: recognised LM Studio `llmster` roots and descendants join the measured group; separate worker evidence is still mandatory. Preflight uses the same daemon identity check. Automatic/explicit-root regressions pass; live process compatibility remains unverified. Verified: 75 tests and Ruff.
+This writes `report.json` and `report.md`. Incomplete collection, missing eligible prompts and pending human scores cannot establish a knee or no knee. Results stay ignored by Git.
