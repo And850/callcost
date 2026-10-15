@@ -1,5 +1,7 @@
 # Milestone 1 pilot validation
 
+This records the earlier installed-model milestone 1 validation. The later matched-conversion and production-reference pilots are in [model preparation](model-preparation.md).
+
 Date: 15 October 2026. Machine: Apple M1 Pro, 10 CPU cores, 16 GPU cores, 16 GiB RAM, macOS 27.0 build 26A428. LM Studio: 0.4.24+1. This is a functional validation, not the first full experiment or evidence for a quality/quantisation knee.
 
 Used the already installed `lmstudio-community/Qwen3.5-9B-MLX-4bit`, with context length 4096, temperature 0, output cap 128 and `reasoning: "off"`. Only a held-out pencil-counting prompt was sent. No GSM8K problem or private summary was sent, and no weights were downloaded.

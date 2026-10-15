@@ -1,0 +1,47 @@
+{
+  "source_repository": "Qwen/Qwen3.5-9B",
+  "source_revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+  "files": [
+    {
+      "path": "LICENSE",
+      "bytes": 11544,
+      "sha256": "bbedc3fda3305820b977265f01b8619d87570a6739de3a5582c3464840f1e57a"
+    },
+    {
+      "path": "README.md",
+      "bytes": 81,
+      "sha256": "748c964f9b7e5f2c3770ce013bbc0153be7c54311d9692c343b6188eefe77ac6"
+    },
+    {
+      "path": "chat_template.jinja",
+      "bytes": 7756,
+      "sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715"
+    },
+    {
+      "path": "config.json",
+      "bytes": 2843,
+      "sha256": "4fa6580dfa67c8b27f7237dfa0d940488219054215952a428b98e19a6cb59cf1"
+    },
+    {
+      "path": "model.safetensors",
+      "bytes": 3919069573,
+      "sha256": "9b26496c311a262f3af0fa99457f7a3928f6f828431f0f4cc00f617f9a8dfd85"
+    },
+    {
+      "path": "model.safetensors.index.json",
+      "bytes": 81194,
+      "sha256": "fdacf4a2d365bca08ff0faaaf5bb4950daeb18b91a527e4bf8b89a53956a4a31"
+    },
+    {
+      "path": "tokenizer.json",
+      "bytes": 19989339,
+      "sha256": "a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f"
+    },
+    {
+      "path": "tokenizer_config.json",
+      "bytes": 1501,
+      "sha256": "86f01837a638275f2d3479804e79802aaff0e3ccef15e5f29dd6afbe6551daed"
+    }
+  ],
+  "total_bytes": 3939163831
+}

@@ -54,3 +54,14 @@ The owner approved the approximately 19.33 GB download and all four conversions,
 Conversion monitor review found that waiting only for the shell leader could leave a descendant alive after stopping. Fixed whole-group cleanup with a reproducer whose child ignores SIGTERM; regression failed before the fix and passed after it.
 
 Approved source download completed: 19,329,392,091 bytes. All four shard hashes match upstream LFS metadata; public source manifest retained. Conversion has not started while the requested apps-closed confirmation is pending. Added the prior successful Fairy production pilot memory/load observation with explicit battery, swap, vision and RSS-attribution caveats.
+
+
+### Conversion execution and output pilots completed
+
+After the owner confirmed apps were closed, all four independent conversions completed through the committed script. Monitored wall time including verification/hashing: 103.119 seconds. Minimum sampled available memory: 1,200,488,448 bytes; maximum sampled swap growth: 4,160,356,352 bytes; guard not triggered. Layer configs confirm requested bits, affine mode and group size 64. All four tokenizer/template hashes agree and vision payload is zero. Runtime weight hashes agree with conversion manifests.
+
+Initial concrete 8-bit inference returned HTTP 400 because the generated local entry had no reasoning control. Local model.yaml definitions now map enableThinking to enable_thinking, with explicit reasoning off requests and observed zero-token checks. They are installed only in new local cache entries; original Fairy catalog/model files are unchanged. No Hub artifacts were published. All four converted models and a fresh Fairy production reference returned Answer: 12 with zero reasoning tokens and no emitted thinking content. The final 8-bit pilot includes controller hashes; earlier attempts remain preserved.
+
+Pilot RSS is inversely ordered across precisions, so it cannot establish total MLX memory savings. Both 8-bit successes had less than 1 GB available after the call. Comfortable 8-bit headroom and a defensible total-memory comparison remain unresolved for the future full run. No preregistered analysis definition was silently changed. A per-tensor comparison found 491/927 encoded language payload hashes differ between production and converted 4-bit despite equal shapes/dtypes/lengths, so their runtime difference is not a controlled vision-only comparison. Public preparation data and full local run identities preserve the evidence. No scored dataset run occurred.
+
+Final preparation review found no important issues. It independently checked five raw pilot records, load metadata, controller hashes, conversion telemetry and the tensor comparison; 53 offline tests pass. Local configuration validation succeeds for five local configurations, and the final model-list check shows no loaded instances.

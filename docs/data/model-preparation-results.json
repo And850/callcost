@@ -1,0 +1,833 @@
+{
+  "schema_version": 1,
+  "source_repository": "Qwen/Qwen3.5-9B",
+  "source_revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+  "converter": "mlx-lm 0.32.0",
+  "group_size": 64,
+  "mode": "affine",
+  "dtype": "bfloat16",
+  "conversion_monitor": {
+    "command": [
+      "bash",
+      "scripts/convert_qwen_mlx.sh"
+    ],
+    "exit_code": 0,
+    "stopped_for_memory_or_interrupt": false,
+    "duration_s": 103.11922891600989,
+    "sample_count": 51,
+    "minimum_available_bytes": 1200488448,
+    "maximum_swap_growth_bytes": 4160356352,
+    "maximum_process_group_rss_bytes": 4445618176,
+    "rss_note": "Sampled process RSS can omit GPU allocations and double-count shared pages",
+    "guard": "<512 MiB available and >4 GiB swap growth for at least 10 seconds"
+  },
+  "verification": [
+    {
+      "bits": 8,
+      "runtime_weight_hashes_match_conversion_manifest": true,
+      "runtime_control_hashes_match_committed_files": true
+    },
+    {
+      "bits": 6,
+      "runtime_weight_hashes_match_conversion_manifest": true,
+      "runtime_control_hashes_match_committed_files": true
+    },
+    {
+      "bits": 4,
+      "runtime_weight_hashes_match_conversion_manifest": true,
+      "runtime_control_hashes_match_committed_files": true
+    },
+    {
+      "bits": 3,
+      "runtime_weight_hashes_match_conversion_manifest": true,
+      "runtime_control_hashes_match_committed_files": true
+    }
+  ],
+  "entries": [
+    {
+      "configuration_id": "converted-8bit",
+      "label": "Qwen3.5-9B MLX 8-bit, converted",
+      "comparison_role": "quantisation_series",
+      "nominal_bits": 8,
+      "run_directory": "runs/converted-8bit-pilot-003",
+      "call_id": "db969968c2764e67a4a66405920bf70b",
+      "timestamp_utc": "2026-10-15T17:48:25.071270+00:00",
+      "model_key": "local/callcost-qwen35-9b-text-8bit",
+      "phase": "pilot",
+      "measured_dataset_calls": 0,
+      "load_request_wall_s": 9.787601625081152,
+      "provider_load_s": 9.782,
+      "latency_s": 11.229122249991633,
+      "ttft_s": 7.881229125079699,
+      "memory_peak_rss_bytes": 1211121664,
+      "weight_components": {
+        "scope": "encoded safetensors payload bytes, not runtime resident or allocated memory",
+        "classification": {
+          "vision_prefixes": [
+            "vision_tower.",
+            "model.visual.",
+            "visual."
+          ],
+          "language_prefixes": [
+            "language_model.",
+            "model.language_model."
+          ]
+        },
+        "file_bytes": 9514533535,
+        "tensor_payload_bytes": 9514412544,
+        "vision_payload_bytes": 0,
+        "language_payload_bytes": 9514412544,
+        "other_payload_bytes": 0,
+        "vision_fraction_of_tensor_payload": 0.0,
+        "files": [
+          {
+            "name": "model-00001-of-00002.safetensors",
+            "file_bytes": 5346607423,
+            "header_and_prefix_bytes": 71423,
+            "payload_bytes_by_component": {
+              "vision": 0,
+              "language": 5346536000,
+              "other": 0
+            },
+            "tensor_counts_by_component": {
+              "vision": 0,
+              "language": 547,
+              "other": 0
+            }
+          },
+          {
+            "name": "model-00002-of-00002.safetensors",
+            "file_bytes": 4167926112,
+            "header_and_prefix_bytes": 49568,
+            "payload_bytes_by_component": {
+              "vision": 0,
+              "language": 4167876544,
+              "other": 0
+            },
+            "tensor_counts_by_component": {
+              "vision": 0,
+              "language": 380,
+              "other": 0
+            }
+          }
+        ],
+        "unavailable_reason": null
+      },
+      "answer": "To find the total number of pencils, we add the number of red pencils to the number of blue pencils:\n\n$$7 \\text{ (red)} + 5 \\text{ (blue)} = 12$$\n\nAnswer: 12",
+      "thinking_verification": {
+        "verified": true,
+        "reasoning_tokens": 0,
+        "tokens_source": "stats.reasoning_output_tokens",
+        "reasoning_content_observed": false,
+        "think_tags_observed": false,
+        "call_id": "db969968c2764e67a4a66405920bf70b",
+        "method": "reasoning: off"
+      },
+      "conditions": {
+        "before": {
+          "timestamp": "2026-10-15T17:48:25.052870+00:00",
+          "ac_power": true,
+          "thermal_state": "unavailable",
+          "available_memory_bytes": 2595733504,
+          "swap_used_bytes": 6597246976
+        },
+        "after": {
+          "timestamp": "2026-10-15T17:48:36.360372+00:00",
+          "ac_power": true,
+          "thermal_state": "unavailable",
+          "available_memory_bytes": 692338688,
+          "swap_used_bytes": 4863492096
+        }
+      },
+      "model_files": [
+        {
+          "name": "chat_template.jinja",
+          "bytes": 7756,
+          "sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715"
+        },
+        {
+          "name": "config.json",
+          "bytes": 2843,
+          "sha256": "3267580a00dd887b4c6f74154a7d5e9c1e81c12b663857b9498e93eec5cdfb56"
+        },
+        {
+          "name": "model-00001-of-00002.safetensors",
+          "bytes": 5346607423,
+          "sha256": "0ac20bb45d09347af8b393cfe53c72e3e97e6624e6632254e0b949687b948d7f"
+        },
+        {
+          "name": "model-00002-of-00002.safetensors",
+          "bytes": 4167926112,
+          "sha256": "754e5a119dc0719e2bf708047d57b29f568a9a33de1014c0b95f8a880c7425e3"
+        },
+        {
+          "name": "model.safetensors.index.json",
+          "bytes": 95099,
+          "sha256": "d57b16c93779f4d15373dfa7af0369394e24e6c428a6c86cd713640a9bef6d79"
+        },
+        {
+          "name": "tokenizer.json",
+          "bytes": 19989339,
+          "sha256": "a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f"
+        },
+        {
+          "name": "tokenizer_config.json",
+          "bytes": 1501,
+          "sha256": "86f01837a638275f2d3479804e79802aaff0e3ccef15e5f29dd6afbe6551daed"
+        },
+        {
+          "name": "model.yaml",
+          "bytes": 650,
+          "sha256": "e01f16f13e7ae15f4d93e8791fba9103d9039fc9bea9e92b331a223131d2a837"
+        },
+        {
+          "name": "manifest.json",
+          "bytes": 432,
+          "sha256": "cdddbe3a26bafae74a2c8604d01ea5fad1a003f213969d3947012424dc19ac40"
+        }
+      ],
+      "load_config": {
+        "context_length": 4096,
+        "parallel": 4,
+        "reasoning_budget_message": ""
+      },
+      "thinking_control_files": [
+        {
+          "name": "model.yaml",
+          "sha256": "e01f16f13e7ae15f4d93e8791fba9103d9039fc9bea9e92b331a223131d2a837"
+        },
+        {
+          "name": "manifest.json",
+          "sha256": "cdddbe3a26bafae74a2c8604d01ea5fad1a003f213969d3947012424dc19ac40"
+        }
+      ],
+      "converter_reported_bits_per_weight": 8.501
+    },
+    {
+      "configuration_id": "converted-6bit",
+      "label": "Qwen3.5-9B MLX 6-bit, converted",
+      "comparison_role": "quantisation_series",
+      "nominal_bits": 6,
+      "run_directory": "runs/converted-6bit-pilot-001",
+      "call_id": "19133c12ecf8476094893075253636a6",
+      "timestamp_utc": "2026-10-15T17:44:49.062329+00:00",
+      "model_key": "local/callcost-qwen35-9b-text-6bit",
+      "phase": "pilot",
+      "measured_dataset_calls": 0,
+      "load_request_wall_s": 8.559864667011425,
+      "provider_load_s": 8.556,
+      "latency_s": 3.164188624941744,
+      "ttft_s": 1.1308044999605045,
+      "memory_peak_rss_bytes": 1050378240,
+      "weight_components": {
+        "scope": "encoded safetensors payload bytes, not runtime resident or allocated memory",
+        "classification": {
+          "vision_prefixes": [
+            "vision_tower.",
+            "model.visual.",
+            "visual."
+          ],
+          "language_prefixes": [
+            "language_model.",
+            "model.language_model."
+          ]
+        },
+        "file_bytes": 7276347937,
+        "tensor_payload_bytes": 7276227072,
+        "vision_payload_bytes": 0,
+        "language_payload_bytes": 7276227072,
+        "other_payload_bytes": 0,
+        "vision_fraction_of_tensor_payload": 0.0,
+        "files": [
+          {
+            "name": "model-00001-of-00002.safetensors",
+            "file_bytes": 5358172442,
+            "header_and_prefix_bytes": 97818,
+            "payload_bytes_by_component": {
+              "vision": 0,
+              "language": 5358074624,
+              "other": 0
+            },
+            "tensor_counts_by_component": {
+              "vision": 0,
+              "language": 750,
+              "other": 0
+            }
+          },
+          {
+            "name": "model-00002-of-00002.safetensors",
+            "file_bytes": 1918175495,
+            "header_and_prefix_bytes": 23047,
+            "payload_bytes_by_component": {
+              "vision": 0,
+              "language": 1918152448,
+              "other": 0
+            },
+            "tensor_counts_by_component": {
+              "vision": 0,
+              "language": 177,
+              "other": 0
+            }
+          }
+        ],
+        "unavailable_reason": null
+      },
+      "answer": "To find the total number of pencils, we add the number of red pencils to the number of blue pencils:\n\n$$7 \\text{ (red)} + 5 \\text{ (blue)} = 12$$\n\nAnswer: 12",
+      "thinking_verification": {
+        "verified": true,
+        "reasoning_tokens": 0,
+        "tokens_source": "stats.reasoning_output_tokens",
+        "reasoning_content_observed": false,
+        "think_tags_observed": false,
+        "call_id": "19133c12ecf8476094893075253636a6",
+        "method": "reasoning: off"
+      },
+      "conditions": {
+        "before": {
+          "timestamp": "2026-10-15T17:44:49.034585+00:00",
+          "ac_power": true,
+          "thermal_state": "unavailable",
+          "available_memory_bytes": 2392735744,
+          "swap_used_bytes": 4579262464
+        },
+        "after": {
+          "timestamp": "2026-10-15T17:44:52.251460+00:00",
+          "ac_power": true,
+          "thermal_state": "unavailable",
+          "available_memory_bytes": 1708376064,
+          "swap_used_bytes": 4554096640
+        }
+      },
+      "model_files": [
+        {
+          "name": "chat_template.jinja",
+          "bytes": 7756,
+          "sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715"
+        },
+        {
+          "name": "config.json",
+          "bytes": 2843,
+          "sha256": "befd97729bd5769b373d0788037c6418e7d1cde42deb998b4c9007bcadb9cf52"
+        },
+        {
+          "name": "model-00001-of-00002.safetensors",
+          "bytes": 5358172442,
+          "sha256": "f9738b8b326e67e5213e46f1ebd59c558f60146ae50f4af9bfebe1ec7a42bc9d"
+        },
+        {
+          "name": "model-00002-of-00002.safetensors",
+          "bytes": 1918175495,
+          "sha256": "57afa8da33ded0f5ac1801cf4d69b4dcae5318933beb48c86f284a908f4341c5"
+        },
+        {
+          "name": "model.safetensors.index.json",
+          "bytes": 95099,
+          "sha256": "2f0ddbc5d91b86651b6543169bf0a76fe1345db9d14d0dc863c7518f094f9b0c"
+        },
+        {
+          "name": "tokenizer.json",
+          "bytes": 19989339,
+          "sha256": "a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f"
+        },
+        {
+          "name": "tokenizer_config.json",
+          "bytes": 1501,
+          "sha256": "86f01837a638275f2d3479804e79802aaff0e3ccef15e5f29dd6afbe6551daed"
+        },
+        {
+          "name": "model.yaml",
+          "bytes": 650,
+          "sha256": "e12a2cbe1f27d181908c2b14a5d2d2c39a453f88889a2015b95d8cc1b6a76671"
+        },
+        {
+          "name": "manifest.json",
+          "bytes": 432,
+          "sha256": "c7c0b7873ddb790451e4f92d6f727fb57f0685a73c7403109a417e54b03bf1e0"
+        }
+      ],
+      "load_config": {
+        "context_length": 4096,
+        "parallel": 4,
+        "reasoning_budget_message": ""
+      },
+      "thinking_control_files": [
+        {
+          "name": "model.yaml",
+          "sha256": "e12a2cbe1f27d181908c2b14a5d2d2c39a453f88889a2015b95d8cc1b6a76671"
+        },
+        {
+          "name": "manifest.json",
+          "sha256": "c7c0b7873ddb790451e4f92d6f727fb57f0685a73c7403109a417e54b03bf1e0"
+        }
+      ],
+      "converter_reported_bits_per_weight": 6.501
+    },
+    {
+      "configuration_id": "converted-4bit",
+      "label": "Qwen3.5-9B MLX 4-bit, converted",
+      "comparison_role": "quantisation_series",
+      "nominal_bits": 4,
+      "run_directory": "runs/converted-4bit-pilot-001",
+      "call_id": "82e7768822774e4abeb6bb8bb17f92a1",
+      "timestamp_utc": "2026-10-15T17:45:03.461541+00:00",
+      "model_key": "local/callcost-qwen35-9b-text-4bit",
+      "phase": "pilot",
+      "measured_dataset_calls": 0,
+      "load_request_wall_s": 7.133245333912782,
+      "provider_load_s": 7.129,
+      "latency_s": 2.6312912909779698,
+      "ttft_s": 0.6279288749210536,
+      "memory_peak_rss_bytes": 2280374272,
+      "weight_components": {
+        "scope": "encoded safetensors payload bytes, not runtime resident or allocated memory",
+        "classification": {
+          "vision_prefixes": [
+            "vision_tower.",
+            "model.visual.",
+            "visual."
+          ],
+          "language_prefixes": [
+            "language_model.",
+            "model.language_model."
+          ]
+        },
+        "file_bytes": 5038162465,
+        "tensor_payload_bytes": 5038041600,
+        "vision_payload_bytes": 0,
+        "language_payload_bytes": 5038041600,
+        "other_payload_bytes": 0,
+        "vision_fraction_of_tensor_payload": 0.0,
+        "files": [
+          {
+            "name": "model.safetensors",
+            "file_bytes": 5038162465,
+            "header_and_prefix_bytes": 120865,
+            "payload_bytes_by_component": {
+              "vision": 0,
+              "language": 5038041600,
+              "other": 0
+            },
+            "tensor_counts_by_component": {
+              "vision": 0,
+              "language": 927,
+              "other": 0
+            }
+          }
+        ],
+        "unavailable_reason": null
+      },
+      "answer": "To find the total number of pencils, we add the number of red pencils to the number of blue pencils.\n\n1.  Number of red pencils = 7\n2.  Number of blue pencils = 5\n3.  Total pencils = $7 + 5 = 12$\n\nAnswer: 12",
+      "thinking_verification": {
+        "verified": true,
+        "reasoning_tokens": 0,
+        "tokens_source": "stats.reasoning_output_tokens",
+        "reasoning_content_observed": false,
+        "think_tags_observed": false,
+        "call_id": "82e7768822774e4abeb6bb8bb17f92a1",
+        "method": "reasoning: off"
+      },
+      "conditions": {
+        "before": {
+          "timestamp": "2026-10-15T17:45:03.443549+00:00",
+          "ac_power": true,
+          "thermal_state": "unavailable",
+          "available_memory_bytes": 3771957248,
+          "swap_used_bytes": 4512153600
+        },
+        "after": {
+          "timestamp": "2026-10-15T17:45:06.116856+00:00",
+          "ac_power": true,
+          "thermal_state": "unavailable",
+          "available_memory_bytes": 2957492224,
+          "swap_used_bytes": 4512153600
+        }
+      },
+      "model_files": [
+        {
+          "name": "chat_template.jinja",
+          "bytes": 7756,
+          "sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715"
+        },
+        {
+          "name": "config.json",
+          "bytes": 2843,
+          "sha256": "15303ca367065b31713bb4573030718cdf1fc31d5bca5b4a989a68ef20e9540d"
+        },
+        {
+          "name": "model.safetensors",
+          "bytes": 5038162465,
+          "sha256": "e1f2a78750abdc4eeb4d41a49675dcf63667bda29b3144a93ea80dcc1c0a4f27"
+        },
+        {
+          "name": "model.safetensors.index.json",
+          "bytes": 81194,
+          "sha256": "d50465249b0ec7eb602558c4d4b7d0c7516bc99548d8d2a3b3c3a3805a93e607"
+        },
+        {
+          "name": "tokenizer.json",
+          "bytes": 19989339,
+          "sha256": "a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f"
+        },
+        {
+          "name": "tokenizer_config.json",
+          "bytes": 1501,
+          "sha256": "86f01837a638275f2d3479804e79802aaff0e3ccef15e5f29dd6afbe6551daed"
+        },
+        {
+          "name": "model.yaml",
+          "bytes": 650,
+          "sha256": "bd7432cdc4e3417f3133c61cc95795409c3fef4a3eda727280a600b641755524"
+        },
+        {
+          "name": "manifest.json",
+          "bytes": 432,
+          "sha256": "d146b63803066ba02e068d80f948c6d53eb838a7f6043872cabb02263741c2dd"
+        }
+      ],
+      "load_config": {
+        "context_length": 4096,
+        "parallel": 4,
+        "reasoning_budget_message": ""
+      },
+      "thinking_control_files": [
+        {
+          "name": "model.yaml",
+          "sha256": "bd7432cdc4e3417f3133c61cc95795409c3fef4a3eda727280a600b641755524"
+        },
+        {
+          "name": "manifest.json",
+          "sha256": "d146b63803066ba02e068d80f948c6d53eb838a7f6043872cabb02263741c2dd"
+        }
+      ],
+      "converter_reported_bits_per_weight": 4.501
+    },
+    {
+      "configuration_id": "converted-3bit",
+      "label": "Qwen3.5-9B MLX 3-bit, converted",
+      "comparison_role": "quantisation_series",
+      "nominal_bits": 3,
+      "run_directory": "runs/converted-3bit-pilot-001",
+      "call_id": "eb1f414333884ed2a97cd1012f86156d",
+      "timestamp_utc": "2026-10-15T17:45:15.786083+00:00",
+      "model_key": "local/callcost-qwen35-9b-text-3bit",
+      "phase": "pilot",
+      "measured_dataset_calls": 0,
+      "load_request_wall_s": 6.236089917016216,
+      "provider_load_s": 6.233,
+      "latency_s": 1.940368541982025,
+      "ttft_s": 0.7623549170093611,
+      "memory_peak_rss_bytes": 5140594688,
+      "weight_components": {
+        "scope": "encoded safetensors payload bytes, not runtime resident or allocated memory",
+        "classification": {
+          "vision_prefixes": [
+            "vision_tower.",
+            "model.visual.",
+            "visual."
+          ],
+          "language_prefixes": [
+            "language_model.",
+            "model.language_model."
+          ]
+        },
+        "file_bytes": 3919069573,
+        "tensor_payload_bytes": 3918948864,
+        "vision_payload_bytes": 0,
+        "language_payload_bytes": 3918948864,
+        "other_payload_bytes": 0,
+        "vision_fraction_of_tensor_payload": 0.0,
+        "files": [
+          {
+            "name": "model.safetensors",
+            "file_bytes": 3919069573,
+            "header_and_prefix_bytes": 120709,
+            "payload_bytes_by_component": {
+              "vision": 0,
+              "language": 3918948864,
+              "other": 0
+            },
+            "tensor_counts_by_component": {
+              "vision": 0,
+              "language": 927,
+              "other": 0
+            }
+          }
+        ],
+        "unavailable_reason": null
+      },
+      "answer": "To find the total number of pencils, we add the number of red pencils to the number of blue pencils: $7 + 5 = 12$.\n\nAnswer: 12",
+      "thinking_verification": {
+        "verified": true,
+        "reasoning_tokens": 0,
+        "tokens_source": "stats.reasoning_output_tokens",
+        "reasoning_content_observed": false,
+        "think_tags_observed": false,
+        "call_id": "eb1f414333884ed2a97cd1012f86156d",
+        "method": "reasoning: off"
+      },
+      "conditions": {
+        "before": {
+          "timestamp": "2026-10-15T17:45:15.759112+00:00",
+          "ac_power": true,
+          "thermal_state": "unavailable",
+          "available_memory_bytes": 4196089856,
+          "swap_used_bytes": 4503764992
+        },
+        "after": {
+          "timestamp": "2026-10-15T17:45:17.753972+00:00",
+          "ac_power": true,
+          "thermal_state": "unavailable",
+          "available_memory_bytes": 3527409664,
+          "swap_used_bytes": 4503764992
+        }
+      },
+      "model_files": [
+        {
+          "name": "chat_template.jinja",
+          "bytes": 7756,
+          "sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715"
+        },
+        {
+          "name": "config.json",
+          "bytes": 2843,
+          "sha256": "4fa6580dfa67c8b27f7237dfa0d940488219054215952a428b98e19a6cb59cf1"
+        },
+        {
+          "name": "model.safetensors",
+          "bytes": 3919069573,
+          "sha256": "9b26496c311a262f3af0fa99457f7a3928f6f828431f0f4cc00f617f9a8dfd85"
+        },
+        {
+          "name": "model.safetensors.index.json",
+          "bytes": 81194,
+          "sha256": "fdacf4a2d365bca08ff0faaaf5bb4950daeb18b91a527e4bf8b89a53956a4a31"
+        },
+        {
+          "name": "tokenizer.json",
+          "bytes": 19989339,
+          "sha256": "a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f"
+        },
+        {
+          "name": "tokenizer_config.json",
+          "bytes": 1501,
+          "sha256": "86f01837a638275f2d3479804e79802aaff0e3ccef15e5f29dd6afbe6551daed"
+        },
+        {
+          "name": "model.yaml",
+          "bytes": 650,
+          "sha256": "213f3d9ec4d76df5f2f7dcb5237802893c1619f2a1a724f20de2cb8cbe3a30d1"
+        },
+        {
+          "name": "manifest.json",
+          "bytes": 432,
+          "sha256": "95971eb5c1d3c2178445887ff0778eeceafef8e953693d0f5a50c3b7eb691578"
+        }
+      ],
+      "load_config": {
+        "context_length": 4096,
+        "parallel": 4,
+        "reasoning_budget_message": ""
+      },
+      "thinking_control_files": [
+        {
+          "name": "model.yaml",
+          "sha256": "213f3d9ec4d76df5f2f7dcb5237802893c1619f2a1a724f20de2cb8cbe3a30d1"
+        },
+        {
+          "name": "manifest.json",
+          "sha256": "95971eb5c1d3c2178445887ff0778eeceafef8e953693d0f5a50c3b7eb691578"
+        }
+      ],
+      "converter_reported_bits_per_weight": 3.501
+    },
+    {
+      "configuration_id": "fairy-production",
+      "label": "Fairy's production model",
+      "comparison_role": "production_reference",
+      "nominal_bits": 4,
+      "run_directory": "runs/fairy-production-pilot-001",
+      "call_id": "0a3a9e6869f54255aa6050d0c59d7e2c",
+      "timestamp_utc": "2026-10-15T17:47:26.275235+00:00",
+      "model_key": "qwen/qwen3.5-9b@4bit",
+      "phase": "pilot",
+      "measured_dataset_calls": 0,
+      "load_request_wall_s": 8.033829791937023,
+      "provider_load_s": 8.029,
+      "latency_s": 2.7187136249849573,
+      "ttft_s": 0.7378382079768926,
+      "memory_peak_rss_bytes": 1534377984,
+      "weight_components": {
+        "scope": "encoded safetensors payload bytes, not runtime resident or allocated memory",
+        "classification": {
+          "vision_prefixes": [
+            "vision_tower.",
+            "model.visual.",
+            "visual."
+          ],
+          "language_prefixes": [
+            "language_model.",
+            "model.language_model."
+          ]
+        },
+        "file_bytes": 5950221142,
+        "tensor_payload_bytes": 5950062560,
+        "vision_payload_bytes": 912020960,
+        "language_payload_bytes": 5038041600,
+        "other_payload_bytes": 0,
+        "vision_fraction_of_tensor_payload": 0.1532792219919113,
+        "files": [
+          {
+            "name": "model-00001-of-00002.safetensors",
+            "file_bytes": 5349771292,
+            "header_and_prefix_bytes": 157756,
+            "payload_bytes_by_component": {
+              "vision": 912020960,
+              "language": 4437592576,
+              "other": 0
+            },
+            "tensor_counts_by_component": {
+              "vision": 333,
+              "language": 920,
+              "other": 0
+            }
+          },
+          {
+            "name": "model-00002-of-00002.safetensors",
+            "file_bytes": 600449850,
+            "header_and_prefix_bytes": 826,
+            "payload_bytes_by_component": {
+              "vision": 0,
+              "language": 600449024,
+              "other": 0
+            },
+            "tensor_counts_by_component": {
+              "vision": 0,
+              "language": 7,
+              "other": 0
+            }
+          }
+        ],
+        "unavailable_reason": null
+      },
+      "answer": "To find the total number of pencils, we add the number of red pencils to the number of blue pencils.\n\n1.  Number of red pencils = 7\n2.  Number of blue pencils = 5\n3.  Total pencils = $7 + 5 = 12$\n\nAnswer: 12",
+      "thinking_verification": {
+        "verified": true,
+        "reasoning_tokens": 0,
+        "tokens_source": "stats.reasoning_output_tokens",
+        "reasoning_content_observed": false,
+        "think_tags_observed": false,
+        "call_id": "0a3a9e6869f54255aa6050d0c59d7e2c",
+        "method": "reasoning: off"
+      },
+      "conditions": {
+        "before": {
+          "timestamp": "2026-10-15T17:47:26.244059+00:00",
+          "ac_power": true,
+          "thermal_state": "unavailable",
+          "available_memory_bytes": 3247538176,
+          "swap_used_bytes": 4403101696
+        },
+        "after": {
+          "timestamp": "2026-10-15T17:47:29.015726+00:00",
+          "ac_power": true,
+          "thermal_state": "unavailable",
+          "available_memory_bytes": 2295758848,
+          "swap_used_bytes": 4403101696
+        }
+      },
+      "model_files": [
+        {
+          "name": "chat_template.jinja",
+          "bytes": 7756,
+          "sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715"
+        },
+        {
+          "name": "config.json",
+          "bytes": 3331,
+          "sha256": "a96942cb6a8a1d3f1d17514d81a1925d04362a6a3233b389d13012211baaa9f8"
+        },
+        {
+          "name": "model-00001-of-00002.safetensors",
+          "bytes": 5349771292,
+          "sha256": "973cc1efdedb4d327993fb9c27865f0bcfd9015897d5f0ca9ffb6cda6a0768e5"
+        },
+        {
+          "name": "model-00002-of-00002.safetensors",
+          "bytes": 600449850,
+          "sha256": "597dae0ed72b60acc07382e8ea0cdb9509c54128e07b0eaa9cf4996373d5ca7d"
+        },
+        {
+          "name": "model.safetensors.index.json",
+          "bytes": 123592,
+          "sha256": "dd023913fb87cfdae27fb11dcf695117c925833796ccac3c64117d6652d8ff1e"
+        },
+        {
+          "name": "preprocessor_config.json",
+          "bytes": 390,
+          "sha256": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516"
+        },
+        {
+          "name": "processor_config.json",
+          "bytes": 991,
+          "sha256": "45fc17c8dd2474af6b493b52483c26c0584b0082d368c480f9fa611e73070040"
+        },
+        {
+          "name": "tokenizer.json",
+          "bytes": 19989325,
+          "sha256": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523"
+        },
+        {
+          "name": "tokenizer_config.json",
+          "bytes": 9187,
+          "sha256": "fa71760892f5c601d345e626ebd602055825a50beed7ee160709c95fffa475f0"
+        },
+        {
+          "name": "video_preprocessor_config.json",
+          "bytes": 385,
+          "sha256": "7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13"
+        },
+        {
+          "name": "vocab.json",
+          "bytes": 6722759,
+          "sha256": "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003"
+        },
+        {
+          "name": "model.yaml",
+          "bytes": 1695,
+          "sha256": "41e997d0ab4ca5572918e33c1c5284c5a9c4032ce3affe40b33ad76d7706746b"
+        },
+        {
+          "name": "manifest.json",
+          "bytes": 770,
+          "sha256": "c19d54c5855a8c596dd6197f715ffff20fc06dead920fce8faba9353edc6c8d1"
+        }
+      ],
+      "load_config": {
+        "context_length": 4096,
+        "parallel": 4,
+        "reasoning_budget_message": ""
+      }
+    }
+  ],
+  "production_vs_converted_4bit": {
+    "method": "Compare tensor names, dtype, shape, encoded length and SHA-256 of data_offsets payload",
+    "scope": "Encoded tensor comparison, not runtime behaviour or memory attribution",
+    "production_tensor_count": 927,
+    "converted_tensor_count": 927,
+    "production_language_bytes": 5038041600,
+    "missing": [],
+    "extra": [],
+    "identical": false,
+    "changed_tensor_count": 491,
+    "changed_dtype_count": 0,
+    "changed_shape_count": 0,
+    "changed_encoded_length_count": 0
+  },
+  "limitations": [
+    "One held-out functional pilot per listed entry, not dataset quality or p50/p95 results",
+    "Process RSS does not account for total MLX GPU/unified memory and is not suitable as a total model-memory proxy",
+    "The 8-bit pilots operated with less than 1 GB available RAM, so comfortable full-run headroom is not established",
+    "Vision payload bytes measure encoded storage, not incremental runtime RSS or vision-only load time",
+    "Fairy production and converted 4-bit have different tensor payload hashes and catalog defaults; runtime differences are not a controlled vision ablation"
+  ]
+}

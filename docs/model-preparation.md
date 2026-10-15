@@ -1,6 +1,6 @@
 # Qwen3.5-9B MLX preparation
 
-Decision recorded on 15 October 2026: use Qwen3.5-9B, MLX at 3, 4, 6 and 8 bits, with thinking off. The owner selected reproducible conversion of all four levels from one pinned source after the published 3-bit candidate proved empty. The owner approved the source download and all four conversions on 15 October 2026. The 19,329,392,091-byte source download is complete. Every source shard matches its upstream LFS SHA-256. Converted outputs are pending the owner closing memory-heavy apps.
+Decision recorded on 15 October 2026: use Qwen3.5-9B, MLX at 3, 4, 6 and 8 bits, with thinking off. The owner selected reproducible conversion of all four levels from one pinned source after the published 3-bit candidate proved empty. The owner approved the source download and all four conversions on 15 October 2026. The 19,329,392,091-byte source download is complete. Every source shard matches its upstream LFS SHA-256. All four outputs are converted, registered locally and have passed thinking-off pilot calls.
 
 ## Inspected published candidates
 
@@ -62,7 +62,7 @@ The four explicit conversion commands are in [convert_qwen_mlx.sh](../scripts/co
 bash scripts/convert_qwen_mlx.sh
 ```
 
-Conversion has not been executed, so memory feasibility, output sizes, layer settings and LM Studio compatibility remain unverified. The 19.31 GB source weights exceed this Mac's 16 GiB physical RAM; lazy loading is used by the converter, but that does not establish a safe peak working set.
+Conversion completed successfully under monitoring on this Mac. The outputs and local LM Studio compatibility have been checked below. Successful conversion does not establish comfortable 8-bit inference headroom.
 
 ## Disk check
 
@@ -78,7 +78,7 @@ The installed production reference passed functional thinking-off and RSS collec
 
 ## Conversion memory monitoring
 
-Before download the Mac had about 2.6 GB available RAM, 12.7 GB swap usage and substantial compression. The owner was asked to close memory-heavy apps before conversion. Download and metadata preparation can continue while waiting.
+Before download the Mac had about 2.6 GB available RAM, 12.7 GB swap usage and substantial compression. The owner closed memory-heavy apps and confirmed readiness before conversion. At conversion start, available memory had improved to about 8 GB.
 
 Run the committed conversion commands through the preparation monitor:
 
@@ -99,14 +99,53 @@ The [component report](data/fairy-production-weight-components.json) retains per
 
 ## Source download completed
 
-Downloaded **19,329,392,091 bytes** of non-cache source files at the pinned revision. All four safetensors shards match their published upstream LFS SHA-256 hashes. The [source manifest](data/qwen35-source-manifest.json) preserves file sizes, hashes and verification results. No conversion has started while the apps-closed confirmation is pending.
+Downloaded **19,329,392,091 bytes** of non-cache source files at the pinned revision. All four safetensors shards match their published upstream LFS SHA-256 hashes. The [source manifest](data/qwen35-source-manifest.json) preserves file sizes, hashes and verification results. The owner confirmed apps were closed, and the monitored conversions then completed.
 
-## Fairy reference memory and load observation
+## Conversion and pilot results
 
-The last successful functional pilot on 15 October 2026 provides one excluded observation, not an experimental percentile:
+All four outputs use affine quantisation with group size 64, and contain no vision tensor payload or `vision_config`. Tokenizer JSON, tokenizer config and chat-template hashes are identical across the four. Runtime weight hashes match their conversion manifests. The captured conversion environment matches the committed lockfile.
 
-| Configuration | Load request wall time | Provider load time | Sampled LM Studio RSS peak | Encoded vision weights |
-| --- | ---: | ---: | ---: | ---: |
-| Fairy's production model, vision retained | 9.1169 s | 9.101 s | 1,777,991,680 bytes | 912,020,960 bytes |
+| Converted precision | Encoded tensor payload | Converter-reported bits/weight | Pilot final line | Observed reasoning tokens |
+| --- | ---: | ---: | --- | ---: |
+| 3-bit | 3,918,948,864 bytes | 3.501 | Answer: 12 | 0 |
+| 4-bit | 5,038,041,600 bytes | 4.501 | Answer: 12 | 0 |
+| 6-bit | 7,276,227,072 bytes | 6.501 | Answer: 12 | 0 |
+| 8-bit | 9,514,412,544 bytes | 8.501 | Answer: 12 | 0 |
 
-The [pilot record](data/fairy-production-pilot.json) contains the full-precision observations, model-file hashes, conditions and original call/run identity. This pilot ran on battery with substantial pre-existing swap. File-cache state was not controlled. Its RSS excludes some GPU/unified-memory allocations and is smaller than its weight files, so it cannot establish total model memory or a vision-only runtime cost. Its load time and memory must not be attributed solely to quantisation when compared with the new text-only series. The full experiment still requires its own matched-condition observations.
+The effective bit counts include quantisation storage overhead; nominal labels describe the requested precision. Exact file sizes and SHA-256 hashes are in the four converted-file manifests under `docs/data/`. These are local prepared weights, not uploaded model repositories.
+
+The monitored script, including source verification and output hashing, took **103.119 seconds**. Across 51 two-second observations, minimum available system memory was **1,200,488,448 bytes**, maximum whole-machine swap growth was **4,160,356,352 bytes**, and maximum sampled conversion-process-group RSS was **4,445,618,176 bytes**. The guard did not trigger. RSS is not total GPU allocation, and whole-machine swap changes cannot be attributed exclusively to one process. The [raw memory log](data/conversion-memory-001.jsonl) preserves the observations.
+
+### Local registration and thinking control
+
+Register the prepared outputs with `python3 scripts/register_local_models.py`. It hard-links weight files under the tested LM Studio models directory, copies the small files and installs the committed local model definitions. It refuses existing registrations. See [local model definitions](../configs/lmstudio-models/README.md).
+
+An initial 8-bit request loaded the concrete model but returned HTTP 400 because its automatically generated entry did not expose reasoning configuration. The retained failed attempt is `runs/converted-8bit-pilot-001`. The local definitions provide `enableThinking` with a `setJinjaVariable` effect for the original Qwen `enable_thinking` variable. All four now expose `off` and `on`, default to off, and receive explicit `reasoning: "off"` in each request. Pilot verification still checks the observed tokens and content.
+
+No LM Studio Hub artifact or weight repository was published. The source names in these local definitions map to existing local directories in Hugging Face-style layout. Allow the local index to refresh before listing them. The tested entries are `local/callcost-qwen35-9b-text-3bit`, `4bit`, `6bit` and `8bit` with the same full prefix.
+
+### Excluded pilot observations
+
+Each row is one successful held-out pencil-counting call, not a p50/p95 result or a task-quality estimate. Earlier failed/setup attempts and the first successful 8-bit call remain in their original run directories. The final 8-bit pilot includes hashes of the local thinking-control definition alongside its weights. All listed calls ran on charger power, returned `Answer: 12`, reported zero reasoning tokens and had no emitted reasoning content or think tags. Each model was unloaded after its pilot.
+
+| Configuration | Load request wall time | Sampled LM Studio RSS peak | Available RAM after call |
+| --- | ---: | ---: | ---: |
+| Converted 8-bit, text only | 9.788 s | 1.211 GB | 0.692 GB |
+| Converted 6-bit, text only | 8.560 s | 1.050 GB | 1.708 GB |
+| Converted 4-bit, text only | 7.133 s | 2.280 GB | 2.957 GB |
+| Converted 3-bit, text only | 6.236 s | 5.141 GB | 3.527 GB |
+| Fairy's production model, vision retained | 8.034 s | 1.534 GB | 2.296 GB |
+
+GB here means decimal billions of bytes. The [complete preparation report](data/model-preparation-results.json) retains exact observations, call IDs, answers, conditions, load configuration, file hashes, component sizes and the controller evidence. Raw CSV, streams, control responses and memory samples remain in the referenced local `runs/` directories.
+
+**The 8-bit model is functionally verified, but comfortable full-run headroom has not been established.** Both successful 8-bit pilots fell below 1 GB of available RAM. A full task run with longer outputs and varying prompt lengths has not been attempted.
+
+**Sampled process RSS is not a suitable proxy for total MLX model memory.** Its ordering is inverted here: 3-bit has larger RSS than 8-bit despite smaller encoded weights. Paging and GPU/unified-memory accounting limit this measurement. Preserve the readings, but do not use these pilots to claim RAM savings or satisfy the memory part of a knee finding. Resolve or explicitly amend the memory method before the first full run; no method change is silently applied here.
+
+### Fairy production caveat and vision bytes
+
+Fairy retains **912,020,960 bytes of encoded vision payload**, or **15.3279%** of its 5,950,062,560-byte total tensor payload. These are encoded storage bytes, not incremental runtime RSS or vision-only load time. Do not subtract them from the table's RSS values.
+
+Its 927 language tensors have the same names, shapes, dtypes and encoded lengths as our converted 4-bit output, totalling 5,038,041,600 bytes. However, **491 encoded tensor payload hashes differ**. The comparison was reproduced with `scripts/compare_language_tensors.py`. The cause of those differences is not isolated by this check. Fairy also retains its original catalog definition and defaults. Its runtime differences therefore cannot be assigned solely to vision or quantisation, and the production reference stays outside the four-level knee sequence. The original Fairy weights remain unchanged.
+
+No scored dataset run, percentile aggregation, quality review or knee analysis has been performed. Gemini and privileged powermetrics remain separate live-validation tasks.
