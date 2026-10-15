@@ -56,8 +56,13 @@ def peak_process_sum(samples, start, end, metric):
     return max(sum(s[metric].values()) for s in selected), None
 
 
+def is_lmstudio_daemon(executable):
+    return executable.endswith('/llmster') and any(
+        root in executable for root in ('/.lmstudio/', '/.cache/lm-studio/', '/LM Studio.app/'))
+
+
 def process_role(executable, arguments):
-    is_app = '/LM Studio.app/' in executable
+    is_app = '/LM Studio.app/' in executable or is_lmstudio_daemon(executable)
     is_worker = any(marker in arguments for marker in (
         '/.cache/lm-studio/extensions/backends/', '/.lmstudio/extensions/backends/'))
     native_node = executable.endswith('/.internal/utils/node') and ('/.cache/lm-studio/' in executable or '/.lmstudio/' in executable)
@@ -76,7 +81,7 @@ def discover_processes(explicit_ids):
             found[root.pid] = root
             found.update({p.pid: p for p in root.children(recursive=True)})
         worker_found = any(process_role(p.exe(), ' '.join(p.cmdline()))[1] for p in found.values())
-    # Always include the application group, even when explicit roots were supplied.
+    # Always include application/daemon roots, even when explicit roots were supplied.
     for process in psutil.process_iter(['pid', 'exe', 'cmdline']):
         info = process.info
         is_app, is_worker = process_role(info.get('exe') or '', ' '.join(info.get('cmdline') or []))

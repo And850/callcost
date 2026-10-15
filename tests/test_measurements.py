@@ -130,3 +130,39 @@ def test_root_powermetrics_cleanup_uses_noninteractive_signal_if_needed(tmp_path
     collector.stderr = io.BytesIO()
     collector.close()
     assert commands == [['/usr/bin/sudo', '-n', '/bin/kill', '-TERM', '12345']]
+
+
+@pytest.mark.parametrize('explicit', [False, True])
+def test_headless_daemon_is_a_memory_root_but_does_not_replace_worker_evidence(monkeypatch, explicit):
+    from callcost.measurements.memory import discover_processes
+
+    class Process:
+        def __init__(self, pid, executable, args):
+            self.pid, self.executable, self.args = pid, executable, args
+            self.info = {'pid': pid, 'exe': executable, 'cmdline': args}
+
+        def exe(self):
+            return self.executable
+
+        def cmdline(self):
+            return self.args
+
+        def children(self, recursive):
+            return [worker] if self.pid == 10 else []
+
+    daemon = Process(10, '/Users/example/.lmstudio/llmster/bin/llmster', [])
+    worker = Process(11, '/Users/example/.lmstudio/extensions/backends/mlx/worker',
+                     ['/Users/example/.lmstudio/extensions/backends/mlx/worker'])
+    unrelated = Process(12, '/tmp/llmster', [])
+    processes = [daemon, worker, unrelated]
+    monkeypatch.setattr('callcost.measurements.memory.psutil.process_iter', lambda attrs: iter(processes))
+    monkeypatch.setattr('callcost.measurements.memory.psutil.Process', lambda pid: daemon if pid == 10 else unrelated)
+    found = discover_processes([10] if explicit else [])
+    assert {p.pid for p in found} == {10, 11}
+    with pytest.raises(ValueError, match='recognised LM Studio'):
+        discover_processes([12])
+    processes[:] = [daemon]
+    # A server without a recognised inference worker cannot establish coverage.
+    monkeypatch.setattr(daemon, 'children', lambda recursive: [])
+    with pytest.raises(ValueError, match='worker not identified'):
+        discover_processes([10] if explicit else [])

@@ -64,3 +64,5 @@ This writes `report.json` and `report.md`. Human scores remain pending until rev
 - Fixed step-cost suppression: all three adjacent comparisons retain available eligible weight/latency savings and secondary footprint distributions while scores are pending. Missing costs have reasons. Quality and variance rules are unchanged. Verified: 72 tests and Ruff.
 
 - Completed human-readable reporting: adjacent cost steps, secondary footprint/RSS, metric observation counts and missing reasons, eligible quality/counts, visible/thinking/billable tokens, payloads, list-price currency, energy baseline qualifications and production caveat. Empty expected groups remain unavailable. Independent follow-up found one additional daemon-memory coverage gap to fix. Verified: 73 tests and Ruff.
+
+- Fixed standalone headless daemon memory coverage: recognised LM Studio `llmster` roots and descendants join the measured group; separate worker evidence is still mandatory. Preflight uses the same daemon identity check. Automatic/explicit-root regressions pass; live process compatibility remains unverified. Verified: 75 tests and Ruff.

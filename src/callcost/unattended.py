@@ -21,6 +21,7 @@ import psutil
 
 from callcost.experiment import PILOT, file_identity, run_experiment
 from callcost.measurements.machine import command, conditions
+from callcost.measurements.memory import is_lmstudio_daemon
 from callcost.report import report_run
 from callcost.schemas import Config, Dataset, load_document
 from callcost.storage import write_json
@@ -57,7 +58,7 @@ def headless_state():
         if exe.endswith('/LM Studio.app/Contents/MacOS/LM Studio'):
             processes.append(dict(pid=info['pid'], mode='service' if '--run-as-service' in args else 'desktop',
                                   executable=exe))
-        elif Path(exe).name == 'llmster':
+        elif is_lmstudio_daemon(exe):
             processes.append(dict(pid=info['pid'], mode='daemon', executable=exe))
     return dict(headless=bool(processes) and all(p['mode'] != 'desktop' for p in processes), processes=processes)
 
