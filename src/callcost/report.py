@@ -142,6 +142,25 @@ def knee_findings(groups, configurations, tasks):
     return findings
 
 
+def collection_status(metadata, rows):
+    schedule = metadata.get('schedule', [])
+    completed = set()
+    duplicates = []
+    for row in rows:
+        index = row.get('schedule_index')
+        if row['status'] != 'completed' or type(index) is not int or not 0 <= index < len(schedule):
+            continue
+        if any(row.get(key) != value for key, value in schedule[index].items()):
+            continue
+        if index in completed:
+            duplicates.append(index)
+        completed.add(index)
+    return dict(expected_slots=len(schedule), completed_slots=len(completed),
+                duplicate_completed_slots=duplicates,
+                complete=bool(schedule) and len(completed) == len(schedule) and not duplicates
+                         and metadata['status'] == 'completed')
+
+
 def report_run(directory):
     directory = Path(directory)
     metadata = json.loads((directory / 'metadata.json').read_text())
@@ -150,7 +169,11 @@ def report_run(directory):
     groups = aggregate(rows, metadata['dataset']['prompts'] if phase == 'measured' else [], phase)
     findings = [] if phase == 'smoke' else knee_findings(groups, metadata['config']['configurations'],
                                                        sorted({p['task_type'] for p in metadata['dataset']['prompts']}))
-    result = dict(run_status=metadata['status'], smoke=metadata.get('smoke', False),
+    collection = collection_status(metadata, rows)
+    if not collection['complete']:
+        for finding in findings:
+            finding.update(finding='insufficient data: collection incomplete', knee=None)
+    result = dict(run_status=metadata['status'], collection=collection, smoke=metadata.get('smoke', False),
                   quantiles='p50 median; p95 nearest rank; Q1/Q3 linear interpolation',
                   memory_for_knee='none; quality-only knee, amendment 2026-10-15; weight bytes are descriptive cost',
                   energy_scope='estimate, whole-machine delta; CPU + GPU + ANE; client device only',
@@ -158,6 +181,8 @@ def report_run(directory):
                   knee=findings, variation=metadata.get('variation'))
     write_json(directory / 'report.json', result)
     lines = ['SMOKE ONLY, no benchmark conclusions' if phase == 'smoke' else 'CallCost saved-run report',
+             f'Collection: {collection["completed_slots"]}/{collection["expected_slots"]} scheduled slots completed; '
+             f'complete={collection["complete"]}.',
              'All completed calls shown. Knee inputs exclude swap-active and swap-unknown calls.',
              'Memory: descriptive weight bytes; sampled physical footprint is secondary. Knee uses quality only.',
              'Energy: estimate, whole-machine delta; CPU + GPU + ANE; client device only.',

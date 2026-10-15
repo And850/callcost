@@ -23,7 +23,7 @@
 - Last recorded automated result: 69 tests passed and Ruff passed, before the final config and launcher-default edit. Those final changes were not rechecked. No known failing existing test was left at that point. This is not fresh verification.
 - Real preflight/server startup, sudo keepalive, privileged powermetrics, caffeinate, notifications and live resume remain unverified together. Unit tests are not evidence of unattended readiness.
 - Full preflight requires 10 GiB available RAM and 10 GiB free disk; smoke uses 4 GiB RAM. These entry guards do not prove 8-bit fits without swapping. Last observed available RAM was about 5.6 GiB; instrumentation pilots recorded swap activity.
-- Wrap-up restrictions remain in effect: no further tests, exploratory runs or smoke tests until the owner authorizes resumed work.
+- Owner authorized code/docs review, fixes, tests and small commits/pushes on 15 October. Ask before every model call, any download, system-setting changes or runs longer than a few minutes. Summary prompts remain unapproved.
 
 ## Next steps, in order
 
@@ -51,3 +51,10 @@ PYTHONPATH=src .venv/bin/python -m callcost report --run "runs/$(cat runs/LATEST
 ```
 
 This writes `report.json` and `report.md`. Human scores remain pending until reviewed; missing eligible prompts mean insufficient data. Results stay ignored by Git.
+
+## Launcher/report review follow-up, 15 October 2026
+
+- README thinking amendment and GitHub account instruction committed and pushed before review.
+- Independent review identified: incomplete collection could yield knee conclusions; hard-kill pilot verification metadata recovery; costs hidden by pending scores; human-readable reporting omissions. Fix these in separate commits before live validation.
+- Fixed incomplete-collection conclusions: report checks completed checkpoint identities against the full saved schedule and completed run status. Swap-excluded repeats do not need replacement; eligible prompt counts remain visible. Regression includes a complete schedule with reduced eligible repeats.
+- First fix verified with 70 tests and Ruff; no inference. No launcher run or benchmark data collected.
