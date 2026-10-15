@@ -143,6 +143,8 @@ class LMStudioSettings(StrictModel):
 
 class LocalConfig(StrictModel):
     id: Name
+    label: Annotated[str, Field(min_length=1)] | None = None
+    comparison_role: Literal['quantisation_series', 'production_reference'] = 'quantisation_series'
     provider: Literal['lmstudio']
     model_key: Annotated[str, Field(min_length=1)]
     expected_quantisation: Annotated[str, Field(min_length=1)]

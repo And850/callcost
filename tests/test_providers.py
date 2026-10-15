@@ -166,3 +166,20 @@ def test_grouped_mlx_alias_loads_only_matching_selected_variant(tmp_path):
     with httpx.Client(transport=httpx.MockTransport(handle)) as client, pytest.raises(ValueError, match='selected'):
         LMStudioProvider(config, LMStudioSettings(), RunSettings(), client).prepare()
     assert len(requests) == 1
+
+
+def test_captured_mlx_pilot_stream_verifies_zero_thinking(tmp_path):
+    from pathlib import Path
+
+    from callcost.schemas import Prompt
+    from callcost.thinking import verify_thinking_off
+    body = (Path(__file__).parent / 'fixtures/lmstudio-0.4.24-mlx4bit.sse').read_bytes()
+    with httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(200, stream=Fragments(body)))) as client:
+        provider = LMStudioProvider(local_config(), LMStudioSettings(), RunSettings(), client)
+        provider.instance_id = 'qwen/qwen3.5-9b'
+        prompt = Prompt(id='fixture', task_type='pilot', prompt='held-out fixture',
+                        scoring={'type': 'numeric_final_line', 'expected': '12'})
+        result = provider.generate(prompt, tmp_path, 'captured')
+    assert verify_thinking_off(result)['verified']
+    assert result.thinking_tokens == 0 and result.output_tokens == 68 and result.input_tokens == 38
+    assert result.answer.endswith('Answer: 12')

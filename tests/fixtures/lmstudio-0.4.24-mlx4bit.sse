@@ -1,0 +1,198 @@
+event: chat.start
+data: {"type":"chat.start","model_instance_id":"qwen/qwen3.5-9b"}
+
+event: prompt_processing.start
+data: {"type":"prompt_processing.start"}
+
+event: prompt_processing.progress
+data: {"type":"prompt_processing.progress","progress":0}
+
+event: prompt_processing.progress
+data: {"type":"prompt_processing.progress","progress":0.9736842105263158}
+
+event: message.start
+data: {"type":"message.start"}
+
+event: message.delta
+data: {"type":"message.delta","content":"To"}
+
+event: message.delta
+data: {"type":"message.delta","content":" find"}
+
+event: message.delta
+data: {"type":"message.delta","content":" the"}
+
+event: message.delta
+data: {"type":"message.delta","content":" total"}
+
+event: message.delta
+data: {"type":"message.delta","content":" number"}
+
+event: message.delta
+data: {"type":"message.delta","content":" of"}
+
+event: message.delta
+data: {"type":"message.delta","content":" pencils"}
+
+event: message.delta
+data: {"type":"message.delta","content":","}
+
+event: message.delta
+data: {"type":"message.delta","content":" we"}
+
+event: message.delta
+data: {"type":"message.delta","content":" add"}
+
+event: message.delta
+data: {"type":"message.delta","content":" the"}
+
+event: message.delta
+data: {"type":"message.delta","content":" number"}
+
+event: message.delta
+data: {"type":"message.delta","content":" of"}
+
+event: message.delta
+data: {"type":"message.delta","content":" red"}
+
+event: message.delta
+data: {"type":"message.delta","content":" pencils"}
+
+event: message.delta
+data: {"type":"message.delta","content":" to"}
+
+event: message.delta
+data: {"type":"message.delta","content":" the"}
+
+event: message.delta
+data: {"type":"message.delta","content":" number"}
+
+event: message.delta
+data: {"type":"message.delta","content":" of"}
+
+event: message.delta
+data: {"type":"message.delta","content":" blue"}
+
+event: message.delta
+data: {"type":"message.delta","content":" pencils"}
+
+event: message.delta
+data: {"type":"message.delta","content":"."}
+
+event: message.delta
+data: {"type":"message.delta","content":"\n\n"}
+
+event: message.delta
+data: {"type":"message.delta","content":"1"}
+
+event: message.delta
+data: {"type":"message.delta","content":"."}
+
+event: message.delta
+data: {"type":"message.delta","content":"  Number"}
+
+event: message.delta
+data: {"type":"message.delta","content":" of"}
+
+event: message.delta
+data: {"type":"message.delta","content":" red"}
+
+event: message.delta
+data: {"type":"message.delta","content":" pencils"}
+
+event: message.delta
+data: {"type":"message.delta","content":" ="}
+
+event: message.delta
+data: {"type":"message.delta","content":" 7"}
+
+event: message.delta
+data: {"type":"message.delta","content":"\n"}
+
+event: message.delta
+data: {"type":"message.delta","content":"2"}
+
+event: message.delta
+data: {"type":"message.delta","content":"."}
+
+event: message.delta
+data: {"type":"message.delta","content":"  Number"}
+
+event: message.delta
+data: {"type":"message.delta","content":" of"}
+
+event: message.delta
+data: {"type":"message.delta","content":" blue"}
+
+event: message.delta
+data: {"type":"message.delta","content":" pencils"}
+
+event: message.delta
+data: {"type":"message.delta","content":" ="}
+
+event: message.delta
+data: {"type":"message.delta","content":" 5"}
+
+event: message.delta
+data: {"type":"message.delta","content":"\n"}
+
+event: message.delta
+data: {"type":"message.delta","content":"3"}
+
+event: message.delta
+data: {"type":"message.delta","content":"."}
+
+event: message.delta
+data: {"type":"message.delta","content":"  Total"}
+
+event: message.delta
+data: {"type":"message.delta","content":" pencils"}
+
+event: message.delta
+data: {"type":"message.delta","content":" ="}
+
+event: message.delta
+data: {"type":"message.delta","content":" $"}
+
+event: message.delta
+data: {"type":"message.delta","content":"7"}
+
+event: message.delta
+data: {"type":"message.delta","content":" +"}
+
+event: message.delta
+data: {"type":"message.delta","content":" 5"}
+
+event: message.delta
+data: {"type":"message.delta","content":" ="}
+
+event: message.delta
+data: {"type":"message.delta","content":" 1"}
+
+event: message.delta
+data: {"type":"message.delta","content":"2"}
+
+event: message.delta
+data: {"type":"message.delta","content":"$"}
+
+event: message.delta
+data: {"type":"message.delta","content":"\n\n"}
+
+event: message.delta
+data: {"type":"message.delta","content":"Answer"}
+
+event: message.delta
+data: {"type":"message.delta","content":":"}
+
+event: message.delta
+data: {"type":"message.delta","content":" 1"}
+
+event: message.delta
+data: {"type":"message.delta","content":"2"}
+
+event: message.end
+data: {"type":"message.end"}
+
+event: chat.end
+data: {"type":"chat.end","result":{"model_instance_id":"qwen/qwen3.5-9b","output":[{"type":"message","content":"To find the total number of pencils, we add the number of red pencils to the number of blue pencils.\n\n1.  Number of red pencils = 7\n2.  Number of blue pencils = 5\n3.  Total pencils = $7 + 5 = 12$\n\nAnswer: 12"}],"stats":{"input_tokens":38,"total_output_tokens":68,"reasoning_output_tokens":0,"tokens_per_second":32.310245501303875,"time_to_first_token_seconds":0.646}}}
+

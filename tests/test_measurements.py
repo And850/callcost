@@ -62,3 +62,23 @@ def test_explicit_roots_cannot_measure_the_benchmark_process():
 def test_empty_measured_answer_is_not_automatically_an_infrastructure_failure():
     result = CallResult(status='completed', answer='', thinking_tokens=0)
     assert verify_thinking_off(result, require_answer=False)['verified']
+
+
+def test_energy_assessment_exposes_drift_missing_baseline_and_negative_deltas():
+    from callcost.measurements.energy import baseline_assessment
+    calls = [{'call_id': 'negative', 'energy_j': -2}, {'call_id': 'positive', 'energy_j': 3},
+             {'call_id': 'missing', 'energy_j': None}]
+    value = baseline_assessment(2, 4, calls)
+    assert value['status'] == 'baseline_shift_observed' and value['drift_watts'] == 2
+    assert value['negative_delta_call_ids'] == ['negative']
+    assert baseline_assessment(2, None, calls)['status'] == 'post_baseline_unavailable'
+    assert baseline_assessment(2, 2, calls)['status'] == 'no_observed_shift'
+
+
+def test_native_node_worker_identity_and_sampling_boundaries():
+    from callcost.measurements.memory import process_role
+    app = '/Applications/LM Studio.app/Contents/Resources/app/.webpack/lib/llmworker.js'
+    node = '/Users/example/.cache/lm-studio/.internal/utils/node'
+    assert process_role(node, f'{node} -e wrapper {app}') == (False, True)
+    assert process_role('/usr/bin/python3', 'my-llmworker.js') == (False, False)
+    assert peak_rss([{'started': .9, 'time': 1.1, 'rss': {'a': 100}, 'error': None}], 1, 2)[0] is None

@@ -27,3 +27,6 @@ Repository = "https://github.com/And850/callcost"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]

@@ -8,7 +8,7 @@ import psutil
 
 
 def peak_rss(samples, start, end):
-    selected = [s for s in samples if start <= s['time'] <= end]
+    selected = [s for s in samples if start <= s.get('started', s['time']) <= s['time'] <= end]
     if not selected:
         return None, 'No memory samples inside call window'
     if any(s['error'] or not s['rss'] for s in selected):
@@ -23,6 +23,8 @@ def process_role(executable, arguments):
     is_app = '/LM Studio.app/' in executable
     is_worker = any(marker in arguments for marker in (
         '/.cache/lm-studio/extensions/backends/', '/.lmstudio/extensions/backends/'))
+    native_node = executable.endswith('/.internal/utils/node') and ('/.cache/lm-studio/' in executable or '/.lmstudio/' in executable)
+    is_worker |= native_node and '/LM Studio.app/Contents/Resources/app/.webpack/lib/llmworker.js' in arguments
     return is_app, is_worker
 
 
@@ -37,13 +39,13 @@ def discover_processes(explicit_ids):
             found[root.pid] = root
             found.update({p.pid: p for p in root.children(recursive=True)})
         worker_found = any(process_role(p.exe(), ' '.join(p.cmdline()))[1] for p in found.values())
-    else:
-        for process in psutil.process_iter(['pid', 'exe', 'cmdline']):
-            info = process.info
-            is_app, is_worker = process_role(info.get('exe') or '', ' '.join(info.get('cmdline') or []))
-            if is_app or is_worker:
-                found[process.pid] = process
-                worker_found |= is_worker
+    # Always include the application group, even when explicit roots were supplied.
+    for process in psutil.process_iter(['pid', 'exe', 'cmdline']):
+        info = process.info
+        is_app, is_worker = process_role(info.get('exe') or '', ' '.join(info.get('cmdline') or []))
+        if is_app or is_worker:
+            found[process.pid] = process
+            worker_found |= is_worker
     if not worker_found:
         raise ValueError('LM Studio inference worker not identified; check process coverage')
     for process in list(found.values()):
@@ -67,7 +69,7 @@ class MemorySampler:
     def _collect(self):
         with self.path.open('w', encoding='utf-8') as stream:
             while not self.stop_event.is_set():
-                sample = {'time': time.perf_counter(), 'rss': {}, 'processes': [], 'error': None}
+                sample = {'started': time.perf_counter(), 'rss': {}, 'processes': [], 'error': None}
                 try:
                     for process in discover_processes(self.process_ids):
                         identity = f'{process.pid}:{process.create_time()}'
@@ -76,6 +78,7 @@ class MemorySampler:
                                                     'executable': process.exe()})
                 except (psutil.Error, ValueError, OSError) as error:
                     sample['error'] = str(error)
+                sample['time'] = time.perf_counter()
                 self.samples.append(sample)
                 stream.write(json.dumps(sample) + '\n')
                 stream.flush()

@@ -68,3 +68,12 @@ def test_thinking_must_be_explicitly_off(config_data, thinking):
     config_data['configurations'][0]['thinking'] = thinking
     with pytest.raises(ValueError):
         Config.model_validate(config_data)
+
+
+def test_production_reference_label_and_role_are_preserved():
+    from callcost.schemas import LocalConfig
+    reference = LocalConfig(id='fairy-production', provider='lmstudio',
+        label="Fairy's production model", comparison_role='production_reference',
+        model_key='qwen/qwen3.5-9b@4bit', expected_quantisation='4bit', model_files=['model.safetensors'])
+    assert reference.model_dump()['comparison_role'] == 'production_reference'
+    assert reference.label == "Fairy's production model"

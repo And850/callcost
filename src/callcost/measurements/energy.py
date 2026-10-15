@@ -128,3 +128,15 @@ class PowerCollector:
                 self.thread.join(timeout=5)
             self.process.stdout.close()
             self.stderr.close()
+
+
+def baseline_assessment(before, after, calls):
+    """Expose drift without introducing an unregistered significance cutoff."""
+    drift = None if before is None or after is None else after - before
+    status = ('baseline_unavailable' if before is None else
+              'post_baseline_unavailable' if after is None else
+              'baseline_shift_observed' if drift != 0 else 'no_observed_shift')
+    return {'status': status, 'drift_watts': drift,
+            'negative_delta_call_ids': [c['call_id'] for c in calls
+                                        if c['energy_j'] is not None and c['energy_j'] < 0],
+            'interpretation': 'Descriptive qualification, not a significance test; no registered drift cutoff'}

@@ -34,7 +34,7 @@ class CallResult:
 
 
 CALL_FIELDS = [
-    'call_id', 'configuration_id', 'provider', 'prompt_id', 'task_type', 'repeat',
+    'call_id', 'configuration_id', 'configuration_label', 'comparison_role', 'provider', 'prompt_id', 'task_type', 'repeat',
     'phase', 'cache_stratum', 'load_id', 'model_files', 'quantisation',
     *CallResult.__dataclass_fields__, 'memory_peak_rss_bytes', 'memory_missing_reason',
     'energy_j', 'energy_missing_reason', 'energy_scope', 'conditions',
