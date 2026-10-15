@@ -10,7 +10,7 @@ Milestone 1 runners and logging are implemented and tested with offline fixtures
 
 The local family is Qwen3.5-9B in MLX format, with thinking off. The 3-, 4-, 6- and 8-bit variants have been independently converted from pinned official Qwen weights using mlx-lm 0.32.0 and group size 64. Each loads in LM Studio and passes a held-out thinking-off pilot. Fairy's existing 4-bit model is a fifth local configuration, labelled "Fairy's production model" and treated as a separate reference. See [model preparation](docs/model-preparation.md) for the inspected published candidates and conversion pins. The Gemini model and prices remain to be filled in. The 8-bit pilots had less than 1 GB available RAM, and sampled process RSS did not track total model memory; resolve these limits before a full benchmark.
 
-Fairy is a separate project. It will supply real summarisation requests, but its code and integration are outside this repository.
+Fairy is a separate project. The initial summaries are Fairy-style prompts written for the benchmark (invented texts), not real Fairy usage. Fairy code and integration are outside this repository.
 
 ## Hypothesis
 
@@ -160,3 +160,7 @@ Non-goals: routing, Fairy integration, a GUI, multi-device support, cloud energy
 ## Licence
 
 MIT. See [LICENSE](LICENSE). Third-party datasets retain their own licence notices.
+
+## Summarisation prompt review
+
+`prompts/summarisation.yaml` contains ten Fairy-style prompts written for the benchmark (invented texts). They are committed for review and have not been sent to any model. Andrii must confirm review before they are used. `max_words` counts whitespace-separated words with `len(answer.split())` and passes when the count is at most the integer limit. Regex checks accept `pattern` as an input alias for `value`. Automatic checks prefill only what they establish; human checklist items remain pending.

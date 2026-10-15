@@ -8,7 +8,7 @@
 
 ## Constraints
 
-- Forty scored prompts: 30 pinned GSM8K test problems and ten owner-supplied summaries.
+- Forty scored prompts: 30 pinned GSM8K test problems and ten Fairy-style prompts written for the benchmark (invented texts), requiring owner review before inference.
 - Five measured calls per prompt per configuration, with additional excluded warm-ups.
 - No family selection before showing the installed variants to the owner.
 - Thinking off for every configuration, verified in a held-out pilot; config-supplied Gemini prices.

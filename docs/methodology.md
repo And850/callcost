@@ -117,3 +117,7 @@ The knee is the first step after the baseline step where task quality falls by a
 The original memory and latency gates were removed before scored benchmark data and before the unattended launcher smoke test. Every adjacent weight-byte saving exceeds 20%, making the original memory gate unsatisfiable for this series. A measured-footprint gate would depend on fixed overhead, and memory bandwidth may make latency fall proportionally with weight size. These are design reasons, not findings from the task dataset. Earlier excluded instrumentation pilots exist. The revised hypothesis is nearly flat quality followed by a sharp drop, while cost falls by a roughly steady amount per step. The variance rule and both kill criteria in the README are unchanged.
 
 Swap-active calls remain reported but are excluded from knee inputs. Missing or reset swap counters also exclude calls and are counted separately. Insufficient eligible prompts or pending human scores cannot establish either a knee or no knee.
+
+## First summarisation dataset
+
+The ten summaries in `prompts/summarisation.yaml` are Fairy-style prompts written for the benchmark (invented texts), not real Fairy usage. They are awaiting Andrii's review. No model may see them until that review is confirmed. `max_words` splits on whitespace and compares the count with an inclusive integer maximum; regex `pattern` is an alias for `value`. All supplied scoring rules are retained. Human criteria remain pending until blind review.

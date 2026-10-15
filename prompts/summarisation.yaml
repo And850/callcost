@@ -1,0 +1,327 @@
+schema_version: 1
+# Fairy-style summarisation prompts, written for the CallCost benchmark (drafted with Claude, reviewed by Alex).
+# All input texts are invented; names, places and numbers are fictional unless obviously generic.
+# Checklists are fixed BEFORE any model sees these prompts. Do not edit after the first run.
+# Requires an automatic check type `max_words` (count whitespace-separated words in the answer).
+prompts:
+  - id: summary-01
+    task_type: summarisation
+    prompt: "Summarise these meeting notes in at most three sentences for a club member who missed the meeting."
+    input: |
+      Python Club, notes from 14 October
+      - Next session moves from Tuesday 21 Oct to Thursday 23 Oct, same room (B12), 15:30.
+      - Topic: recursion. Marta will prepare three warm-up problems; Leo brings the projector adapter.
+      - We discussed a club hackathon in December but decided to wait until after mock exams. No date set.
+      - Attendance today: 7. Two new members joined.
+      - Anyone who wants an invite to the club's GitHub organisation should message Leo by Friday.
+    scoring:
+      type: checklist
+      items:
+        - id: thursday
+          description: "States the next session is on Thursday."
+          automatic: {type: substring, value: "Thursday", case_sensitive: false}
+        - id: room
+          description: "Mentions room B12."
+          automatic: {type: substring, value: "B12", case_sensitive: false}
+        - id: time
+          description: "Mentions the 15:30 start time."
+          automatic: {type: regex, pattern: "15[:.]30|3[:.]30 ?(pm|p\\.m\\.)", case_sensitive: false}
+        - id: hackathon_undecided
+          description: "Says the hackathon is postponed or has no date; does not present December as a fixed date."
+          human: true
+        - id: github_deadline
+          description: "Mentions messaging Leo by Friday for the GitHub invite."
+          human: true
+        - id: faithful
+          description: "Adds no facts that are not in the notes."
+          human: true
+        - id: length
+          description: "At most 80 words."
+          automatic: {type: max_words, value: 80}
+
+  - id: summary-02
+    task_type: summarisation
+    prompt: "Summarise this email in two sentences."
+    input: |
+      From: Mr. Costa
+      Subject: Physics lab report, deadline update
+
+      Hi all,
+      Correction to Monday's message: the lab report on the pendulum period is now due Friday 7 November at 23:59, not Monday 3 November as I wrote before. Submit it through the class portal as a single PDF. Please include your raw data table and an uncertainty for g. Reports over 6 pages will not be marked beyond page 6. If you were absent for the practical, ask Priya for the shared dataset rather than inventing values.
+      Thanks,
+      Mr. Costa
+    scoring:
+      type: checklist
+      items:
+        - id: due_date
+          description: "Gives 7 November as the due date."
+          automatic: {type: regex, pattern: "7(th)? Nov|Nov(ember)? 7", case_sensitive: false}
+        - id: due_time
+          description: "Gives 23:59 (or 11:59 pm) as the time."
+          automatic: {type: regex, pattern: "23[:.]59|11[:.]59 ?(pm|p\\.m\\.)", case_sensitive: false}
+        - id: pdf
+          description: "Mentions a single PDF via the portal."
+          automatic: {type: substring, value: "PDF", case_sensitive: false}
+        - id: not_old_date
+          description: "Does not present 3 November as the deadline."
+          human: true
+        - id: content_requirement
+          description: "Mentions the raw data table or the uncertainty for g."
+          human: true
+        - id: faithful
+          description: "Adds no facts that are not in the email."
+          human: true
+        - id: length
+          description: "At most 60 words."
+          automatic: {type: max_words, value: 60}
+
+  - id: summary-03
+    task_type: summarisation
+    prompt: "Summarise this bug report in two sentences: first a one-line description a developer could use as a ticket title, then the likely cause."
+    input: |
+      Issue #214: Timer notification fires twice
+      Reported by: dmitri-k
+      Steps: set a 5-minute timer from the menu bar panel, lock the screen, unlock after the timer ends.
+      Expected: one notification. Actual: two identical notifications, about 1 second apart.
+      Happens on macOS 26.1, not on 25.6. Does not happen if the screen stays unlocked.
+      Workaround: none found. Attached logs show the scheduler registering the timer twice after the unlock event.
+      Priority: low, but annoying.
+    scoring:
+      type: checklist
+      items:
+        - id: duplicate
+          description: "Says the notification fires twice / is duplicated."
+          automatic: {type: regex, pattern: "twice|two|duplicate", case_sensitive: false}
+        - id: lock_condition
+          description: "Mentions locking/unlocking the screen as the trigger."
+          automatic: {type: regex, pattern: "lock", case_sensitive: false}
+        - id: cause
+          description: "Identifies the scheduler registering the timer twice after unlock as the likely cause."
+          human: true
+        - id: no_fake_fix
+          description: "Does not claim a workaround or fix exists."
+          human: true
+        - id: faithful
+          description: "Adds no facts that are not in the report."
+          human: true
+        - id: length
+          description: "At most 60 words."
+          automatic: {type: max_words, value: 60}
+
+  - id: summary-04
+    task_type: summarisation
+    prompt: "Summarise this news article in exactly three bullet points."
+    input: |
+      Port Elmira's city council approved an expansion of the BiciPort bike-share on Tuesday. The network will grow from 40 to 65 stations by June next year, with 300 new e-bikes. The expansion costs EUR 2.1 million, of which EUR 1.4 million comes from a regional transport grant. Annual membership rises from EUR 35 to EUR 42; single rides stay at EUR 1. Councillor Ana Ferrer said usage grew 18% last year, mostly among commuters. Opposition councillors voted against, arguing the money should go to bus frequency instead. Construction of the first ten stations starts in March.
+    scoring:
+      type: checklist
+      items:
+        - id: stations
+          description: "Mentions growth to 65 stations."
+          automatic: {type: substring, value: "65", case_sensitive: false}
+        - id: cost
+          description: "Mentions the EUR 2.1 million cost."
+          automatic: {type: regex, pattern: "2[.,]1 ?(million|m\\b)", case_sensitive: false}
+        - id: membership
+          description: "Mentions the membership price rising to EUR 42."
+          automatic: {type: substring, value: "42", case_sensitive: false}
+        - id: three_bullets
+          description: "Exactly three bullet points."
+          human: true
+        - id: single_ride
+          description: "Does not claim the single-ride price changes."
+          human: true
+        - id: faithful
+          description: "Adds no facts that are not in the article."
+          human: true
+        - id: length
+          description: "At most 90 words."
+          automatic: {type: max_words, value: 90}
+
+  - id: summary-05
+    task_type: summarisation
+    prompt: "Summarise the plan this group chat ended with, in one or two sentences."
+    input: |
+      [Sat 10:02] Nina: so are we doing Montserrat on Sunday?
+      [10:05] Oscar: forecast says rain sunday afternoon
+      [10:06] Nina: ok what about saturday next week instead
+      [10:09] Oscar: works for me. train at 8:36 from Placa Espanya?
+      [10:11] Jae: I can't do Saturday, I have a tournament. Sunday 26th?
+      [10:15] Nina: fine, Sunday 26th then, same 8:36 train
+      [10:16] Oscar: ok, I'll buy the tickets tonight, it's EUR 13.40 return each
+      [10:20] Jae: send me the payment request and I'll pay you back
+    scoring:
+      type: checklist
+      items:
+        - id: date
+          description: "Gives Sunday 26th as the day."
+          automatic: {type: substring, value: "26", case_sensitive: false}
+        - id: train
+          description: "Mentions the 8:36 train."
+          automatic: {type: regex, pattern: "8[:.]36", case_sensitive: false}
+        - id: final_plan
+          description: "Presents Sunday 26th as the final plan, not this Sunday or next Saturday."
+          human: true
+        - id: tickets
+          description: "Mentions Oscar buying the tickets (price optional)."
+          human: true
+        - id: faithful
+          description: "Adds no facts that are not in the chat."
+          human: true
+        - id: length
+          description: "At most 50 words."
+          automatic: {type: max_words, value: 50}
+
+  - id: summary-06
+    task_type: summarisation
+    prompt: "Summarise these release notes for a user deciding whether to update, in at most four bullet points."
+    input: |
+      Notely 3.4 release notes
+      New: offline mode for notes created in the last 30 days. Search now matches text inside PDF attachments.
+      Changed: sync interval reduced from 10 minutes to 2 minutes on Wi-Fi; on mobile data it stays at 10 minutes. The free plan now allows 3 devices instead of 2.
+      Fixed: crash when renaming a folder whose name contains an emoji; low contrast in dark mode on the tag picker.
+      Removed: the legacy Evernote importer. Use the new universal importer instead.
+      Known issue: offline edits to shared notes may create duplicates; a fix is planned for 3.4.1.
+    scoring:
+      type: checklist
+      items:
+        - id: offline
+          description: "Mentions the new offline mode."
+          automatic: {type: substring, value: "offline", case_sensitive: false}
+        - id: devices
+          description: "Mentions the free plan allowing 3 devices."
+          automatic: {type: regex, pattern: "(3|three) devices", case_sensitive: false}
+        - id: importer_removed
+          description: "Mentions removal of the Evernote importer."
+          human: true
+        - id: known_issue
+          description: "Mentions the duplicate-notes known issue."
+          human: true
+        - id: sync_scope
+          description: "Does not claim sync is every 2 minutes on mobile data."
+          human: true
+        - id: bullets
+          description: "At most four bullet points."
+          human: true
+        - id: length
+          description: "At most 90 words."
+          automatic: {type: max_words, value: 90}
+
+  - id: summary-07
+    task_type: summarisation
+    prompt: "Summarise this procedure in three sentences for a student who will do the practical tomorrow."
+    input: |
+      Practical 4: specific heat capacity of an aluminium block
+      1. Measure the block's mass on the top-pan balance (record to 0.1 g).
+      2. Insert the 12 V heater and the thermometer; add a drop of oil to each hole for thermal contact.
+      3. Record the starting temperature, then switch on and start the stopwatch at the same moment.
+      4. Record voltage and current every minute; they should stay roughly constant.
+      5. Switch off after 10 minutes but keep recording the temperature until it stops rising. Use the maximum temperature, not the temperature at switch-off.
+      6. Calculate c = VIt / (m x deltaT). Expect a value below the textbook 900 J/kg K because of heat loss; insulating the block reduces the gap.
+      Safety: the heater stays hot for several minutes after switch-off.
+    scoring:
+      type: checklist
+      items:
+        - id: duration
+          description: "Mentions heating for 10 minutes."
+          automatic: {type: regex, pattern: "10 ?min|ten min", case_sensitive: false}
+        - id: max_temp
+          description: "Says to use the maximum temperature reached after switch-off."
+          human: true
+        - id: calculation
+          description: "Gives the formula or says energy is calculated from voltage, current and time."
+          human: true
+        - id: safety
+          description: "Mentions that the heater stays hot."
+          human: true
+        - id: faithful
+          description: "Adds no facts or numbers that are not in the procedure."
+          human: true
+        - id: length
+          description: "At most 90 words."
+          automatic: {type: max_words, value: 90}
+
+  - id: summary-08
+    task_type: summarisation
+    prompt: "Summarise this notice in two sentences for a resident who lives on the 4th floor."
+    input: |
+      Edifici Albada, notice to residents
+      Water will be shut off on Wednesday 12 November from 09:00 to 14:00 for pipe replacement on floors 3 to 6. Floors 1 and 2 are not affected. Please fill containers in advance if needed. The lift will also be out of service from 08:00 to 12:00 the same day while materials are moved. If the work finishes early, water will be restored without further notice. Questions: the administrator's office, weekdays 10:00 to 13:00.
+    scoring:
+      type: checklist
+      items:
+        - id: start
+          description: "Gives 09:00 as the water shut-off start."
+          automatic: {type: regex, pattern: "0?9[:.]00|9 ?(am|a\\.m\\.)", case_sensitive: false}
+        - id: end
+          description: "Gives 14:00 as the water shut-off end."
+          automatic: {type: regex, pattern: "14[:.]00|2 ?(pm|p\\.m\\.)", case_sensitive: false}
+        - id: affected
+          description: "Makes clear the 4th-floor resident is affected by the water cut."
+          human: true
+        - id: lift
+          description: "Mentions the lift being out of service 08:00 to 12:00."
+          human: true
+        - id: faithful
+          description: "Adds no facts that are not in the notice."
+          human: true
+        - id: length
+          description: "At most 60 words."
+          automatic: {type: max_words, value: 60}
+
+  - id: summary-09
+    task_type: summarisation
+    prompt: "Summarise this study abstract in two sentences, including the main result and one limitation."
+    input: |
+      Background: Short daytime naps are often recommended for students, but evidence on their effect on afternoon test performance is mixed.
+      Methods: 96 secondary-school students were randomly assigned to a 20-minute nap, a 20-minute quiet rest, or normal activity after lunch, on three non-consecutive days. They then sat a 15-minute arithmetic test.
+      Results: The nap group scored 6% higher than the normal-activity group (p = 0.03). Quiet rest scored 3% higher, which was not statistically significant. Students who slept longer than 25 minutes performed worse than the quiet-rest group.
+      Limitations: single school, self-reported sleep onset, short follow-up.
+      Conclusion: Brief naps may modestly improve afternoon arithmetic performance; longer naps may not.
+    scoring:
+      type: checklist
+      items:
+        - id: main_result
+          description: "Gives the 6% improvement for the nap group."
+          automatic: {type: regex, pattern: "6 ?%|6 per ?cent|six per ?cent", case_sensitive: false}
+        - id: limitation
+          description: "Names at least one stated limitation."
+          human: true
+        - id: quiet_rest
+          description: "Does not claim quiet rest had a significant effect."
+          human: true
+        - id: hedged
+          description: "Does not overstate the conclusion (e.g. 'naps improve grades' without qualification)."
+          human: true
+        - id: faithful
+          description: "Adds no facts that are not in the abstract."
+          human: true
+        - id: length
+          description: "At most 70 words."
+          automatic: {type: max_words, value: 70}
+
+  - id: summary-10
+    task_type: summarisation
+    prompt: "Using only these search results, answer in at most two sentences: when is the library open on Saturdays? Say so if the sources disagree."
+    input: |
+      Result 1 (city library website, updated 2 October): Biblioteca del Turo is open on Saturdays from 10:00 to 14:00. Closed on Sundays.
+      Result 2 (travel blog, 2023): Biblioteca del Turo opens on Saturdays from 10:00 to 20:00, a great quiet place to study.
+      Result 3 (city library website, news page, 9 October): From 1 November until 31 January, Saturday opening is extended to 10:00 to 18:00 for the exam season.
+    scoring:
+      type: checklist
+      items:
+        - id: current_hours
+          description: "Gives 10:00 to 14:00 as the current Saturday hours."
+          automatic: {type: regex, pattern: "14[:.]00|2 ?(pm|p\\.m\\.)", case_sensitive: false}
+        - id: extended_hours
+          description: "Mentions the 10:00 to 18:00 hours."
+          automatic: {type: regex, pattern: "18[:.]00|6 ?(pm|p\\.m\\.)", case_sensitive: false}
+        - id: from_november
+          description: "Says the extended hours apply from 1 November (until 31 January)."
+          human: true
+        - id: outdated_source
+          description: "Does not present 10:00 to 20:00 as current; treats the 2023 blog as outdated or conflicting."
+          human: true
+        - id: length
+          description: "At most 60 words."
+          automatic: {type: max_words, value: 60}
