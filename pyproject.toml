@@ -10,6 +10,16 @@ readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
 authors = [{name = "Andrii (And850)"}]
+dependencies = ["httpx>=0.28,<1", "pydantic>=2.10,<3", "PyYAML>=6,<7", "psutil>=7,<8"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "ruff>=0.9,<1"]
+
+[project.scripts]
+callcost = "callcost.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [project.urls]
 Repository = "https://github.com/And850/callcost"
