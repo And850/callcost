@@ -21,3 +21,7 @@ Five measured repeats for full runs. Smoke mode uses only one held-out call per 
 ## Review focus
 
 Crash between checkpoint and CSV write; signal during streaming or model loading; stale status after SIGKILL; two resume processes; changed files on resume; missing swap counters; no sudo credentials; leftover owned model; an unrelated loaded model; missing cloud inputs. Preflight thresholds apply before loading, not to the free RAM left after an 8-bit model has loaded.
+
+## Updated owner instructions, 15 October 2026
+
+Remove latency and memory gates before smoke testing. Keep the 10 percentage point and twice-previous-drop quality rule, variance rule and both kill criteria. Report cost savings beside every step. Add whitespace-based max_words checks and regex pattern aliases for the supplied invented-text summaries, but do not infer on them until owner review is confirmed. Use configs/experiment.yaml and Gemini thinking level low; cloud thinking cannot be disabled. Verify cloud documentation and log list-price equivalent separately from free-tier payment.
