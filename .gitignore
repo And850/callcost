@@ -13,3 +13,6 @@ dist/
 runs/
 prompts/private/
 configs/private/
+
+.venv-convert/
+models/

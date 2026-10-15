@@ -26,3 +26,22 @@ Interfaces: schemas feed both providers and the experiment coordinator; provider
 ## Verification record
 
 Implementation and verification entries will be appended as each task completes.
+
+### 15 October 2026 implementation and verification
+
+- Input validation, durable CSV/metadata storage and both streaming adapters implemented in small normal Git commits.
+- Seeded configuration blocks, held-out thinking-off pilots, warm-ups, five measured repeats, first-appearance/repeat labels and exact-text answer variation implemented. Failures abort without retries and preserve partial evidence.
+- Local installed Qwen3.5-9B MLX 4-bit pilot passed: explicit zero reasoning tokens, no reasoning content/tags, separate load timing, complete response evidence and process RSS samples. Native load rejected the alias with 404; resolve only the matching selected alias to its verified group key. All successful pilot instances were unloaded.
+- Live worker discovery identified the bundled Node runtime executing `llmworker.js`. Its RSS is below weight-file size and is not a total unified-memory footprint. Comfortable headroom has not been established.
+- Gemini has offline fixtures only because no key/model/prices are configured. Privileged powermetrics data remain unverified because non-interactive sudo required a password. These are remaining live validation tasks, not zero readings.
+- Separate code review found interrupted-attempt loss, unsafe explicit process roots, empty-answer misclassification and missing baseline qualifications. Fixes and regression tests cover these, including interruption after the HTTP response while collecting conditions. Energy blocks now expose drift, missing post-baselines and negative deltas without claiming a statistical cutoff.
+- GSM8K sample committed from pinned revision with 30 original test-row IDs, stable seed/hash selection, source checksum and upstream licence. Private summaries are still pending.
+- Verified 47 automated tests and Ruff checks, installed CLI package/help, converter CLI help and shell syntax. A captured held-out LM Studio stream is retained as a parser fixture. No full dataset run has occurred.
+
+### Conversion and reference amendment, before any full run
+
+The owner explicitly selected official-source independent MLX conversions using pinned mlx-lm, same group size, and a fifth local configuration labelled Fairy's production model. This replaces the earlier proposed mlx-vlm preparation path. The four matched experimental variants use text-only mlx-lm conversion; the existing production reference retains vision support and stays outside the knee sequence.
+
+Prepared mlx-lm 0.32.0 with locked dependencies under Python 3.13.2. Exact commands and pins are in `scripts/download_qwen_source.sh`, `scripts/convert_qwen_mlx.sh` and `docs/model-preparation.md`. Disk availability after environment setup was 192.78 GB against approximately 45 GB planned. No source weights or converted weights were downloaded. The owner explicitly requires confirmation before downloading; the code and commands are committed first for review.
+
+Final conversion review also identified a missing source-integrity check. The preparation script now verifies exact file sets, lengths and SHA-256 hashes before converting, with regressions for modified, extra and missing source files. No model script was run.

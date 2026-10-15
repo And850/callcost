@@ -1,4 +1,5 @@
-# Schema proposal. Not runnable until identifiers, prices and thinking are filled.
+# Fill model identifiers, complete file lists and verified prices before validation.
+# Qwen3.5-9B, MLX at 8/6/4/3 bits, pending reproducible conversion and pilot.
 schema_version: 1
 run:
   repeats: 5
@@ -18,27 +19,68 @@ lmstudio:
   cache_policy: disable_if_supported_else_split
 configurations:
   - id: local-q8
+    label: Qwen3.5-9B MLX 8-bit, converted
+    comparison_role: quantisation_series
     provider: lmstudio
     model_key: null
-    expected_quantisation: Q8_0
+    expected_quantisation: 8bit
+    model_format: mlx
+    reasoning: "off"
+    model_files: []  # All weights, tokenizer, template and model configuration files.
   - id: local-q6
+    label: Qwen3.5-9B MLX 6-bit, converted
+    comparison_role: quantisation_series
     provider: lmstudio
     model_key: null
-    expected_quantisation: Q6_K
+    expected_quantisation: 6bit
+    model_format: mlx
+    reasoning: "off"
+    model_files: []  # All weights, tokenizer, template and model configuration files.
   - id: local-q4
+    label: Qwen3.5-9B MLX 4-bit, converted
+    comparison_role: quantisation_series
     provider: lmstudio
     model_key: null
-    expected_quantisation: Q4_K_M
+    expected_quantisation: 4bit
+    model_format: mlx
+    reasoning: "off"
+    model_files: []  # All weights, tokenizer, template and model configuration files.
   - id: local-q3
+    label: Qwen3.5-9B MLX 3-bit, converted
+    comparison_role: quantisation_series
     provider: lmstudio
     model_key: null
-    expected_quantisation: Q3_K_M
+    expected_quantisation: 3bit
+    model_format: mlx
+    reasoning: "off"
+    model_files: []  # All weights, tokenizer, template and model configuration files.
+  - id: fairy-production
+    label: "Fairy's production model"
+    comparison_role: production_reference
+    provider: lmstudio
+    model_key: qwen/qwen3.5-9b@4bit
+    expected_quantisation: 4bit
+    model_format: mlx
+    reasoning: "off"
+    # Existing LM Studio files, read without changing Fairy or its model.
+    model_files:
+      - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/chat_template.jinja
+      - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/config.json
+      - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/model-00001-of-00002.safetensors
+      - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/model-00002-of-00002.safetensors
+      - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/model.safetensors.index.json
+      - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/preprocessor_config.json
+      - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/processor_config.json
+      - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/tokenizer.json
+      - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/tokenizer_config.json
+      - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/video_preprocessor_config.json
+      - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/vocab.json
   - id: cloud
     provider: gemini
     model: null
     api_key_env: GEMINI_API_KEY
-    # Set exactly one supported choice: {budget: <integer>} or {level: <string>}.
-    thinking: null
+    # Choose a model that supports disabling thinking, then verify in a pilot.
+    thinking: {budget: 0}
     pricing:
       currency: USD
       input_per_million: null

@@ -11,7 +11,8 @@
 - Forty scored prompts: 30 pinned GSM8K test problems and ten owner-supplied summaries.
 - Five measured calls per prompt per configuration, with additional excluded warm-ups.
 - No family selection before showing the installed variants to the owner.
-- Fixed Gemini thinking setting and config-supplied prices.
+- Thinking off for every configuration, verified in a held-out pilot; config-supplied Gemini prices.
+- Four independent official-source mlx-lm conversions at 3/4/6/8 bits, group size 64, plus Fairy's production 4-bit reference. Download only after owner confirmation.
 - No invented measurements, hidden retries, LLM primary judge or Fairy code changes.
 - No em dashes in README or documentation.
 - Small commits, no force-pushes and no history rewriting.
@@ -21,21 +22,21 @@
 
 - [x] Publish the README, MIT licence, measurement specification and example input formats.
 - [x] Record the installed model inventory without claiming file sizes are runtime memory.
-- [ ] Add a reproducible 30-problem GSM8K selection with pinned source, row IDs and licence.
+- [x] Add a reproducible 30-problem GSM8K selection with pinned source, row IDs and licence.
 
 ## Milestone 1: runners and logging, 25 October 2026
 
 Files: `src/callcost/cli.py`, `schemas.py`, `experiment.py`, `storage.py`, `providers/lmstudio.py`, `providers/gemini.py`, and `measurements/{machine,memory,energy}.py`.
 
-- [ ] Implement strict YAML/JSON validation before provider requests. Test duplicate IDs, unknown fields, repeats below five, missing scoring rules, unresolved prices and missing thinking settings.
-- [ ] Define one typed per-call record with explicit units, missing-value reasons, statuses, provider usage and load-event references. Test CSV escaping and metadata round trips.
-- [ ] Implement LM Studio discovery, explicit variant loading and streamed text/statistics. Test fragmented streaming events, empty events, truncated streams and unexpected model identity using recorded API fixtures.
-- [ ] Implement Gemini streaming with explicit thinking controls. Test thinking-token accounting, missing usage, rate limiting and payload byte counts.
-- [ ] Implement machine metadata and sampled process RSS. Test process exits, ambiguous worker identity and contemporaneous sums rather than sums of separate peaks.
-- [ ] Add optional powermetrics collection and raw preservation. Test units, overlapping intervals, incomplete coverage, baseline drift and negative deltas.
-- [ ] Implement seeded sequential scheduling, held-out warm-ups and first-appearance/repeat labels. Test that every configuration sees every prompt exactly five measured times.
-- [ ] Log exact answer-text variation across measured repeats for each prompt/configuration group, retaining distinct-answer counts and participating call IDs. Test identical answers, changed numeric answers, whitespace-only changes, interleaved groups, excluded warm-ups and failed attempts.
-- [ ] Verify with offline fixtures, then a clearly labelled smoke run once model settings and access are available. Commit each independently verified component.
+- [x] Implement strict YAML/JSON validation before provider requests. Test duplicate IDs, unknown fields, repeats below five, missing scoring rules, unresolved prices and missing thinking settings.
+- [x] Define one typed per-call record with explicit units, missing-value reasons, statuses, provider usage and load-event references. Test CSV escaping and metadata round trips.
+- [x] Implement LM Studio discovery, explicit variant loading and streamed text/statistics. Test fragmented streaming events, empty events, truncated streams and unexpected model identity using synthetic API fixtures plus a captured installed-MLX stream.
+- [x] Implement Gemini streaming with explicit thinking controls. Test thinking-token accounting, missing usage, rate limiting and payload byte counts.
+- [x] Implement machine metadata and sampled process RSS. Test process exits, ambiguous worker identity and contemporaneous sums rather than sums of separate peaks.
+- [x] Add optional powermetrics collection and raw preservation. Test units, overlapping intervals, incomplete coverage, baseline drift and negative deltas.
+- [x] Implement seeded sequential scheduling, held-out warm-ups and first-appearance/repeat labels. Test that every configuration sees every prompt exactly five measured times.
+- [x] Log exact answer-text variation across measured repeats for each prompt/configuration group, retaining distinct-answer counts and participating call IDs. Test identical answers, changed numeric answers, whitespace-only changes, interleaved groups, excluded warm-ups and failed attempts.
+- [x] Verify with offline fixtures, then a clearly labelled smoke run once model settings and access are available. Commit each independently verified component. The installed local pilot passed; Gemini and privileged energy validation remain pending.
 
 ## Milestone 2: aggregation
 

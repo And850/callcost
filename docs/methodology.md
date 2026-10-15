@@ -1,6 +1,6 @@
 # Measurement method
 
-This document specifies planned behaviour. No runner or measurement collector is implemented yet.
+Milestone 1 implements collection and exact-answer variation. Quality scoring, percentile aggregation and blind review below remain specifications for later milestones. Provider streams are tested with synthetic fixtures and one captured LM Studio 0.4.24 MLX stream. The installed 4-bit pilot verified loading, thinking off and process RSS collection. Gemini and privileged power validation remain pending. See [pilot validation](pilot-validation.md).
 
 ## Timing and tokens
 
@@ -20,7 +20,7 @@ Identify the LM Studio application and inference-worker processes by executable 
 
 Sample process RSS every 100 ms using psutil. For each timestamp, sum the RSS of the identified processes, then take the largest sampled sum during the call. Do not sum the independent peak of each process, because those peaks may occur at different times.
 
-The column label is `LM Studio RSS peak, sampled`. Keep pre-call memory, sampling timestamps, actual gaps and process identities. Include resident weights in the peak. This is not exact model-owned memory: shared pages, unified memory and sampling resolution limit attribution.
+The column label is `LM Studio RSS peak, sampled`. Keep sampling timestamps and process identities in raw JSONL; pre/post-call available system memory and swap are in conditions. Raw sample timestamps expose actual gaps. Include resident weights in the peak. This is not exact model-owned memory: shared pages, unified memory and sampling resolution limit attribution.
 
 The knee calculation uses the median of the per-call peaks for each configuration and task type. Report memory savings relative to the preceding, higher-precision level.
 
@@ -34,7 +34,7 @@ Measure a ten-second idle baseline with the model resident and measurement tools
 estimated_energy_j = sum((power_w - baseline_power_w) * overlap_seconds)
 ```
 
-Samples describe time intervals. Use their overlap with the request window, record boundary approximation and reject insufficient coverage. Preserve negative deltas and flag noise or baseline mismatch rather than clamping to zero.
+Use the pre-block baseline for subtraction, and save the post-block baseline separately to reveal drift. Sample end times use client receipt on a monotonic clock; starts subtract the reported `elapsed_ns`. This is approximate attribution and is not synchronised device telemetry. Samples describe time intervals. Use their overlap with the request window, record boundary approximation and reject insufficient coverage. Require at least two overlapping samples and at least 90% interval coverage; reject overlapping sample intervals beyond 10 ms. Preserve negative deltas rather than clamping to zero. Each configuration energy block records the absolute baseline drift, a descriptive shift/missing-baseline assessment and IDs of negative-delta calls. Calls link to that block through configuration ID. These qualifications must accompany energy estimates. There is no registered statistical drift cutoff, so a shift flag is not a significance claim or automatic correction. Short calls frequently have unavailable energy at this sample rate.
 
 Use only supported, non-overlapping power domains. Record their names and units. A CPU/GPU/ANE sum is not wall-socket power and may omit memory, display and other components. Every presentation must retain the label `estimate, whole-machine delta` and identify the actual scope in its accompanying method.
 
@@ -46,13 +46,13 @@ Consult the installed LM Studio version and its supported API controls before th
 
 When a supported cache-disable control exists, use it and record the requested and verified setting. Otherwise record the first measured appearance of each prompt per configuration separately from the four subsequent measured appearances. Report both strata with their own sample counts. Do not label either stratum as proven uncached or cached. Keep warm-up prompts separate from the scored dataset.
 
-Use one request at a time, seeded random ordering and fixed configuration settings. Preserve the actual schedule, loading events and cache policy so reloads and cache exposure can be audited. A fresh chat does not prove a fresh runtime cache.
+Use one request at a time and seeded configuration blocks: load one configuration, run a held-out pilot, run the configured warm-ups, then shuffle all task prompts independently for each of five repeat rounds before unloading. Configuration order is seeded too. This preserves repeat cache exposure, but a single block per model cannot remove thermal or time-of-day confounding. Keep configuration settings fixed. Preserve the actual schedule, loading events and cache policy so reloads and cache exposure can be audited. A fresh chat does not prove a fresh runtime cache.
 
 ## Gemini thinking and price
 
-Each Gemini configuration must contain exactly one explicit, model-supported thinking budget or thinking level. An unresolved setting prevents a benchmark run. Record the setting and effective model identifier in metadata.
+Each Gemini configuration must contain `thinking: {budget: 0}` and use a model that supports disabling thinking. Local configurations use `reasoning: "off"`. A held-out pilot must return a non-empty answer, zero reasoning tokens and no observed reasoning content or `<think>` tags. Missing reasoning-token evidence is not treated as zero. Check subsequent calls too; any violation aborts the run after retaining the response. Record the setting, disabling method, evidence source and effective model identifier.
 
-Use provider usage metadata for input, visible output, thinking and cached token counts. Calculate the declared standard list-price equivalent using configured prices. Include billable thinking tokens exactly once. Record currency, price source and checked date; report this as a list-price equivalent rather than the actual free-tier bill. Never infer missing usage from response length.
+Use provider usage metadata for input, visible output, thinking and cached token counts. Calculate the declared standard list-price equivalent using configured prices. Include billable thinking tokens exactly once. When Gemini omits `thoughtsTokenCount`, infer it only if complete counts permit `totalTokenCount - promptTokenCount - candidatesTokenCount - toolUsePromptTokenCount`; record that accounting source. No tools are requested, so absent tool-use count is zero. Cached input is charged at the configured standard input rate: this is a standard list-price equivalent, not a claim about a cache-discounted bill. Record currency, price source and checked date; report this as a list-price equivalent rather than the actual free-tier bill. Never infer missing usage from response length.
 
 ## Quality and statistics
 
@@ -63,6 +63,8 @@ Checklist scores are the fraction of equally weighted criteria passed. Automatic
 Keep call failures, timeouts, truncation and missing observations explicit. A refusal or unparseable completed answer is a quality outcome. Infrastructure failures must not disappear through silent retries. Incomplete results must not support an unqualified knee conclusion.
 
 Use the ordinary median for p50 and nearest-rank p95. Display the number of valid observations for each metric. For IQRs, use linear interpolation at ranks `(n - 1) * 0.25` and `(n - 1) * 0.75` in zero-based sorted data. Closed IQR intervals that touch count as overlapping. Keep prompts as the independent task units when describing uncertainty.
+
+The four independently converted mlx-lm configurations form the quantisation sequence. `comparison_role: production_reference` identifies Fairy's existing model, whose conversion retains vision support. Preserve its label and exclude it from that sequence, alongside the Gemini cloud reference.
 
 Apply the README's knee and indistinguishability rules without selecting thresholds after seeing outcomes. Keep cache strata visible; do not silently select the stratum producing the strongest claim. Any remaining analysis conventions must be committed before a full run.
 
@@ -80,7 +82,7 @@ Output variation is independent of quality scoring. Two different answers may bo
 
 ## Run artifacts
 
-`calls.csv` contains per-attempt identity, prompt/configuration IDs, repeat and cache-stratum labels, status, answer, timing, token usage and cost measurements. `metadata.json` stores machine/software conditions, input hashes, model identity, load events, settings, pricing and the schedule. Raw memory and power samples preserve the basis of derived values. Separate review decisions reference anonymous answer IDs; the identity mapping is hidden from review mode.
+`calls.csv` contains per-attempt identity, prompt/configuration IDs, repeat and cache-stratum labels, status, answer, timing, token usage and cost measurements. `metadata.json` stores machine/software conditions, input hashes, model identity, load events, settings, pricing and the schedule. Raw memory and power samples preserve the basis of derived values. Later review decisions will reference anonymous answer IDs with a separate hidden identity mapping.
 
 Record chip, CPU/GPU cores, RAM, macOS, LM Studio version, model file and quantisation, charger state, timestamp and readable thermal state. Missing thermal readings mean unavailable, not nominal. Secrets and machine serial numbers are not needed in run metadata.
 
@@ -93,3 +95,13 @@ Record chip, CPU/GPU cores, RAM, macOS, LM Studio version, model file and quanti
 - [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing)
 - [psutil](https://psutil.io/)
 - The installed macOS `powermetrics --help` and manual, whose version and supported samplers must be recorded with an instrumented run.
+
+## Current instrumentation limits
+
+The automatic process selector recognises the LM Studio app bundle and known inference-backend paths, plus the bundled Node runtime executing `llmworker.js` as observed on LM Studio 0.4.24. If it cannot identify a worker, memory is unavailable. Explicit `measurement.lmstudio_process_ids` add manually identified roots and descendants; they must still have recognised LM Studio identities. Automatic app/worker discovery remains active so explicit roots cannot silently replace the complete app group with just the Python client or GUI. A changing process set, failed sample or no in-window sample makes the peak unavailable. RSS is not physical footprint and has no proven relationship to model-only unified-memory use.
+
+The powermetrics parser currently accepts only plist samples with `elapsed_ns` and numeric nonnegative `processor.cpu_power`, `gpu_power` and `ane_power` in mW. The installed help confirms these samplers and NUL-separated plist output, but the actual plist schema has not yet been validated under sudo on this Mac. Unsupported schemas produce unavailable energy, not substituted readings. Raw samples and stderr are retained.
+
+Model file hashes identify the files supplied in config; the native model-list API does not independently prove that they are the files loaded by the runtime. Verify this mapping manually. The runner refuses to start if any LM Studio instance is already loaded and records the returned model identity, format, quantisation and echoed context length. It does not change the installed model files.
+
+On LM Studio 0.4.24, the models endpoint listed a `@4bit` variant alias that the load endpoint rejected with HTTP 404. For an alias, CallCost requires the listed `selected_variant` to match exactly, checks the reported quantisation, then sends the accepted group key. An unselected alias is rejected rather than silently loading another precision. The API behaviour for multiple newly converted variants must be validated before the full experiment; prepare separately addressable installed variants if the native API cannot select a member of a grouped listing. Requests, responses and HTTP statuses for list/load/unload are preserved alongside inference evidence.

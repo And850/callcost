@@ -6,7 +6,9 @@ CallCost is a Python command-line project comparing local models served by LM St
 
 ## Status
 
-Project foundation and pre-registration. The runners, aggregation and blind review commands are not implemented yet. No benchmark results have been collected. The local model family and Gemini model have not been selected.
+Milestone 1 runners and logging are implemented and tested with offline fixtures. A held-out pilot on the installed Qwen3.5-9B MLX 4-bit model verified streaming, loading/unloading, zero reasoning tokens and process RSS sampling. Gemini and energy validation are pending. Aggregation, quality scoring and blind review are later milestones. No benchmark results have been collected.
+
+The local family is Qwen3.5-9B in MLX format, with thinking off. The 3-, 4-, 6- and 8-bit variants will be converted independently from pinned official Qwen weights using mlx-lm 0.32.0 and group size 64. Fairy's existing 4-bit model is a fifth local configuration, labelled "Fairy's production model" and treated as a separate reference. See [model preparation](docs/model-preparation.md) for the inspected published candidates and conversion pins. The Gemini model and prices remain to be filled in.
 
 Fairy is a separate project. It will supply real summarisation requests, but its code and integration are outside this repository.
 
@@ -27,7 +29,7 @@ These rules are recorded before the first full run. Any later amendment must be 
 - Variance kill: if, for adjacent quantisation levels, the interquartile ranges of per-call latency overlap AND the quality difference is under 5 percentage points, the levels are treated as indistinguishable.
 - If no step meets the knee definition for a task type, report **no knee found** for that task type.
 
-Compare adjacent levels within the same local model family, ordered from highest to lowest precision. Gemini is a reference point, not a step in the quantisation sequence. Percentage-point quality changes are distinct from relative percentage savings in latency and memory.
+Compare adjacent levels within the same local model family, ordered from highest to lowest precision. Gemini and Fairy's production model are reference points outside the four converted levels in the quantisation sequence. Percentage-point quality changes are distinct from relative percentage savings in latency and memory.
 
 ### Kill criteria
 
@@ -35,7 +37,7 @@ If quality and cost fall together smoothly with no knee, or run-to-run variance 
 
 If running the tool on Andrii's own projects changes no decision, with no model swapped, no quantisation changed and nothing moved between local and cloud, the tool has failed at its purpose and the README will say so.
 
-## Planned measurements
+## Measurements
 
 | Metric | Definition |
 | --- | --- |
@@ -57,11 +59,11 @@ Missing measurements are recorded as unavailable with a reason, never silently r
 
 ## Method
 
-Run one request at a time. Keep temperature, output budget, context length and local inference settings fixed. Record the exact model files, quantisations and effective load settings. Each precision is a separately installed variant of the same base checkpoint and engine.
+Run one request at a time. Keep temperature, output budget, context length and local inference settings fixed. Record the exact model files, quantisations and effective load settings. The four experimental precisions are separately installed text-only MLX conversions of the same pinned checkpoint using the same converter and group size. The existing production reference retains its original conversion and vision support, so it is excluded from the four-level knee calculation.
 
 Use LM Studio's REST API to list, load and unload models. Disable prompt/KV cache reuse between calls if the API provides a supported control. If it does not, label the first measured appearance of each prompt separately from its four repeats and report both groups. Neither label proves the underlying cache state. Conversation storage and prompt caching are different mechanisms.
 
-Fix Gemini's thinking budget or level in config and record it in metadata. Do not silently accept a provider default or discard thinking tokens from list-price calculations.
+Hold thinking off for every configuration: LM Studio `reasoning: "off"` and a Gemini model supporting `thinkingBudget: 0`. A held-out pilot must show zero reasoning tokens and no reasoning content or `<think>` tags before measured calls begin. Missing evidence stops the run. Preserve the setting, observed counts, evidence source and pilot call ID in metadata, and check every later call too. Count any observed thinking tokens in list-price calculations even if they invalidate the call.
 
 Record hardware, CPU/GPU core counts, RAM, macOS and LM Studio versions, timestamp, charger state and readable thermal information. Preserve configuration and prompt hashes, software version and the randomisation seed.
 
@@ -75,17 +77,31 @@ See [the measurement method](docs/methodology.md) and [the implementation plan](
 
 ## Reproduction
 
-There is no runnable benchmark command yet. The planned interface is:
+Use Python 3.12 or newer on macOS:
 
-```text
-callcost run --prompts prompts/dataset.yaml --config configs/experiment.yaml
-callcost report runs/<run-id>
-callcost review runs/<run-id>
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install '.[dev]'
+.venv/bin/callcost models
+.venv/bin/callcost validate --prompts datasets/gsm8k/prompts.json --config configs/private/experiment.yaml
+.venv/bin/callcost run --prompts datasets/gsm8k/prompts.json --config configs/private/experiment.yaml --output runs/pilot-001 --pilot-only
+.venv/bin/callcost run --prompts prompts/private/dataset.yaml --config configs/private/experiment.yaml --output runs/experiment-001
+.venv/bin/pytest -q
 ```
+
+See the [pilot validation record](docs/pilot-validation.md) for what has and has not been exercised on this Mac.
+
+Copy `configs/example.yaml` to `configs/private/experiment.yaml` and fill every placeholder. Quote `"off"` in YAML. Supply exact LM Studio keys and quantisation names from `callcost models`; list all model weight, configuration, tokenizer and template files so they can be hashed. Relative file paths resolve against the config directory. The REST API does not prove that this supplied file list belongs to the selected model; check that mapping against the installed directory before a run.
+
+The output directory must not exist. Each run saves `calls.csv`, `metadata.json`, exact request/response bodies and instrument samples under `raw/`. It prints progress and the answer-variation count per configuration/task. The p50/p95 cost-quality table is milestone 2. Pilot and warm-up rows are retained but excluded from measured repeats. Any provider or thinking-verification failure stops the run, preserves partial evidence and returns non-zero; calls are never retried silently.
+
+LM Studio must already be running with its local server enabled and existing model instances unloaded. CallCost only unloads the instance it loaded. Set the configured Gemini credential environment variable before running; credentials are not written to run artifacts. Input and output text are saved locally, so treat run directories as private unless deliberately publishing them.
+
+Energy is optional by default. If you want power measurement, run `sudo -v` yourself immediately before the benchmark. CallCost invokes only the collector through `sudo -n`; it never prompts for a password and the benchmark stays unprivileged. Without access or supported samples, energy remains unavailable. `required_powermetrics` stops the run when collection cannot start or establish a baseline. See [measurement details](docs/methodology.md) for coverage and scope limits.
 
 Before a full run, install the selected variants, fill in exact model identifiers and verified Gemini prices, fix the thinking setting, supply the ten real summaries and their checklists, and validate the complete 40-prompt dataset. Credentials are read from environment variables and never committed.
 
-GSM8K selection will pin the upstream commit, original zero-based test-row indices, selection algorithm and seed. The sample and its source licence will be retained with the reproducible selection procedure.
+The committed [GSM8K sample](datasets/gsm8k/prompts.json) records original zero-based test-row indices. Rebuild it with `python3 scripts/prepare_gsm8k.py`. The [selection manifest](datasets/gsm8k/selection.json) pins the source commit, source SHA-256, row indices and stable hash-ranking procedure using seed 2027. Its upstream licence is retained alongside the sample. The ten private summaries still need to be supplied and merged into a 40-prompt file before a full run.
 
 Run artifacts and private prompt files are ignored by Git by default. Publish only deliberately selected artifacts.
 
@@ -98,7 +114,7 @@ Run artifacts and private prompt files are ignored by Git by default. Publish on
 - LM Studio overhead: measurements include its server, runtime and associated process overhead rather than isolating model computation.
 - Energy: the energy column is an estimate, whole-machine delta, and the measured CPU/GPU/ANE domains may omit other components and differ from wall-socket power.
 - Cloud energy: energy used by Gemini's servers is outside scope and is neither measured nor estimated.
-- Sampled RSS can miss brief peaks, double-count shared pages and imperfectly account for unified-memory allocations.
+- Sampled RSS can miss brief peaks, double-count shared pages and omit GPU/unified-memory allocations; the installed MLX pilot reported RSS below weight-file size, so RSS cannot establish that a model fits comfortably in RAM.
 - Public benchmark questions may have appeared in model training data; GSM8K accuracy does not establish unseen-task reasoning ability.
 - Cloud model updates, service load and network conditions limit exact reproducibility.
 

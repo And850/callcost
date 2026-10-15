@@ -1,0 +1,89 @@
+[
+  {
+    "repo": "mlx-community/Qwen3.5-9B-3bit",
+    "revision": "d86313135359a5b828cc54059e3e7f7883edeafc",
+    "base_model": null,
+    "weight_bytes": 0,
+    "weight_GB": 0.0,
+    "files": [],
+    "config_paths": []
+  },
+  {
+    "repo": "mlx-community/Qwen3.5-9B-4bit",
+    "revision": "8b2b98c00a6b4d291155e4890773ca8f769aee53",
+    "base_model": [
+      "Qwen/Qwen3.5-9B-Base"
+    ],
+    "weight_bytes": 5950221072,
+    "weight_GB": 5.95,
+    "files": [
+      {
+        "rfilename": "model-00001-of-00002.safetensors",
+        "size": 5349771222
+      },
+      {
+        "rfilename": "model-00002-of-00002.safetensors",
+        "size": 600449850
+      }
+    ],
+    "config_paths": [
+      "config.json",
+      "preprocessor_config.json",
+      "processor_config.json",
+      "tokenizer_config.json",
+      "video_preprocessor_config.json"
+    ]
+  },
+  {
+    "repo": "mlx-community/Qwen3.5-9B-6bit",
+    "revision": "76fe4065e622cf34990d3c13ef80ec8531c9a0f7",
+    "base_model": [
+      "Qwen/Qwen3.5-9B-Base"
+    ],
+    "weight_bytes": 8188406421,
+    "weight_GB": 8.19,
+    "files": [
+      {
+        "rfilename": "model-00001-of-00002.safetensors",
+        "size": 5348887423
+      },
+      {
+        "rfilename": "model-00002-of-00002.safetensors",
+        "size": 2839518998
+      }
+    ],
+    "config_paths": [
+      "config.json",
+      "preprocessor_config.json",
+      "processor_config.json",
+      "tokenizer_config.json",
+      "video_preprocessor_config.json"
+    ]
+  },
+  {
+    "repo": "mlx-community/Qwen3.5-9B-8bit",
+    "revision": "16daa4818c54ce5f5436f929d52542eb65bbed9d",
+    "base_model": [
+      "Qwen/Qwen3.5-9B-Base"
+    ],
+    "weight_bytes": 10426592423,
+    "weight_GB": 10.43,
+    "files": [
+      {
+        "rfilename": "model-00001-of-00002.safetensors",
+        "size": 5339522525
+      },
+      {
+        "rfilename": "model-00002-of-00002.safetensors",
+        "size": 5087069898
+      }
+    ],
+    "config_paths": [
+      "config.json",
+      "preprocessor_config.json",
+      "processor_config.json",
+      "tokenizer_config.json",
+      "video_preprocessor_config.json"
+    ]
+  }
+]
