@@ -1,0 +1,29 @@
+model: local/callcost-qwen35-9b-text-3bit
+base:
+- key: And850/callcost-qwen35-9b-3bit-mlx-text
+  sources:
+  - type: huggingface
+    user: And850
+    repo: callcost-qwen35-9b-3bit-mlx-text
+metadataOverrides:
+  domain: llm
+  architectures:
+  - qwen3_5
+  compatibilityTypes:
+  - safetensors
+  paramsStrings:
+  - 9B
+  contextLengths:
+  - 262144
+  vision: false
+  reasoning: true
+  trainedForToolUse: true
+customFields:
+- key: enableThinking
+  displayName: Enable Thinking
+  description: Controls the official Qwen template enable_thinking variable
+  type: boolean
+  defaultValue: false
+  effects:
+  - type: setJinjaVariable
+    variable: enable_thinking

@@ -1,0 +1,22 @@
+{
+  "type": "model",
+  "owner": "local",
+  "name": "callcost-qwen35-9b-text-6bit",
+  "dependencies": [
+    {
+      "type": "model",
+      "purpose": "baseModel",
+      "modelKeys": [
+        "And850/callcost-qwen35-9b-6bit-mlx-text"
+      ],
+      "sources": [
+        {
+          "type": "huggingface",
+          "user": "And850",
+          "repo": "callcost-qwen35-9b-6bit-mlx-text"
+        }
+      ]
+    }
+  ],
+  "revision": 1
+}
