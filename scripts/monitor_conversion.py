@@ -16,6 +16,36 @@ def pressure_stop(available_bytes, swap_growth_bytes):
     return available_bytes < 512 * 1024**2 and swap_growth_bytes > 4 * 1024**3
 
 
+def group_is_running(group_id):
+    for member in psutil.process_iter(['pid', 'status']):
+        try:
+            if os.getpgid(member.pid) == group_id and member.info['status'] != psutil.STATUS_ZOMBIE:
+                return True
+        except (ProcessLookupError, PermissionError):
+            continue
+    return False
+
+
+def terminate_group(process, grace_seconds=10):
+    try:
+        os.killpg(process.pid, signal.SIGTERM)
+    except ProcessLookupError:
+        process.wait(timeout=5)
+        return
+    deadline = time.monotonic() + grace_seconds
+    while time.monotonic() < deadline:
+        process.poll()  # Reap an exited leader, but keep checking its descendants.
+        if not group_is_running(process.pid):
+            break
+        time.sleep(.05)
+    if group_is_running(process.pid):
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    process.wait(timeout=5)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
@@ -76,13 +106,10 @@ def main():
     except KeyboardInterrupt:
         stopped = True
     finally:
-        if process.poll() is None:
-            os.killpg(process.pid, signal.SIGTERM)
-            try:
-                process.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                os.killpg(process.pid, signal.SIGKILL)
-                process.wait(timeout=5)
+        if group_is_running(process.pid):
+            terminate_group(process)
+        else:
+            process.wait(timeout=5)
         summary = {'command': command, 'exit_code': process.returncode, 'stopped_for_memory_or_interrupt': stopped,
                    'duration_s': time.monotonic() - started, 'sample_count': len(samples),
                    'minimum_available_bytes': min((s['available_bytes'] for s in samples), default=None),

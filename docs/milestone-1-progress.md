@@ -50,3 +50,5 @@ Final conversion review also identified a missing source-integrity check. The pr
 ### Approved conversion execution
 
 The owner approved the approximately 19.33 GB download and all four conversions, requested memory monitoring and per-output pilots, and required a measured vision-weight caveat for Fairy's production reference. Started the pinned download through the committed script. Current memory pressure prompted a request to close memory-heavy apps before conversion. Header-only component accounting measured 912,020,960 vision payload bytes out of 5,950,062,560 total, or 15.3279%; runtime attribution remains explicitly unavailable. Added a two-second conversion resource monitor with a documented sustained-thrashing stop condition. The four quantisation commands and their settings are unchanged.
+
+Conversion monitor review found that waiting only for the shell leader could leave a descendant alive after stopping. Fixed whole-group cleanup with a reproducer whose child ignores SIGTERM; regression failed before the fix and passed after it.
