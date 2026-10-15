@@ -45,6 +45,10 @@ Before the first scored benchmark and before the unattended launcher smoke test,
 
 The revised hypothesis is that task quality stays nearly flat across levels and then drops sharply at one step, while cost falls by a roughly steady amount per step. The knee is the first step after the baseline step where quality falls by at least 10 percentage points AND at least twice the previous step's drop. The baseline step cannot qualify. Cost is no longer a gate: show weight-byte memory saving, measured physical footprint as a secondary column, and p50 and p95 latency savings for every step. The variance rule and both kill criteria remain unchanged. If no eligible step meets the quality rule, report **no knee found**; missing eligible data or outstanding human scores are **insufficient data**, not evidence of no knee.
 
+### Thinking pre-registration amendment, 15 October 2026
+
+Before any scored benchmark data or launcher smoke data, clarify the thinking policy: thinking is off for all local configurations (the quantisation series and Fairy's reference). The cloud reference runs at `gemini-3.8-flash`'s lowest available level, `thinking_level: low`, because this model cannot disable thinking. Its thinking tokens are reported separately and included in billable output. The cloud is a reference point outside the knee calculation, so this does not affect the knee rule. This supersedes the earlier requirement that cloud thinking be disabled and aligns the method with the recorded cloud configuration. Excluded local preparation and instrumentation pilots already exist.
+
 ### Kill criteria
 
 If quality and cost fall together smoothly with no knee, or run-to-run variance is larger than the difference between quantisation levels, the hypothesis fails and the README will say so. The registered variance rule above determines when adjacent levels are indistinguishable.
@@ -79,7 +83,7 @@ Run one request at a time. Keep temperature, output budget, context length and l
 
 Use LM Studio's REST API to list, load and unload models. Disable prompt/KV cache reuse between calls if the API provides a supported control. If it does not, label the first measured appearance of each prompt separately from its four repeats and report both groups. Neither label proves the underlying cache state. Conversation storage and prompt caching are different mechanisms.
 
-Hold thinking off for every configuration: LM Studio `reasoning: "off"` and a Gemini model supporting `thinkingBudget: 0`. A held-out pilot must show zero reasoning tokens and no reasoning content or `<think>` tags before measured calls begin. Missing evidence stops the run. Preserve the setting, observed counts, evidence source and pilot call ID in metadata, and check every later call too. Count any observed thinking tokens in list-price calculations even if they invalidate the call.
+Thinking is off for all local configurations, both the quantisation series and Fairy's reference, using LM Studio `reasoning: "off"`. A held-out local pilot must show zero reasoning tokens and no reasoning content or `<think>` tags before measured calls begin. Missing local evidence stops the run. Preserve the setting, observed counts, evidence source and pilot call ID in metadata, and check every later local call too. The cloud reference runs at `gemini-3.8-flash`'s lowest available level, `thinking_level: low`, because this model cannot disable thinking. Its thinking tokens are reported separately and included in billable output. The cloud is a reference point outside the knee calculation, so this does not affect the knee rule.
 
 Record hardware, CPU/GPU core counts, RAM, macOS and LM Studio versions, timestamp, charger state and readable thermal information. Preserve configuration and prompt hashes, software version and the randomisation seed.
 
