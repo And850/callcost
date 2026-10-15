@@ -66,6 +66,18 @@ Use the ordinary median for p50 and nearest-rank p95. Display the number of vali
 
 Apply the README's knee and indistinguishability rules without selecting thresholds after seeing outcomes. Keep cache strata visible; do not silently select the stratum producing the strongest claim. Any remaining analysis conventions must be committed before a full run.
 
+## Answer variation across repeats
+
+Temperature 0 controls token sampling but does not guarantee reproducible GPU arithmetic or identical output. Floating-point addition and multiplication are not associative, and changes in evaluation order can alter results. Numerical changes can affect greedy token selection when candidate scores are close. This is a general limitation, not proof that any observed difference was caused by GPU arithmetic. See the [numerical accuracy](https://docs.pytorch.org/docs/stable/notes/numerical_accuracy.html) and [reproducibility](https://docs.pytorch.org/docs/stable/notes/randomness.html) explanations in PyTorch's documentation; citing them does not imply LM Studio uses PyTorch.
+
+Within a single run, group measured calls by configuration ID and prompt ID. Compare the exact decoded answer text without trimming, case folding or other normalisation. Retain each answer and its call ID, plus the number of distinct answers in the group. Log the group and participating call IDs whenever at least two distinct answers are observed. Compare answer text rather than provider IDs, timestamps or reasoning metadata.
+
+For each configuration and task type, report `varying_prompts / compared_prompts`: the number of prompt groups containing more than one distinct answer divided by the number with at least two completed measured responses. For example, answers A, A, B, A, B for one prompt contribute one varying prompt, not two or five. Record the distinct-answer count of two for that group.
+
+Exclude warm-ups and failed attempts from text comparisons, but keep their records and failure counts. A provider-completed truncated response remains an observed answer with its truncation flag. Groups with fewer than the configured five completed measured responses are explicitly incomplete; those with fewer than two cannot be compared and must not be reported as stable. Display incomplete and uncomparable group counts alongside the variation count. Compare all measured repeats, including the first appearance, while retaining their cache-stratum labels.
+
+Output variation is independent of quality scoring. Two different answers may both be correct, and five identical answers may all be wrong. Do not attribute differences automatically to quantisation, floating-point arithmetic or caching.
+
 ## Run artifacts
 
 `calls.csv` contains per-attempt identity, prompt/configuration IDs, repeat and cache-stratum labels, status, answer, timing, token usage and cost measurements. `metadata.json` stores machine/software conditions, input hashes, model identity, load events, settings, pricing and the schedule. Raw memory and power samples preserve the basis of derived values. Separate review decisions reference anonymous answer IDs; the identity mapping is hidden from review mode.

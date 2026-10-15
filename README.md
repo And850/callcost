@@ -67,6 +67,8 @@ Record hardware, CPU/GPU core counts, RAM, macOS and LM Studio versions, timesta
 
 Report median (p50) and p95 per configuration per task type, with sample and failure counts. Keep raw per-call data in CSV and run metadata in JSON. Preserve measurement samples so derived numbers can be checked.
 
+Log when repeated calls for the same prompt and configuration produce different answer text. Per configuration and task type, report the number of prompts with more than one distinct answer, alongside the number of prompts compared and any incomplete repeat groups. Compare exact answer text, including whitespace, and preserve the differing call IDs and answers. This counts output variation, not necessarily a change in correctness or evidence of a particular cause.
+
 Automatic quality checks run first. Blind human review shuffles answers, hides configuration and timing, and records checklist decisions separately. Unreviewed criteria remain pending. Maths scoring checks the numeric final line with a declared decimal tolerance and logs parseability separately. No LLM is the primary judge.
 
 See [the measurement method](docs/methodology.md) and [the implementation plan](docs/implementation-plan.md).
@@ -92,6 +94,7 @@ Run artifacts and private prompt files are ignored by Git by default. Publish on
 - Sample size: 30 maths problems and 10 summaries are a small task sample, and five repeats do not create five times as many independent problems.
 - Single device: results describe this Mac and do not support generalisation to other hardware.
 - Thermal throttling: a laptop's thermal and power state can change performance during a run despite controlled ordering and logged conditions.
+- Determinism: temperature 0 does not guarantee identical answers on a GPU because floating-point results can depend on execution order, so some answers may differ across repeats; the frequency must be measured rather than assumed small.
 - LM Studio overhead: measurements include its server, runtime and associated process overhead rather than isolating model computation.
 - Energy: the energy column is an estimate, whole-machine delta, and the measured CPU/GPU/ANE domains may omit other components and differ from wall-socket power.
 - Cloud energy: energy used by Gemini's servers is outside scope and is neither measured nor estimated.

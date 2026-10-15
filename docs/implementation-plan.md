@@ -15,6 +15,7 @@
 - No invented measurements, hidden retries, LLM primary judge or Fairy code changes.
 - No em dashes in README or documentation.
 - Small commits, no force-pushes and no history rewriting.
+- Use the fresh `gh repo clone` checkout and normal `git add`, `git commit` and `git push`. Verify local and remote are in sync before runner work. If the sandbox blocks Git metadata writes, stop and ask the owner to approve the command or adjust permissions; do not publish commits through the API as a workaround.
 
 ## Repository foundation
 
@@ -33,12 +34,14 @@ Files: `src/callcost/cli.py`, `schemas.py`, `experiment.py`, `storage.py`, `prov
 - [ ] Implement machine metadata and sampled process RSS. Test process exits, ambiguous worker identity and contemporaneous sums rather than sums of separate peaks.
 - [ ] Add optional powermetrics collection and raw preservation. Test units, overlapping intervals, incomplete coverage, baseline drift and negative deltas.
 - [ ] Implement seeded sequential scheduling, held-out warm-ups and first-appearance/repeat labels. Test that every configuration sees every prompt exactly five measured times.
+- [ ] Log exact answer-text variation across measured repeats for each prompt/configuration group, retaining distinct-answer counts and participating call IDs. Test identical answers, changed numeric answers, whitespace-only changes, interleaved groups, excluded warm-ups and failed attempts.
 - [ ] Verify with offline fixtures, then a clearly labelled smoke run once model settings and access are available. Commit each independently verified component.
 
 ## Milestone 2: aggregation
 
 - [ ] Implement p50, nearest-rank p95, IQRs and observation counts from saved CSV. Test hand-calculated samples, missing metrics and load-event deduplication.
 - [ ] Render one row per configuration/task with adjacent quality and cost metrics, and separate first-appearance/repeat reporting when cache reuse cannot be disabled.
+- [ ] Report varying prompts out of compared prompts per configuration/task, alongside incomplete and uncomparable group counts. Test that A, A, B, A, B counts as one varying prompt, and that a single completed response is not counted as stable.
 - [ ] Test incomplete and failed runs so missing data cannot become zero-cost successes.
 
 ## Milestone 3: blind review, 8 November 2026
