@@ -1,6 +1,6 @@
 # Qwen3.5-9B MLX preparation
 
-Decision recorded on 15 October 2026: use Qwen3.5-9B, MLX at 3, 4, 6 and 8 bits, with thinking off. The owner selected reproducible conversion of all four levels from one pinned source after the published 3-bit candidate proved empty. The owner approved the source download and all four conversions on 15 October 2026. Download is in progress; converted outputs and pilot results will be recorded below.
+Decision recorded on 15 October 2026: use Qwen3.5-9B, MLX at 3, 4, 6 and 8 bits, with thinking off. The owner selected reproducible conversion of all four levels from one pinned source after the published 3-bit candidate proved empty. The owner approved the source download and all four conversions on 15 October 2026. The 19,329,392,091-byte source download is complete. Every source shard matches its upstream LFS SHA-256. Converted outputs are pending the owner closing memory-heavy apps.
 
 ## Inspected published candidates
 
@@ -48,7 +48,7 @@ python3.13 -m venv .venv-convert
 .venv-convert/bin/mlx_lm.convert --help
 ```
 
-The environment was installed and its CLI help verified on this Mac. No model weights were downloaded. The converter CLI does not expose a revision flag, so download the exact revision to a local directory first, then convert with Hub access disabled. This avoids accidentally resolving `main` during conversion.
+The environment and CLI help were verified before the approved weight download. The converter CLI does not expose a revision flag, so download the exact revision to a local directory first, then convert with Hub access disabled. This avoids accidentally resolving `main` during conversion.
 
 The exact source download command is in [download_qwen_source.sh](../scripts/download_qwen_source.sh). It checks at least 45 GB free before downloading and writes a SHA-256 manifest of the local source. **Owner confirmation was received on 15 October 2026**, authorising the download and four conversions.
 
@@ -95,3 +95,18 @@ The monitor samples process-tree RSS, available system memory and swap every two
 A header-only inspection of the installed safetensors found **912,020,960 encoded bytes** of `vision_tower.*` tensors, including their scales and biases. Total tensor payload is **5,950,062,560 bytes**; vision therefore accounts for **15.3279%** of that payload. Language tensors account for 5,038,041,600 bytes. Safetensors file size, including headers, is 5,950,221,142 bytes.
 
 The [component report](data/fairy-production-weight-components.json) retains per-file counts and method. Run metadata records the same component breakdown for every local configuration. This measures encoded weight storage, not the resident/allocated memory attributable to vision. Do not subtract 912 MB from process RSS or infer a vision-only load duration. Fairy's RSS and load time include its original vision-capable architecture, runtime and file-cache state; comparisons to the text-only series carry that caveat.
+
+
+## Source download completed
+
+Downloaded **19,329,392,091 bytes** of non-cache source files at the pinned revision. All four safetensors shards match their published upstream LFS SHA-256 hashes. The [source manifest](data/qwen35-source-manifest.json) preserves file sizes, hashes and verification results. No conversion has started while the apps-closed confirmation is pending.
+
+## Fairy reference memory and load observation
+
+The last successful functional pilot on 15 October 2026 provides one excluded observation, not an experimental percentile:
+
+| Configuration | Load request wall time | Provider load time | Sampled LM Studio RSS peak | Encoded vision weights |
+| --- | ---: | ---: | ---: | ---: |
+| Fairy's production model, vision retained | 9.1169 s | 9.101 s | 1,777,991,680 bytes | 912,020,960 bytes |
+
+The [pilot record](data/fairy-production-pilot.json) contains the full-precision observations, model-file hashes, conditions and original call/run identity. This pilot ran on battery with substantial pre-existing swap. File-cache state was not controlled. Its RSS excludes some GPU/unified-memory allocations and is smaller than its weight files, so it cannot establish total model memory or a vision-only runtime cost. Its load time and memory must not be attributed solely to quantisation when compared with the new text-only series. The full experiment still requires its own matched-condition observations.

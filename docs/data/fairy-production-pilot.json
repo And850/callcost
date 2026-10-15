@@ -1,0 +1,106 @@
+{
+  "configuration_label": "Fairy's production model",
+  "comparison_role": "production_reference",
+  "run_directory": "runs/installed-4bit-pilot-005",
+  "call_id": "cbd75c084a064001865be44c2cb48111",
+  "timestamp_utc": "2026-10-15T16:16:43.059076+00:00",
+  "phase": "pilot",
+  "sample_count": 1,
+  "machine": {
+    "platform": "Darwin",
+    "python": "3.14.6",
+    "cpu_cores_physical": 10,
+    "cpu_cores_logical": 10,
+    "ram_bytes": 17179869184,
+    "macos_version": "27.0",
+    "macos_build": "26A428",
+    "chip": "Apple M1 Pro",
+    "gpu_cores": 16,
+    "lmstudio_version": "0.4.24+1",
+    "model": "MacBookPro18,1"
+  },
+  "load_request_wall_s": 9.116876707994379,
+  "provider_load_s": 9.101,
+  "memory_peak_rss_bytes": 1777991680,
+  "thinking_tokens": 0,
+  "conditions": {
+    "before": {
+      "timestamp": "2026-10-15T16:16:43.032810+00:00",
+      "ac_power": false,
+      "charger_raw": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=40370275)\t47%; discharging; 4:04 remaining present: true",
+      "thermal_raw": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded",
+      "thermal_state": "unavailable",
+      "thermal_note": "pmset diagnostics retained; absence of warnings is not a nominal-state measurement",
+      "available_memory_bytes": 2312667136,
+      "swap_used_bytes": 17561092096
+    },
+    "after": {
+      "timestamp": "2026-10-15T16:16:45.929626+00:00",
+      "ac_power": false,
+      "charger_raw": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=40370275)\t47%; discharging; 4:04 remaining present: true",
+      "thermal_raw": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded",
+      "thermal_state": "unavailable",
+      "thermal_note": "pmset diagnostics retained; absence of warnings is not a nominal-state measurement",
+      "available_memory_bytes": 1310769152,
+      "swap_used_bytes": 17561092096
+    }
+  },
+  "caveat": "Retains vision encoder. RSS is not total unified-memory footprint; encoded vision bytes cannot be subtracted from RSS or converted to vision-only load time. One functional pilot, not a quantisation comparison.",
+  "model_files": [
+    {
+      "name": "chat_template.jinja",
+      "sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715",
+      "bytes": 7756
+    },
+    {
+      "name": "config.json",
+      "sha256": "a96942cb6a8a1d3f1d17514d81a1925d04362a6a3233b389d13012211baaa9f8",
+      "bytes": 3331
+    },
+    {
+      "name": "model-00001-of-00002.safetensors",
+      "sha256": "973cc1efdedb4d327993fb9c27865f0bcfd9015897d5f0ca9ffb6cda6a0768e5",
+      "bytes": 5349771292
+    },
+    {
+      "name": "model-00002-of-00002.safetensors",
+      "sha256": "597dae0ed72b60acc07382e8ea0cdb9509c54128e07b0eaa9cf4996373d5ca7d",
+      "bytes": 600449850
+    },
+    {
+      "name": "model.safetensors.index.json",
+      "sha256": "dd023913fb87cfdae27fb11dcf695117c925833796ccac3c64117d6652d8ff1e",
+      "bytes": 123592
+    },
+    {
+      "name": "preprocessor_config.json",
+      "sha256": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516",
+      "bytes": 390
+    },
+    {
+      "name": "processor_config.json",
+      "sha256": "45fc17c8dd2474af6b493b52483c26c0584b0082d368c480f9fa611e73070040",
+      "bytes": 991
+    },
+    {
+      "name": "tokenizer.json",
+      "sha256": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523",
+      "bytes": 19989325
+    },
+    {
+      "name": "tokenizer_config.json",
+      "sha256": "fa71760892f5c601d345e626ebd602055825a50beed7ee160709c95fffa475f0",
+      "bytes": 9187
+    },
+    {
+      "name": "video_preprocessor_config.json",
+      "sha256": "7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13",
+      "bytes": 385
+    },
+    {
+      "name": "vocab.json",
+      "sha256": "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003",
+      "bytes": 6722759
+    }
+  ]
+}
