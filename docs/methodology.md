@@ -1,6 +1,6 @@
 # Measurement method
 
-Collection, exact-answer variation, automatic quality checks, percentile aggregation and saved-run reports are implemented. Human checklist scores remain pending; blind review tooling is not implemented. Offline tests and source review do not establish unattended readiness. Gemini inference, six-configuration live interruption/resume and privileged power validation remain pending. See [HANDOFF.md](HANDOFF.md) for current state and [pilot validation](pilot-validation.md) for earlier evidence.
+Collection, exact-answer variation, automatic quality checks, percentile aggregation and saved-run reports are implemented. Human checklist scores remain pending; blind review tooling is not implemented. Offline tests and source review do not establish unattended readiness. Held-out Gemini inference and six-configuration live interruption/resume passed on 15 October 2026. All completed smoke calls recorded swap activity. Privileged power validation remains pending; no benchmark prompts were used. See [HANDOFF.md](HANDOFF.md) for current state and [pilot validation](pilot-validation.md) for earlier evidence.
 
 ## Timing and tokens
 
@@ -120,4 +120,4 @@ Swap-active calls remain reported but are excluded from knee inputs. Missing or 
 
 ## First summarisation dataset
 
-The ten summaries in `prompts/summarisation.yaml` are Fairy-style prompts written for the benchmark (invented texts), not real Fairy usage. They are awaiting Andrii's review. No model may see them until that review is confirmed. `max_words` splits on whitespace and compares the count with an inclusive integer maximum; regex `pattern` is an alias for `value`. All supplied scoring rules are retained. Human criteria remain pending until blind review.
+The ten summaries in `prompts/summarisation.yaml` are Fairy-style prompts written for the benchmark (invented texts), not real Fairy usage. Andrii confirmed review on 15 October 2026 and the approved file was committed unchanged. They have not been sent to a model; the full benchmark still requires separate approval. `max_words` splits on whitespace and compares the count with an inclusive integer maximum; regex `pattern` is an alias for `value`. All supplied scoring rules are retained. Human criteria remain pending until blind review.

@@ -6,7 +6,7 @@ CallCost is a Python command-line project comparing local models served by LM St
 
 ## Status
 
-Local and Gemini runners, durable checkpoints/resume, automatic scoring, percentile aggregation and saved-run reports are implemented. Launcher/report review and offline regression fixes are complete; 75 tests and Ruff passed on 15 October 2026. The six-configuration live smoke, deliberate interruption/resume and privileged energy validation remain pending. No scored benchmark results or launcher smoke data have been collected. Human review tooling and charts remain unfinished. Follow [HANDOFF.md](docs/HANDOFF.md) for operational readiness and permissions.
+Local and Gemini runners, durable checkpoints/resume, automatic scoring, percentile aggregation and saved-run reports are implemented. Launcher/report review and offline regression fixes are complete; 75 tests and Ruff passed on 15 October 2026. The six-configuration held-out live smoke and deliberate interruption/resume passed on 15 October 2026. No benchmark prompts were used. Every smoke call recorded swap activity, so a fresh restart is required before the full run. Privileged energy remains unvalidated. No scored benchmark results have been collected. Human review tooling and charts remain unfinished. Follow [HANDOFF.md](docs/HANDOFF.md) for operational readiness and permissions.
 
 The local family is Qwen3.5-9B in MLX format, with thinking off. The 3-, 4-, 6- and 8-bit variants have been independently converted from pinned official Qwen weights using mlx-lm 0.32.0 and group size 64. Each loads in LM Studio and passes a held-out thinking-off pilot. Fairy's existing 4-bit model is a fifth local configuration, labelled "Fairy's production model" and treated as a separate reference. See [model preparation](docs/model-preparation.md) for the inspected published candidates and conversion pins. The experiment config selects Gemini 3.8 Flash at thinking level low, with standard list prices checked on 15 October 2026. The 8-bit pilots had less than 1 GB available RAM, and sampled process RSS did not track total model memory; resolve these limits before a full benchmark.
 
@@ -123,7 +123,7 @@ Energy is optional by default. If you want power measurement, run `sudo -v` your
 
 Before a full run, review the [completed preparation and its measurement limits](docs/model-preparation.md), use the registered weight proxy and check 8-bit headroom, fill in exact model identifiers and verified Gemini prices, fix the thinking setting, complete owner review of the ten invented-text summaries and their checklists, and validate the complete 40-prompt dataset. Credentials are read from environment variables and never committed.
 
-The committed [GSM8K sample](datasets/gsm8k/prompts.json) records original zero-based test-row indices. Rebuild it with `python3 scripts/prepare_gsm8k.py`. The [selection manifest](datasets/gsm8k/selection.json) pins the source commit, source SHA-256, row indices and stable hash-ranking procedure using seed 2027. Its upstream licence is retained alongside the sample. The ten Fairy-style prompts written for the benchmark (invented texts) are in `prompts/summarisation.yaml`. They require owner review before inference and must be combined with the pinned maths file into the private input only after owner review. The launcher validates a complete input; it does not merge files. The current ignored `prompts/private/full.yaml` is an incomplete staging file containing only the 30 pinned maths prompts and is rejected for a full run.
+The committed [GSM8K sample](datasets/gsm8k/prompts.json) records original zero-based test-row indices. Rebuild it with `python3 scripts/prepare_gsm8k.py`. The [selection manifest](datasets/gsm8k/selection.json) pins the source commit, source SHA-256, row indices and stable hash-ranking procedure using seed 2027. Its upstream licence is retained alongside the sample. The ten Fairy-style prompts written for the benchmark (invented texts) are in `prompts/summarisation.yaml`. Owner review was confirmed on 15 October 2026. The ignored `prompts/private/full.yaml` contains all 40 approved prompts and passes the full-dataset guard, including pinned maths identity. The launcher validates this input; it does not merge files. No benchmark prompt has been sent to a model.
 
 Run artifacts and private prompt files are ignored by Git by default. Publish only deliberately selected artifacts.
 
@@ -169,7 +169,7 @@ MIT. See [LICENSE](LICENSE). Third-party datasets retain their own licence notic
 
 ## Summarisation prompt review
 
-`prompts/summarisation.yaml` contains ten Fairy-style prompts written for the benchmark (invented texts). They are committed for review and have not been sent to any model. Andrii must confirm review before they are used. `max_words` counts whitespace-separated words with `len(answer.split())` and passes when the count is at most the integer limit. Regex checks accept `pattern` as an input alias for `value`. Automatic checks prefill only what they establish; human checklist items remain pending.
+`prompts/summarisation.yaml` contains ten Fairy-style prompts written for the benchmark (invented texts). Andrii confirmed review on 15 October 2026; the approved file is committed unchanged. These prompts have not been sent to any model. The full benchmark still requires separate approval. `max_words` counts whitespace-separated words with `len(answer.split())` and passes when the count is at most the integer limit. Regex checks accept `pattern` as an input alias for `value`. Automatic checks prefill only what they establish; human checklist items remain pending.
 
 ## Cloud reference configuration
 
@@ -179,7 +179,7 @@ The configured standard prices are USD 0.75 per million input tokens and USD 3.7
 
 ## Resuming after a run
 
-Read `runs/LATEST`, then the named run's `status.json`, then `run.log`. The launcher is still WIP and has not had its live smoke test; follow [HANDOFF.md](docs/HANDOFF.md) before the first full run. LATEST may not exist yet. Resume an interrupted launcher run with `./scripts/run_full.sh --resume`. To produce a saved-run report without inference, from the repository root run:
+Read `runs/LATEST`, then the named run's `status.json`, then `run.log`. The held-out launcher smoke and interruption/resume test passed; follow [HANDOFF.md](docs/HANDOFF.md) before the first full run. LATEST may not exist yet. Resume an interrupted launcher run with `./scripts/run_full.sh --resume`. To produce a saved-run report without inference, from the repository root run:
 
 ```sh
 PYTHONPATH=src .venv/bin/python -m callcost report --run "runs/$(cat runs/LATEST)"
