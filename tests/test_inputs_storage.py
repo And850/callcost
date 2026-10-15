@@ -77,3 +77,22 @@ def test_production_reference_label_and_role_are_preserved():
         model_key='qwen/qwen3.5-9b@4bit', expected_quantisation='4bit', model_files=['model.safetensors'])
     assert reference.model_dump()['comparison_role'] == 'production_reference'
     assert reference.label == "Fairy's production model"
+
+
+def test_resume_recovers_checkpoint_even_if_csv_was_not_written(tmp_path):
+    from callcost.storage import write_json
+    path = tmp_path / 'run'
+    store = RunStore(path)
+    store.append_call({'call_id': 'one', 'answer': 'first', 'status': 'completed', 'schedule_index': 0})
+    store.close()
+    # Power loss after atomic checkpoint, before CSV append.
+    write_json(path / 'checkpoints/00000002.json', {'call_id': 'two', 'answer': 'second',
+                                                  'status': 'completed', 'schedule_index': 1})
+    (path / 'calls.csv').write_text('torn CSV')
+    resumed = RunStore(path, resume=True)
+    assert [r['call_id'] for r in resumed.rows] == ['one', 'two']
+    with pytest.raises(ValueError, match='active writer'):
+        RunStore(path, resume=True)
+    resumed.close()
+    rows = list(csv.DictReader((path / 'calls.csv').open()))
+    assert [r['answer'] for r in rows] == ['first', 'second']

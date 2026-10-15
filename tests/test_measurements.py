@@ -106,3 +106,27 @@ def test_swap_deltas_do_not_confuse_pageins_with_swapins():
     assert swap_delta(first, dict(first, swapins=5))['swapping_occurred'] is None
     assert swap_delta(first, None)['swapping_occurred'] is None
     assert parse_vm_stat('Pageouts: 0.') is None
+
+
+def test_root_powermetrics_cleanup_uses_noninteractive_signal_if_needed(tmp_path, monkeypatch):
+    import io
+
+    from callcost.measurements.energy import PowerCollector
+    class RootProcess:
+        pid = 12345
+        stdout = io.BytesIO()
+        def poll(self):
+            return None
+        def terminate(self):
+            raise PermissionError('root process')
+        def wait(self, timeout):
+            return 0
+    commands = []
+    def run(args, **kwargs):
+        commands.append(args)
+    monkeypatch.setattr('callcost.measurements.energy.subprocess.run', run)
+    collector = PowerCollector(tmp_path, 250)
+    collector.process = RootProcess()
+    collector.stderr = io.BytesIO()
+    collector.close()
+    assert commands == [['/usr/bin/sudo', '-n', '/bin/kill', '-TERM', '12345']]

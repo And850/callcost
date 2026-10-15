@@ -118,11 +118,19 @@ class PowerCollector:
         self.stop_event.set()
         if self.process:
             if self.process.poll() is None:
-                self.process.terminate()
+                try:
+                    self.process.terminate()
+                except PermissionError:
+                    subprocess.run(['/usr/bin/sudo', '-n', '/bin/kill', '-TERM', str(self.process.pid)],
+                                   capture_output=True, check=True, timeout=5)
                 try:
                     self.process.wait(timeout=5)
                 except subprocess.TimeoutExpired:
-                    self.process.kill()
+                    try:
+                        self.process.kill()
+                    except PermissionError:
+                        subprocess.run(['/usr/bin/sudo', '-n', '/bin/kill', '-KILL', str(self.process.pid)],
+                                       capture_output=True, check=True, timeout=5)
                     self.process.wait(timeout=5)
             if self.thread:
                 self.thread.join(timeout=5)

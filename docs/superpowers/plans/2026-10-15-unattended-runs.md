@@ -12,8 +12,8 @@ Five measured repeats for full runs. Smoke mode uses only one held-out call per 
 
 ## Tasks
 
-- [ ] Memory and swap: test counter parsing and contemporaneous footprint sums, implement the SDK-defined libproc ABI, run four short validation pilots, record findings and commit the dated README amendment before any benchmark data.
-- [ ] Checkpoints and resume: test interrupted streams and crash windows, save each attempt atomically, rebuild CSV from checkpoints, skip completed schedule slots, refuse changed inputs/software and concurrent writers, maintain live status.
+- [x] Memory and swap: test counter parsing and contemporaneous footprint sums, implement the SDK-defined libproc ABI, run four short validation pilots, record findings and commit the dated README amendment before any benchmark data.
+- [x] Checkpoints and resume: test interrupted streams and crash windows, save each attempt atomically, rebuild CSV from checkpoints, skip completed schedule slots, refuse changed inputs/software and concurrent writers, maintain live status.
 - [ ] Terminal launcher: test preflight failures before model loading, check credentials/charger/model inventory/RAM/disk, record clean-state facts, authenticate sudo once with noninteractive keepalive, use caffeinate and full logging, maintain LATEST and notify completion/failure.
 - [ ] Reporting and documentation: report all successful calls and swap exclusions separately, preserve first-appearance/repeat strata, document memory and resume workflow.
 - [ ] Verification: run tests/lint, live five-local-model smoke with a deliberate interruption and resume, verify no completed slot repeats. Cloud smoke requires a configured model, prices and environment key. Review and push small commits.

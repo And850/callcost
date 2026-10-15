@@ -1,6 +1,7 @@
 """Sequential experiments. Persist evidence before treating a call as successful."""
 
 import hashlib
+import json
 import os
 import random
 import time
@@ -20,6 +21,7 @@ from callcost.measurements.weights import inspect_weights
 from callcost.providers.gemini import GeminiProvider
 from callcost.providers.lmstudio import LMStudioProvider
 from callcost.schemas import LocalConfig, Prompt
+from callcost.signals import defer_termination
 from callcost.storage import RunStore
 from callcost.thinking import verify_thinking_off
 from callcost.variation import answer_hash, variation_report
@@ -83,14 +85,14 @@ def measured_call(provider, prompt, config, store, phase, repeat, load, files, p
                 if result is None:
                     raise
                 interrupted = True
-    swap_after = snapshot()
-    swap = swap_delta(swap_before, swap_after)
+    swap_after = None
     start, end = result.started_monotonic, result.ended_monotonic
     memory = energy = None
     memory_reason = 'Memory collection interrupted' if sampler else 'LM Studio process memory is not applicable to Gemini'
     energy_reason = 'Energy collection disabled or unavailable; see metadata'
     after = {'unavailable_reason': 'Post-call conditions interrupted'}
     try:
+        swap_after = snapshot()
         if sampler:
             memory, memory_reason = sampler.finish(start, end)
         if power:
@@ -99,10 +101,11 @@ def measured_call(provider, prompt, config, store, phase, repeat, load, files, p
     except KeyboardInterrupt:
         interrupted = True
     if interrupted:
-        result.status = 'error'
+        # A completed response remains complete even if a telemetry read is interrupted.
         result.error = 'Interrupted by user'
+    swap = swap_delta(swap_before, swap_after)
     try:
-        evidence = verify_thinking_off(result, require_answer=phase == 'pilot')
+        evidence = verify_thinking_off(result, require_answer=phase in ('pilot', 'smoke'))
     except ValueError as error:
         result.status = 'error'
         result.error = result.error or str(error)
@@ -129,27 +132,29 @@ def measured_call(provider, prompt, config, store, phase, repeat, load, files, p
 
 
 def run_experiment(config, dataset, directory, *, pilot_only=False, client=None, input_files=None,
-                   progress=print):
+                   progress=print, resume=False, smoke=False, launch_metadata=None, energy_mode=None):
     files = preflight(config)
     components = {s.id: inspect_weights(s.model_files)
                   for s in config.configurations if isinstance(s, LocalConfig)}
     machine = machine_metadata()
     if machine['platform'] != 'Darwin':
         raise ValueError('Milestone 1 runs are supported only on macOS')
-    store = RunStore(Path(directory))
+    directory = Path(directory)
     rng = random.Random(config.run.shuffle_seed)
     settings = list(config.configurations)
     rng.shuffle(settings)
     schedule = []
     for setting in settings:
-        schedule.append((setting, PILOT, 'pilot', 0))
-        if not pilot_only:
+        schedule.append((setting, PILOT, 'smoke' if smoke else 'pilot', 1 if smoke else 0))
+        if not pilot_only and not smoke:
             schedule.extend((setting, PILOT, 'warmup', n + 1) for n in range(config.run.warmup_runs))
             for repeat in range(1, config.run.repeats + 1):
                 prompts = list(dataset.prompts)
                 rng.shuffle(prompts)
                 schedule.extend((setting, prompt, 'measured', repeat) for prompt in prompts)
-    metadata = {'schema_version': 1, 'status': 'running', 'pilot_only': pilot_only,
+    runtime_identity = {str(p.relative_to(Path(__file__).parent)): file_identity(p)['sha256']
+                        for p in sorted(Path(__file__).parent.rglob('*.py'))}
+    metadata = {'schema_version': 2, 'smoke': smoke, 'runtime_identity': runtime_identity, 'status': 'running', 'pilot_only': pilot_only,
                 'started_at': datetime.now(timezone.utc).isoformat(), 'machine': machine,
                 'config': config.model_dump(mode='json'), 'dataset': dataset.model_dump(mode='json'),
                 'input_files': input_files or [], 'model_files': files,
@@ -163,32 +168,66 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
                              for s, p, phase, r in schedule],
                 'ordering': 'seeded configuration blocks; independently shuffled prompts per repeat',
                 'cache': 'No verified cache-disable API. Labels describe exposure, not proven cache state.',
-                'thinking_verification': {}, 'loads': [], 'energy_blocks': [], 'errors': []}
-    rows, first_answers = [], {}
+                'thinking_verification': {}, 'loads': [], 'energy_blocks': [], 'errors': [], 'segments': []}
+    if resume:
+        previous = json.loads((directory / 'metadata.json').read_text())
+        for key in ('config', 'dataset', 'model_files', 'input_files', 'runtime_identity', 'schedule', 'smoke', 'pilot_only', 'software'):
+            if previous.get(key) != metadata.get(key):
+                raise ValueError(f'Resume refused: {key} changed since this run started')
+        for key in ('chip', 'ram_bytes', 'macos_build', 'lmstudio_version'):
+            if previous['machine'].get(key) != machine.get(key):
+                raise ValueError(f'Resume refused: machine {key} changed')
+        metadata = previous
+        metadata['status'] = 'running'
+    store = RunStore(directory, resume=resume)
+    rows, first_answers = list(store.rows), {}
+    for row in rows:
+        if row['phase'] == 'measured' and row['status'] == 'completed':
+            first_answers.setdefault((row['configuration_id'], row['prompt_id']), row['answer_sha256'])
+    done = {r['schedule_index'] for r in rows if r['status'] == 'completed'}
+    segment = {'id': uuid.uuid4().hex, 'started_at': datetime.now(timezone.utc).isoformat(),
+               'resumed': resume, 'conditions': launch_metadata,
+               'energy_mode': energy_mode or config.measurement.energy.mode,
+               'cache_note': 'A resumed segment reloads models; exposure labels do not prove cache state'}
+    metadata['segments'].append(segment)
+    current_id = None
+    def status(state='running', error=None):
+        store.write_status(state=state, total=len(schedule), current=current_id,
+                           started_at=metadata['started_at'], error=error)
+    status()
     owned_client = client is None
     client = client or httpx.Client(trust_env=False)
     provider = power = None
     try:
         store.write_metadata(metadata)
+        if resume:
+            recover_owned_instances(metadata, config, client, store.directory / 'raw')
         for setting in settings:
+            if not any(i not in done and item[0].id == setting.id for i, item in enumerate(schedule)):
+                continue
+            current_id = setting.id
+            status()
             progress(f'{setting.id}: preparing model and thinking-off pilot', flush=True)
             provider = make_provider(setting, config, client, store.directory / 'raw')
-            load = provider.prepare()
-            if load:
-                metadata['loads'].append(load)
-                store.write_metadata(metadata)
+            # Finish recording an accepted load before delivering a terminal signal.
+            with defer_termination():
+                load = provider.prepare()
+                if load:
+                    metadata['loads'].append(load)
+                    store.write_metadata(metadata)
             baseline = None
-            energy_block = {'configuration_id': setting.id, 'scope': SCOPE, 'mode': config.measurement.energy.mode}
+            energy_block = {'configuration_id': setting.id, 'segment_id': segment['id'],
+                            'scope': SCOPE, 'mode': segment['energy_mode']}
             metadata['energy_blocks'].append(energy_block)
-            for current, prompt, phase, repeat in schedule:
-                if current.id != setting.id:
+            for index, (current, prompt, phase, repeat) in enumerate(schedule):
+                if current.id != setting.id or index in done:
                     continue
                 # Instrument energy after pilot/warm-up, with a loaded idle model baseline.
-                if phase == 'measured' and 'attempted' not in energy_block:
+                if phase in ('measured', 'smoke') and 'attempted' not in energy_block:
                     energy_block['attempted'] = True
                     energy = config.measurement.energy
-                    if energy.mode != 'off':
-                        power = PowerCollector(store.directory / 'raw' / f'{setting.id}.power', energy.sample_ms)
+                    if energy_block['mode'] != 'off':
+                        power = PowerCollector(store.directory / 'raw' / f'{setting.id}.{segment["id"]}.power', energy.sample_ms)
                         if power.start():
                             baseline = power.baseline(energy.idle_baseline_seconds)
                         energy_block['baseline_watts'] = baseline
@@ -197,7 +236,7 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
                             energy_block['unavailable_reason'] = 'Power samples or idle baseline unavailable; inspect raw stderr'
                             power.close()
                             power = None
-                            if energy.mode == 'required_powermetrics':
+                            if energy_block['mode'] == 'required_powermetrics':
                                 raise ValueError('Required energy collection unavailable')
                     store.write_metadata(metadata)
                 progress(f'{setting.id}: {phase} {prompt.id}, repeat {repeat}', flush=True)
@@ -207,17 +246,21 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
                     key = (setting.id, prompt.id)
                     first_answers.setdefault(key, row['answer_sha256'])
                     row['varies_from_first_answer'] = row['answer_sha256'] != first_answers[key]
-                store.append_call(row)
-                rows.append(row)
+                row['schedule_index'] = index
+                row['segment_id'] = segment['id']
+                with defer_termination():
+                    store.append_call(row)
+                    rows.append(row)
+                    status()
+                    if phase in ('pilot', 'smoke') and evidence is not None:
+                        metadata['thinking_verification'][setting.id] = dict(
+                            evidence, call_id=row['call_id'],
+                            method='reasoning: off' if isinstance(setting, LocalConfig) else 'thinkingConfig.thinkingBudget: 0')
+                        store.write_metadata(metadata)
                 if row['error'] == 'Interrupted by user':
                     raise KeyboardInterrupt
                 if row['status'] != 'completed':
                     raise ValueError(f'Call {row["call_id"]} failed: {row["error"]}')
-                if phase == 'pilot':
-                    metadata['thinking_verification'][setting.id] = dict(
-                        evidence, call_id=row['call_id'],
-                        method='reasoning: off' if isinstance(setting, LocalConfig) else 'thinkingConfig.thinkingBudget: 0')
-                    store.write_metadata(metadata)
                 if config.run.cooldown_seconds:
                     time.sleep(config.run.cooldown_seconds)
             if power:
@@ -225,7 +268,7 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
                 energy_block['errors'] = list(power.errors)
                 energy_block['assessment'] = baseline_assessment(
                     baseline, energy_block['post_baseline_watts'],
-                    [r for r in rows if r['configuration_id'] == setting.id])
+                    [r for r in rows if r['configuration_id'] == setting.id and r['segment_id'] == segment['id']])
                 power.close()
                 power = None
             provider.close()
@@ -246,8 +289,12 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
         for block in metadata['energy_blocks']:
             if 'assessment' not in block:
                 block['assessment'] = baseline_assessment(block.get('baseline_watts'), None,
-                    [r for r in rows if r['configuration_id'] == block['configuration_id']])
+                    [r for r in rows if r['configuration_id'] == block['configuration_id'] and r['segment_id'] == block['segment_id']])
         metadata['finished_at'] = datetime.now(timezone.utc).isoformat()
+        segment['finished_at'] = metadata['finished_at']
+        segment['status'] = metadata['status']
+        status('completed' if metadata['status'] == 'completed' else 'failed',
+               None if metadata['status'] == 'completed' else metadata['errors'][-1])
         metadata['variation'] = variation_report(config, dataset, rows)
         metadata['completed_measured_calls'] = sum(r['phase'] == 'measured' and r['status'] == 'completed' for r in rows)
         store.write_metadata(metadata)
@@ -255,3 +302,26 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
         if owned_client:
             client.close()
     return metadata
+
+
+def recover_owned_instances(metadata, config, client, raw_directory):
+    """Only unload a precisely recorded instance left by this interrupted run."""
+    if not metadata['loads']:
+        return
+    key = os.environ.get(config.lmstudio.api_key_env) if config.lmstudio.api_key_env else None
+    headers = {'Authorization': f'Bearer {key}'} if key else {}
+    response = client.get(config.lmstudio.base_url + '/api/v1/models', headers=headers, timeout=10)
+    response.raise_for_status()
+    known = {(load['load_request_key'], load['instance_id']) for load in metadata['loads']}
+    loaded = [(model['key'], instance['id']) for model in response.json()['models']
+              for instance in model.get('loaded_instances', [])]
+    if any(pair not in known for pair in loaded):
+        raise ValueError('Unrecorded LM Studio instance is loaded; unload it explicitly before resuming')
+    for model_key, instance_id in loaded:
+        response = client.post(config.lmstudio.base_url + '/api/v1/models/unload', headers=headers,
+                               json={'instance_id': instance_id}, timeout=config.run.timeout_seconds)
+        prefix = raw_directory / f'resume-unload-{uuid.uuid4().hex}'
+        prefix.with_suffix('.json').write_text(json.dumps({'model_key': model_key, 'instance_id': instance_id,
+                                                         'http_status': response.status_code}))
+        prefix.with_suffix('.response.bin').write_bytes(response.content)
+        response.raise_for_status()
