@@ -4,7 +4,7 @@ import json
 import math
 import re
 import statistics
-from collections import defaultdict
+from collections import Counter, defaultdict
 from decimal import Decimal, localcontext
 from fractions import Fraction
 from pathlib import Path
@@ -84,20 +84,38 @@ def quality(rows, prompts):
                 parse_attempts=sum(s['parseable'] is not None for s in scores), call_scores=scores)
 
 
-def aggregate(rows, prompts=None, phase='measured'):
+def aggregate(rows, prompts=None, phase='measured', configurations=None):
     grouped = defaultdict(list)
+    for config in configurations or []:
+        for task in {p['task_type'] for p in prompts or []}:
+            for stratum in ('all', 'first_appearance', 'repeat'):
+                grouped[(config['id'], task, stratum)] = []
     for row in rows:
-        if row['phase'] == phase and row['status'] == 'completed':
+        if row['phase'] == phase:
             key = (row['configuration_id'], row['task_type'])
             grouped[(*key, 'all')].append(row)
             grouped[(*key, row['cache_stratum'])].append(row)
     result = []
-    for (config, task, stratum), calls in sorted(grouped.items()):
+    for (config, task, stratum), attempts in sorted(grouped.items()):
+        calls = [r for r in attempts if r['status'] == 'completed']
         eligible = [r for r in calls if r.get('swapping_occurred') is False]
         task_prompts = {p['id']: p for p in prompts or [] if p['task_type'] == task}
         def summary(group):
-            return {metric: distribution(r.get(metric) for r in group) for metric in METRICS}
+            result = {}
+            reason_fields = {'memory_peak_footprint_bytes': 'footprint_missing_reason',
+                             'memory_peak_rss_bytes': 'memory_missing_reason', 'energy_j': 'energy_missing_reason'}
+            for metric in METRICS:
+                d = distribution(r.get(metric) for r in group)
+                d['missing_reasons'] = dict(Counter(
+                    r.get(reason_fields.get(metric)) or r.get('missing', {}).get(metric) or 'Not recorded for this call'
+                    for r in group if r.get(metric) is None))
+                d['unavailable_reason'] = 'No completed calls in this group' if not group else None
+                result[metric] = d
+            return result
         result.append(dict(configuration_id=config, task_type=task, cache_stratum=stratum, calls=len(calls),
+                           failed_attempts=len(attempts) - len(calls),
+                           failed_call_ids=[r['call_id'] for r in attempts if r['status'] != 'completed'],
+                           currencies=sorted({r['currency'] for r in calls if r.get('currency')}),
                            swapped_calls=sum(r.get('swapping_occurred') is True for r in calls),
                            swap_unknown_calls=sum(r.get('swapping_occurred') is None for r in calls),
                            quality=quality(calls, task_prompts), **summary(calls),
@@ -145,8 +163,8 @@ def knee_findings(groups, configurations, tasks):
             steps.append(dict(upper=sequence[index]['id'], lower=sequence[index + 1]['id'],
                               quality_drop=None if drop is None else float(drop), **costs,
                               cost_missing_reasons=reasons,
-                              upper_footprint_bytes=a.get('memory_peak_footprint_bytes', distribution([])),
-                              lower_footprint_bytes=b.get('memory_peak_footprint_bytes', distribution([])),
+                              upper_footprint_bytes=a.get('memory_peak_footprint_bytes', dict(distribution([]), unavailable_reason='No eligible footprint observations')),
+                              lower_footprint_bytes=b.get('memory_peak_footprint_bytes', dict(distribution([]), unavailable_reason='No eligible footprint observations')),
                               indistinguishable=indistinguishable, qualifies=qualifies))
             previous_drop = drop
         knee = next((s for s in steps if s['qualifies']), None)
@@ -179,19 +197,24 @@ def report_run(directory):
     metadata = json.loads((directory / 'metadata.json').read_text())
     rows = [json.loads(p.read_text()) for p in sorted((directory / 'checkpoints').glob('*.json'))]
     phase = 'smoke' if metadata.get('smoke') else 'measured'
-    groups = aggregate(rows, metadata['dataset']['prompts'] if phase == 'measured' else [], phase)
+    groups = aggregate(rows, metadata['dataset']['prompts'] if phase == 'measured' else [], phase,
+                       metadata['config']['configurations'])
     findings = [] if phase == 'smoke' else knee_findings(groups, metadata['config']['configurations'],
                                                        sorted({p['task_type'] for p in metadata['dataset']['prompts']}))
     collection = collection_status(metadata, rows)
     if not collection['complete']:
         for finding in findings:
             finding.update(finding='insufficient data: collection incomplete', knee=None)
+            for step in finding['steps']:
+                step['qualifies'] = None
     result = dict(run_status=metadata['status'], collection=collection, smoke=metadata.get('smoke', False),
                   quantiles='p50 median; p95 nearest rank; Q1/Q3 linear interpolation',
                   memory_for_knee='none; quality-only knee, amendment 2026-10-15; weight bytes are descriptive cost',
                   energy_scope='estimate, whole-machine delta; CPU + GPU + ANE; client device only',
                   failed_attempts=sum(r['status'] != 'completed' for r in rows), groups=groups,
-                  knee=findings, variation=metadata.get('variation'))
+                  knee=findings, variation=metadata.get('variation'),
+                  energy_blocks=metadata.get('energy_blocks', []),
+                  production_reference_caveat=metadata.get('production_reference_caveat'))
     write_json(directory / 'report.json', result)
     lines = ['SMOKE ONLY, no benchmark conclusions' if phase == 'smoke' else 'CallCost saved-run report',
              f'Collection: {collection["completed_slots"]}/{collection["expected_slots"]} scheduled slots completed; '
@@ -199,19 +222,61 @@ def report_run(directory):
              'All completed calls shown. Knee inputs exclude swap-active and swap-unknown calls.',
              'Memory: descriptive weight bytes; sampled physical footprint is secondary. Knee uses quality only.',
              'Energy: estimate, whole-machine delta; CPU + GPU + ANE; client device only.',
-             '| Configuration / task / cache | Calls | Swap / unknown | Knee eligible | Quality | Latency p50/p95 s | TTFT p50/p95 s | Weight GB | Footprint p50/p95 GB | Energy p50/p95 J |',
-             '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |']
+             'Values are p50/p95 with valid observation counts. GB uses 1e9 bytes.',
+             'Step costs use swap-free observations only. Costs remain available while human quality is pending.',
+             '',
+             '| Configuration / task / cache | Calls / failed | Swap / unknown | Knee eligible | Quality all / eligible | Latency s | TTFT s | Weight GB | Footprint GB, secondary | RSS GB, secondary | Energy J |',
+             '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |']
+    def cell(value):
+        return str(value).replace('|', r'\|').replace('\n', ' ')
     def pair(group, metric, scale=1):
         d = group[metric]
-        return 'unavailable' if not d['n'] else f'{d["p50"]/scale:.3f}/{d["p95"]/scale:.3f}'
+        reasons = '; '.join(f'{cell(reason)} ({count})' for reason, count in d.get('missing_reasons', {}).items())
+        number_format = '.9g' if metric == 'list_price_cost' else '.3f'
+        value = 'unavailable' if not d['n'] else '/'.join(format(d[q]/scale, number_format) for q in ('p50', 'p95'))
+        detail = reasons or d.get('unavailable_reason')
+        return f'{value} (n={d["n"]}' + (f'; {detail}' if detail else '') + ')'
+    def score(q):
+        return ('unavailable: ' + cell(q.get('reason') or 'Pending scores')) if q['score'] is None else f'{100*q["score"]:.1f}%'
+    def label(g):
+        return f'{g["configuration_id"]} / {g["task_type"]} / {g["cache_stratum"]}'
     for g in groups:
-        q = g['quality']['score']
-        label = f'{g["configuration_id"]} / {g["task_type"]} / {g["cache_stratum"]}'
-        score = 'pending' if q is None else f'{100*q:.1f}%'
-        lines.append(f'| {label} | {g["calls"]} | {g["swapped_calls"]}/{g["swap_unknown_calls"]} | '
-                     f'{g["knee_eligible"]["calls"]} | {score} | {pair(g,"latency_s")} | {pair(g,"ttft_s")} | '
-                     f'{pair(g,"loaded_weight_bytes",1e9)} | {pair(g,"memory_peak_footprint_bytes",1e9)} | {pair(g,"energy_j")} |')
-    lines.extend(f'{f["task_type"]}: {f["finding"]}' for f in findings)
+        lines.append(f'| {label(g)} | {g["calls"]}/{g["failed_attempts"]} | {g["swapped_calls"]}/{g["swap_unknown_calls"]} | '
+                     f'{g["knee_eligible"]["calls"]} | {score(g["quality"])} / {score(g["knee_eligible"]["quality"])} | '
+                     f'{pair(g,"latency_s")} | {pair(g,"ttft_s")} | '
+                     f'{pair(g,"loaded_weight_bytes",1e9)} | {pair(g,"memory_peak_footprint_bytes",1e9)} | '
+                     f'{pair(g,"memory_peak_rss_bytes",1e9)} | {pair(g,"energy_j")} |')
+    lines += ['', '| Configuration / task / cache | Input tokens | Visible output tokens | Thinking tokens | Billable output tokens | Decode tokens/s | Request bytes | Response bytes | List-price equivalent |',
+              '| --- | --- | --- | --- | --- | --- | --- | --- | --- |']
+    for g in groups:
+        lines.append(f'| {label(g)} | ' + ' | '.join(pair(g, metric) for metric in (
+            'input_tokens', 'output_tokens', 'thinking_tokens', 'billable_output_tokens',
+            'decode_tokens_per_second', 'request_payload_bytes', 'response_payload_bytes'))
+            + f' | {pair(g,"list_price_cost")} {"/".join(g["currencies"]) or "currency unavailable; see raw calls"} |')
+    lines += [''] + [f'{f["task_type"]}: {f["finding"]}' for f in findings]
+    lines += ['', '| Task / adjacent step | Quality drop, pp | Weight saving | Latency p50/p95 saving | Upper / lower footprint GB, secondary | Indistinguishable | Qualifies |',
+              '| --- | --- | --- | --- | --- | --- | --- |']
+    for finding in findings:
+        for step in finding['steps']:
+            def percent(key):
+                v = step[key]
+                return ('unavailable: ' + step['cost_missing_reasons'].get(key, 'Pending quality')) if v is None else f'{100*v:.2f}%'
+            drop = 'pending' if step['quality_drop'] is None else f'{100*step["quality_drop"]:.2f}'
+            footprints = ' / '.join(pair({'footprint': step[k]}, 'footprint', 1e9)
+                                    for k in ('upper_footprint_bytes', 'lower_footprint_bytes'))
+            lines.append(f'| {finding["task_type"]} / {step["upper"]} to {step["lower"]} | {drop} | '
+                         f'{percent("weight_byte_saving")} | {percent("latency_p50_saving")}/{percent("latency_p95_saving")} | '
+                         f'{footprints} | {step["indistinguishable"]} | {step["qualifies"]} |')
+    lines += ['', 'Eligible calls per prompt (swap-active and swap-unknown excluded):']
+    for g in groups:
+        counts = g['knee_eligible']['quality'].get('calls_per_prompt', {})
+        lines.append(f'{label(g)}: ' + (', '.join(f'{p}={n}' for p, n in counts.items()) or 'Scoring rules unavailable'))
+    if result['production_reference_caveat']:
+        lines += ['', result['production_reference_caveat']]
+    lines += ['', 'Energy baseline qualifications (descriptive, no registered drift cutoff):']
+    for block in result['energy_blocks']:
+        lines.append(cell(json.dumps({k: block.get(k) for k in (
+            'configuration_id', 'segment_id', 'mode', 'assessment', 'unavailable_reason')}, ensure_ascii=False)))
     text = '\n'.join(lines) + '\n'
     (directory / 'report.md').write_text(text)
     return text

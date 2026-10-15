@@ -113,3 +113,37 @@ def test_pending_quality_keeps_all_adjacent_costs_and_secondary_footprints():
     assert len(missing['steps']) == 3
     assert missing['steps'][-1]['weight_byte_saving'] is None
     assert missing['steps'][-1]['cost_missing_reasons']['weight_byte_saving']
+
+
+def test_saved_report_exposes_missing_measurements_tokens_costs_and_empty_groups(tmp_path):
+    import json
+
+    from callcost.report import report_run
+
+    prompts = [dict(id='p', task_type='maths', scoring={'type': 'expected_answer', 'expected': 'yes'}),
+               dict(id='s', task_type='summarisation', scoring={'type': 'expected_answer', 'expected': 'yes'})]
+    (tmp_path / 'checkpoints').mkdir()
+    (tmp_path / 'metadata.json').write_text(json.dumps(dict(
+        status='failed', config={'configurations': [{'id': 'cloud', 'provider': 'gemini'}]},
+        dataset={'prompts': prompts}, schedule=[])))
+    row = dict(status='completed', phase='measured', configuration_id='cloud', task_type='maths',
+               prompt_id='p', call_id='c', cache_stratum='first_appearance', answer='yes',
+               latency_s=1, swapping_occurred=False, memory_peak_footprint_bytes=None,
+               footprint_missing_reason='Process coverage incomplete', thinking_tokens=3,
+               output_tokens=4, billable_output_tokens=7, list_price_cost='0.001', currency='USD',
+               request_payload_bytes=100, response_payload_bytes=200)
+    (tmp_path / 'checkpoints/00000001.json').write_text(json.dumps(row))
+    text = report_run(tmp_path)
+    result = json.loads((tmp_path / 'report.json').read_text())
+    group = next(g for g in result['groups'] if g['task_type'] == 'maths' and g['cache_stratum'] == 'all')
+    assert group['memory_peak_footprint_bytes']['missing_reasons'] == {'Process coverage incomplete': 1}
+    empty = next(g for g in result['groups'] if g['task_type'] == 'summarisation' and g['cache_stratum'] == 'all')
+    assert empty['calls'] == 0 and empty['quality']['score'] is None
+    assert empty['latency_s']['p50'] is None
+    assert 'Process coverage incomplete' in text
+    assert 'RSS' in text and 'Thinking' in text and 'Billable output' in text
+    assert '0.001' in text and 'USD' in text
+    assert '100.000/100.000' in text and '200.000/200.000' in text
+    assert 'n=1' in text and 'No completed calls' in text
+    assert 'Quality all / eligible' in text
+    assert 'Weight saving' in text and 'Latency p50/p95 saving' in text

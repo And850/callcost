@@ -62,3 +62,5 @@ This writes `report.json` and `report.md`. Human scores remain pending until rev
 - Fixed hard-kill pilot metadata recovery: resume revalidates completed pilot/smoke checkpoints and restores verification with the original call ID before continuing. Offline regression proves no completed call is repeated. Verified: 71 tests and Ruff.
 
 - Fixed step-cost suppression: all three adjacent comparisons retain available eligible weight/latency savings and secondary footprint distributions while scores are pending. Missing costs have reasons. Quality and variance rules are unchanged. Verified: 72 tests and Ruff.
+
+- Completed human-readable reporting: adjacent cost steps, secondary footprint/RSS, metric observation counts and missing reasons, eligible quality/counts, visible/thinking/billable tokens, payloads, list-price currency, energy baseline qualifications and production caveat. Empty expected groups remain unavailable. Independent follow-up found one additional daemon-memory coverage gap to fix. Verified: 73 tests and Ruff.
