@@ -20,6 +20,7 @@ callcost = "callcost.cli:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
 
 [project.urls]
 Repository = "https://github.com/And850/callcost"
