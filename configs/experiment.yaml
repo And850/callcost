@@ -1,0 +1,125 @@
+# Experiment config. Summarisation prompts require owner review before inference.
+# Standard USD rates below apply through 2026-12-31. From 2027-01-01 they double.
+# Free-tier usage is reported as list-price equivalent, including thinking output tokens.
+schema_version: 1
+run:
+  repeats: 5
+  warmup_runs: 2
+  temperature: 0
+  max_output_tokens: 1024
+  shuffle_seed: 2027
+measurement:
+  memory_sample_ms: 100
+  energy:
+    mode: optional_powermetrics
+    sample_ms: 250
+    idle_baseline_seconds: 10
+lmstudio:
+  base_url: http://127.0.0.1:1234
+  context_length: 4096
+  cache_policy: disable_if_supported_else_split
+configurations:
+- id: local-q8
+  label: Qwen3.5-9B MLX 8-bit, converted
+  comparison_role: quantisation_series
+  provider: lmstudio
+  model_key: local/callcost-qwen35-9b-text-8bit
+  expected_quantisation: 8bit
+  model_format: mlx
+  reasoning: 'off'
+  model_files:
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-8bit-mlx-text/chat_template.jinja
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-8bit-mlx-text/config.json
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-8bit-mlx-text/model-00001-of-00002.safetensors
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-8bit-mlx-text/model-00002-of-00002.safetensors
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-8bit-mlx-text/model.safetensors.index.json
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-8bit-mlx-text/tokenizer.json
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-8bit-mlx-text/tokenizer_config.json
+  - ~/.cache/lm-studio/hub/models/local/callcost-qwen35-9b-text-8bit/model.yaml
+  - ~/.cache/lm-studio/hub/models/local/callcost-qwen35-9b-text-8bit/manifest.json
+- id: local-q6
+  label: Qwen3.5-9B MLX 6-bit, converted
+  comparison_role: quantisation_series
+  provider: lmstudio
+  model_key: local/callcost-qwen35-9b-text-6bit
+  expected_quantisation: 6bit
+  model_format: mlx
+  reasoning: 'off'
+  model_files:
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-6bit-mlx-text/chat_template.jinja
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-6bit-mlx-text/config.json
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-6bit-mlx-text/model-00001-of-00002.safetensors
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-6bit-mlx-text/model-00002-of-00002.safetensors
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-6bit-mlx-text/model.safetensors.index.json
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-6bit-mlx-text/tokenizer.json
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-6bit-mlx-text/tokenizer_config.json
+  - ~/.cache/lm-studio/hub/models/local/callcost-qwen35-9b-text-6bit/model.yaml
+  - ~/.cache/lm-studio/hub/models/local/callcost-qwen35-9b-text-6bit/manifest.json
+- id: local-q4
+  label: Qwen3.5-9B MLX 4-bit, converted
+  comparison_role: quantisation_series
+  provider: lmstudio
+  model_key: local/callcost-qwen35-9b-text-4bit
+  expected_quantisation: 4bit
+  model_format: mlx
+  reasoning: 'off'
+  model_files:
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-4bit-mlx-text/chat_template.jinja
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-4bit-mlx-text/config.json
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-4bit-mlx-text/model.safetensors
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-4bit-mlx-text/model.safetensors.index.json
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-4bit-mlx-text/tokenizer.json
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-4bit-mlx-text/tokenizer_config.json
+  - ~/.cache/lm-studio/hub/models/local/callcost-qwen35-9b-text-4bit/model.yaml
+  - ~/.cache/lm-studio/hub/models/local/callcost-qwen35-9b-text-4bit/manifest.json
+- id: local-q3
+  label: Qwen3.5-9B MLX 3-bit, converted
+  comparison_role: quantisation_series
+  provider: lmstudio
+  model_key: local/callcost-qwen35-9b-text-3bit
+  expected_quantisation: 3bit
+  model_format: mlx
+  reasoning: 'off'
+  model_files:
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-3bit-mlx-text/chat_template.jinja
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-3bit-mlx-text/config.json
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-3bit-mlx-text/model.safetensors
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-3bit-mlx-text/model.safetensors.index.json
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-3bit-mlx-text/tokenizer.json
+  - ~/.cache/lm-studio/models/And850/callcost-qwen35-9b-3bit-mlx-text/tokenizer_config.json
+  - ~/.cache/lm-studio/hub/models/local/callcost-qwen35-9b-text-3bit/model.yaml
+  - ~/.cache/lm-studio/hub/models/local/callcost-qwen35-9b-text-3bit/manifest.json
+- id: fairy-production
+  label: Fairy's production model
+  comparison_role: production_reference
+  provider: lmstudio
+  model_key: qwen/qwen3.5-9b@4bit
+  expected_quantisation: 4bit
+  model_format: mlx
+  reasoning: 'off'
+  model_files:
+  - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/chat_template.jinja
+  - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/config.json
+  - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/model-00001-of-00002.safetensors
+  - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/model-00002-of-00002.safetensors
+  - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/model.safetensors.index.json
+  - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/preprocessor_config.json
+  - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/processor_config.json
+  - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/tokenizer.json
+  - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/tokenizer_config.json
+  - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/video_preprocessor_config.json
+  - ~/.cache/lm-studio/models/lmstudio-community/Qwen3.5-9B-MLX-4bit/vocab.json
+  - ~/.cache/lm-studio/hub/models/qwen/qwen3.5-9b/model.yaml
+  - ~/.cache/lm-studio/hub/models/qwen/qwen3.5-9b/manifest.json
+- id: cloud
+  provider: gemini
+  model: gemini-3.8-flash
+  api_key_env: GEMINI_API_KEY
+  thinking:
+    thinking_level: low
+  pricing:
+    currency: USD
+    input_per_million: '0.75'
+    output_per_million: '3.75'
+    source_url: https://ai.google.dev/gemini-api/docs/pricing
+    checked_on: '2026-10-15'

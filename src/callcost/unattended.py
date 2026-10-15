@@ -240,7 +240,7 @@ def check_full_dataset(config, dataset):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Unattended CallCost run, keep this Terminal open')
-    parser.add_argument('--config', type=Path, default=ROOT / 'configs/private/full.yaml')
+    parser.add_argument('--config', type=Path, default=ROOT / 'configs/experiment.yaml')
     parser.add_argument('--prompts', type=Path, default=ROOT / 'prompts/private/full.yaml')
     parser.add_argument('--resume', action='store_true', help='Resume runs/LATEST using its saved inputs')
     parser.add_argument('--smoke', action='store_true', help='One held-out call/configuration; no benchmark evidence')
