@@ -9,6 +9,7 @@ CallCost is a Python CLI that measures what one language-model call costs on And
 - Explain choices briefly. Do not make large decisions silently. Keep code readable and scope limited to the requested work.
 - Ask before large downloads, system-setting changes or long runs. A handoff command is not permission to execute it.
 - Work in this clone: `/Users/andreyryzhanskiy/Documents/CallCost/callcost`, repository `And850/callcost`. The parent directory is an older copy.
+- GitHub account: `And850`. `gh` and `git` are already authenticated in Terminal; push to `origin` (`https://github.com/And850/callcost`).
 - Use normal `git add`, `git commit`, `git push` here, with small, clear commits. Do not commit through an API. Never force-push or rewrite history.
 - If Git metadata writes are blocked, stop and explain the permission issue. Do not work around it through another publishing route.
 - Never auto-commit benchmark results. Run artifacts stay ignored unless the owner explicitly selects material to publish.
