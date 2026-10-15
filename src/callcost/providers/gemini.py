@@ -23,7 +23,7 @@ class GeminiProvider:
 
     def generate(self, prompt, raw_directory, call_id):
         setting = self.configuration.thinking
-        thinking = {'thinkingBudget': setting.budget} if setting.budget is not None else {'thinkingLevel': setting.level}
+        thinking = {'thinkingBudget': setting.budget}
         payload = {
             'contents': [{'role': 'user', 'parts': [{'text': render_prompt(prompt)}]}],
             'generationConfig': {'temperature': self.run.temperature,
@@ -39,8 +39,16 @@ class GeminiProvider:
         result.input_tokens = token_count(usage.get('promptTokenCount'))
         result.output_tokens = token_count(usage.get('candidatesTokenCount'))
         result.thinking_tokens = token_count(usage.get('thoughtsTokenCount'))
-        if usage and result.thinking_tokens is None and setting.budget == 0 and 'thoughtsTokenCount' not in usage:
-            result.thinking_tokens = 0  # Explicitly disabled, not inferred from answer length.
+        if result.thinking_tokens is not None:
+            result.thinking_tokens_source = 'usageMetadata.thoughtsTokenCount'
+        elif 'thoughtsTokenCount' not in usage:
+            total = token_count(usage.get('totalTokenCount'))
+            tools = token_count(usage.get('toolUsePromptTokenCount', 0))
+            if all(x is not None for x in (total, tools, result.input_tokens, result.output_tokens)):
+                residual = total - tools - result.input_tokens - result.output_tokens
+                if residual >= 0:
+                    result.thinking_tokens = residual
+                    result.thinking_tokens_source = 'totalTokenCount - promptTokenCount - candidatesTokenCount - toolUsePromptTokenCount'
         result.cached_input_tokens = token_count(usage.get('cachedContentTokenCount'))
         if result.output_tokens is not None and result.thinking_tokens is not None:
             result.billable_output_tokens = result.output_tokens + result.thinking_tokens
@@ -75,6 +83,8 @@ class GeminiProvider:
             if candidate.get('index', 0) != 0:
                 raise ValueError('Unexpected extra response candidate')
             for part in candidate.get('content', {}).get('parts', []):
+                if part.get('thought') and part.get('text'):
+                    result.reasoning_content_observed = True
                 if 'text' in part and not part.get('thought', False):
                     append_answer(part['text'], now, result)
             if candidate.get('finishReason'):

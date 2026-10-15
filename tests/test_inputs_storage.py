@@ -61,3 +61,10 @@ def test_storage_preserves_multiline_answer_and_null(tmp_path):
     assert json.loads((tmp_path / 'run/metadata.json').read_text())['missing'] is None
     with pytest.raises(FileExistsError):
         RunStore(tmp_path / 'run')
+
+
+@pytest.mark.parametrize('thinking', [{'budget': 1}, {'budget': -1}, {'level': 'minimal'}, {}])
+def test_thinking_must_be_explicitly_off(config_data, thinking):
+    config_data['configurations'][0]['thinking'] = thinking
+    with pytest.raises(ValueError):
+        Config.model_validate(config_data)

@@ -10,7 +10,14 @@ from typing import Annotated, Literal
 from urllib.parse import urlparse
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictInt,
+    field_validator,
+    model_validator,
+)
 
 Name = Annotated[str, Field(min_length=1, pattern=r'^[A-Za-z0-9][A-Za-z0-9_.-]*$')]
 PositiveInt = Annotated[StrictInt, Field(gt=0)]
@@ -140,18 +147,12 @@ class LocalConfig(StrictModel):
     model_key: Annotated[str, Field(min_length=1)]
     expected_quantisation: Annotated[str, Field(min_length=1)]
     model_files: Annotated[list[Path], Field(min_length=1)]
-    reasoning: Literal['off', 'on', 'low', 'medium', 'high'] | None = None
+    reasoning: Literal['off'] = 'off'
+    model_format: Literal['mlx', 'gguf'] = 'mlx'
 
 
 class Thinking(StrictModel):
-    budget: Annotated[StrictInt, Field(ge=0)] | None = None
-    level: Literal['minimal', 'low', 'medium', 'high'] | None = None
-
-    @model_validator(mode='after')
-    def explicit_setting(self):
-        if (self.budget is None) == (self.level is None):
-            raise ValueError('Set exactly one fixed thinking budget or level')
-        return self
+    budget: Annotated[StrictInt, Field(ge=0, le=0)]
 
 
 class Pricing(StrictModel):
@@ -181,6 +182,9 @@ class Config(StrictModel):
     @model_validator(mode='after')
     def unique_ids(self):
         require_unique([c.id for c in self.configurations])
+        formats = {c.model_format for c in self.configurations if isinstance(c, LocalConfig)}
+        if len(formats) > 1:
+            raise ValueError('Do not mix MLX and GGUF within an experiment')
         return self
 
 

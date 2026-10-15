@@ -71,6 +71,9 @@ def stream_request(client: httpx.Client, url: str, payload: dict, headers: dict,
                     for data in decoder.feed(b'', final=True):
                         if data != '[DONE]':
                             consume(json.loads(data), clock(), result)
+    except KeyboardInterrupt:
+        result.error = 'Interrupted by user'
+        result.status = 'error'
     except (httpx.HTTPError, ValueError, KeyError, TypeError, TimeoutError) as error:
         # Do not put request headers, credentials or provider error text into logs.
         result.error = f'{type(error).__name__}: request or stream failed; inspect retained response'

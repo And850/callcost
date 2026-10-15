@@ -16,6 +16,8 @@ class CallResult:
     input_tokens: int | None = None
     output_tokens: int | None = None
     thinking_tokens: int | None = None
+    thinking_tokens_source: str | None = None
+    reasoning_content_observed: bool = False
     billable_output_tokens: int | None = None
     cached_input_tokens: int | None = None
     decode_tokens_per_second: float | None = None

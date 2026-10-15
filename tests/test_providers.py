@@ -5,7 +5,7 @@ import pytest
 
 from callcost.providers.gemini import GeminiProvider
 from callcost.providers.lmstudio import LMStudioProvider
-from callcost.schemas import Config, Dataset, LocalConfig, LMStudioSettings, RunSettings
+from callcost.schemas import Config, Dataset, LMStudioSettings, LocalConfig, RunSettings
 
 
 class Fragments(httpx.SyncByteStream):
@@ -23,7 +23,7 @@ def sse(events):
 
 
 def test_gemini_stream_usage_thinking_and_exact_payload(config_data, prompt_data, tmp_path):
-    config_data['configurations'][0]['thinking'] = {'budget': 128}
+    config_data['configurations'][0]['thinking'] = {'budget': 0}
     config = Config.model_validate(config_data)
     body = sse([
         {'candidates': [{'content': {'parts': [{'text': 'private thought', 'thought': True}]}}]},
@@ -39,7 +39,7 @@ def test_gemini_stream_usage_thinking_and_exact_payload(config_data, prompt_data
         provider = GeminiProvider(config.configurations[0], config.run, client, 'secret')
         result = provider.generate(Dataset.model_validate(prompt_data).prompts[0], tmp_path, 'call')
     sent = json.loads(requests[0].content)
-    assert sent['generationConfig']['thinkingConfig'] == {'thinkingBudget': 128}
+    assert sent['generationConfig']['thinkingConfig'] == {'thinkingBudget': 0}
     assert 'scoring' not in json.dumps(sent)
     assert result.status == 'completed'
     assert result.answer == 'Answer: 雪4'
@@ -81,8 +81,8 @@ def test_missing_gemini_usage_is_not_zero(config_data, prompt_data, tmp_path):
 
 
 def local_config():
-    return LocalConfig(id='q4', provider='lmstudio', model_key='test@q4_k_m',
-                       expected_quantisation='Q4_K_M', model_files=['/tmp/test.Q4_K_M.gguf'])
+    return LocalConfig(id='q4', provider='lmstudio', model_key='test@4bit',
+                       expected_quantisation='4bit', model_files=['/tmp/test.4bit.gguf'])
 
 
 def test_lmstudio_explicit_load_stream_and_unload(tmp_path, prompt_data):
@@ -100,7 +100,7 @@ def test_lmstudio_explicit_load_stream_and_unload(tmp_path, prompt_data):
     def handle(request):
         paths.append(request.url.path)
         if request.url.path.endswith('/models'):
-            return httpx.Response(200, json={'models': [{'key': 'test@q4_k_m', 'quantization': {'name': 'Q4_K_M'}, 'loaded_instances': []}]})
+            return httpx.Response(200, json={'models': [{'key': 'test@4bit', 'format': 'mlx', 'quantization': {'name': '4bit'}, 'loaded_instances': []}]})
         if request.url.path.endswith('/load'):
             return httpx.Response(200, json={'instance_id': 'instance', 'status': 'loaded', 'load_time_seconds': 0.3, 'load_config': {'context_length': 4096}})
         if request.url.path.endswith('/unload'):
@@ -126,8 +126,43 @@ def test_local_quantisation_mismatch_prevents_load():
     requests = []
     def handle(request):
         requests.append(request)
-        return httpx.Response(200, json={'models': [{'key': 'test@q4_k_m', 'quantization': {'name': 'Q8_0'}, 'loaded_instances': []}]})
+        return httpx.Response(200, json={'models': [{'key': 'test@4bit', 'format': 'mlx', 'quantization': {'name': '8bit'}, 'loaded_instances': []}]})
     with httpx.Client(transport=httpx.MockTransport(handle)) as client:
         with pytest.raises(ValueError, match='quantisation'):
             LMStudioProvider(local_config(), LMStudioSettings(), RunSettings(), client).prepare()
+    assert len(requests) == 1
+
+
+def test_gemini_zero_thinking_from_complete_accounting(config_data, prompt_data, tmp_path):
+    event = {'candidates': [{'content': {'parts': [{'text': 'Answer: 4'}]}, 'finishReason': 'STOP'}],
+             'usageMetadata': {'promptTokenCount': 20, 'candidatesTokenCount': 4, 'totalTokenCount': 24}}
+    config = Config.model_validate(config_data)
+    with httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(200, stream=Fragments(sse([event]))))) as client:
+        result = GeminiProvider(config.configurations[0], config.run, client, 'key').generate(
+            Dataset.model_validate(prompt_data).prompts[0], tmp_path, 'zero')
+    assert result.thinking_tokens == 0
+    assert result.thinking_tokens_source.startswith('totalTokenCount -')
+    assert result.billable_output_tokens == 4
+
+
+def test_grouped_mlx_alias_loads_only_matching_selected_variant(tmp_path):
+    config = LocalConfig(id='local', provider='lmstudio', model_key='qwen/model@4bit',
+                         expected_quantisation='4bit', model_files=['weights.safetensors'])
+    requests = []
+    def handle(request):
+        requests.append(request)
+        if request.method == 'GET':
+            return httpx.Response(200, json={'models': [{'key': 'qwen/model', 'format': 'mlx',
+                'variants': ['qwen/model@4bit', 'qwen/model@8bit'], 'selected_variant': 'qwen/model@4bit',
+                'quantization': {'name': '4bit'}, 'loaded_instances': []}]})
+        return httpx.Response(200, json={'instance_id': 'loaded', 'status': 'loaded',
+                                        'load_config': {'context_length': 4096}})
+    with httpx.Client(transport=httpx.MockTransport(handle)) as client:
+        LMStudioProvider(config, LMStudioSettings(), RunSettings(), client).prepare()
+    assert json.loads(requests[1].content)['model'] == 'qwen/model'
+    requests.clear()
+    config.model_key = 'qwen/model@8bit'
+    config.expected_quantisation = '8bit'
+    with httpx.Client(transport=httpx.MockTransport(handle)) as client, pytest.raises(ValueError, match='selected'):
+        LMStudioProvider(config, LMStudioSettings(), RunSettings(), client).prepare()
     assert len(requests) == 1
