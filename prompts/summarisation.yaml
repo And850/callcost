@@ -1,19 +1,31 @@
 schema_version: 1
 # Fairy-style summarisation prompts, written for the CallCost benchmark (drafted with Claude, reviewed by Alex).
 # All input texts are invented; names, places and numbers are fictional unless obviously generic.
-# Checklists are fixed BEFORE any model sees these prompts. Do not edit after the first run.
-# Requires an automatic check type `max_words` (count whitespace-separated words in the answer).
+# Inputs are deliberately noisy (quoted replies, tangents, boilerplate, distractors) so that the
+# summary has to select, not copy. Checklists are fixed BEFORE any model sees these prompts.
+# Requires the automatic check type `max_words` (count whitespace-separated words in the answer).
 prompts:
   - id: summary-01
     task_type: summarisation
     prompt: "Summarise these meeting notes in at most three sentences for a club member who missed the meeting."
     input: |
-      Python Club, notes from 14 October
-      - Next session moves from Tuesday 21 Oct to Thursday 23 Oct, same room (B12), 15:30.
-      - Topic: recursion. Marta will prepare three warm-up problems; Leo brings the projector adapter.
-      - We discussed a club hackathon in December but decided to wait until after mock exams. No date set.
-      - Attendance today: 7. Two new members joined.
-      - Anyone who wants an invite to the club's GitHub organisation should message Leo by Friday.
+      Python Club meeting, 14 Oct (notes by Leo, typed during the meeting, sorry for the mess)
+
+      Started late, about 15:40, because the projector in B12 wouldn't connect to Marta's laptop again. We tried HDMI, then the USB-C adapter from the IT office, which also didn't work. Ended up crowding round one screen. Someone needs to ask IT about this properly, it's the third time.
+
+      Attendance: 7 today. Two new people came (Year 10, Sofia and Arnav), both have done a bit of Scratch, Arnav has done some Python on his own.
+
+      Recap of last session: we finished the list comprehension exercises. Most people got the nested one in the end. Marta said we should keep a shared doc of solutions, people agreed but nobody volunteered to maintain it, so that's still open.
+
+      Long discussion about a club hackathon. Ideas: December, maybe a Saturday, maybe together with Math Club. Several people said mock exams are early December and they won't have time. Agreed to wait until after mocks and decide then. NO DATE SET. Also talked about a pizza budget for it, Ms. Ortiz said the school might cover it, but that depends on the date anyway.
+
+      Next session: we can't have Tuesday 21 Oct because the room is booked for parents' evening setup. Moving to Thursday 23 Oct, same room B12, starting 15:30. Topic: recursion. Marta will prepare three warm-up problems. Leo brings his own projector adapter (the one that works).
+
+      Off-topic: Arnav asked about competitive programming sites, people recommended Codeforces and the school's old USACO folder. Someone asked if the club could get school laptops, answer was probably not this term.
+
+      Admin: we now have a GitHub organisation for the club. Anyone who wants an invite should message Leo by Friday with their GitHub username. After Friday he'll send the invites in one batch.
+
+      Ended 16:35.
     scoring:
       type: checklist
       items:
@@ -24,10 +36,13 @@ prompts:
           description: "Mentions room B12."
           automatic: {type: substring, value: "B12", case_sensitive: false}
         - id: time
-          description: "Mentions the 15:30 start time."
+          description: "Mentions 15:30."
           automatic: {type: regex, pattern: "15[:.]30|3[:.]30 ?(pm|p\\.m\\.)", case_sensitive: false}
+        - id: right_time
+          description: "Gives 15:30 as the next session's start, not 15:40 (today's late start)."
+          human: true
         - id: hackathon_undecided
-          description: "Says the hackathon is postponed or has no date; does not present December as a fixed date."
+          description: "If the hackathon is mentioned, says it has no date / is postponed; does not present December as fixed."
           human: true
         - id: github_deadline
           description: "Mentions messaging Leo by Friday for the GitHub invite."
@@ -41,14 +56,41 @@ prompts:
 
   - id: summary-02
     task_type: summarisation
-    prompt: "Summarise this email in two sentences."
+    prompt: "Summarise this email thread in two sentences: what do I need to do, and by when?"
     input: |
       From: Mr. Costa
-      Subject: Physics lab report, deadline update
+      To: Physics HL, Year 12
+      Date: Wednesday 22 October, 08:12
+      Subject: RE: RE: Physics lab report
 
       Hi all,
-      Correction to Monday's message: the lab report on the pendulum period is now due Friday 7 November at 23:59, not Monday 3 November as I wrote before. Submit it through the class portal as a single PDF. Please include your raw data table and an uncertainty for g. Reports over 6 pages will not be marked beyond page 6. If you were absent for the practical, ask Priya for the shared dataset rather than inventing values.
+
+      Quick correction to Monday's message, sorry about the confusion. The lab report on the pendulum period is now due Friday 7 November at 23:59, not Monday 3 November as I wrote before. Several of you have the Chemistry test that Monday and Ms. Rahman asked if we could move it, which seemed fair.
+
+      Everything else stays as it was: submit through the class portal as a single PDF (not Word, not Google Docs links, I can't annotate those). Please include your raw data table and an uncertainty for g. Reports over 6 pages will not be marked beyond page 6.
+
+      If you were absent for the practical, ask Priya for the shared dataset rather than inventing values. I will check.
+
       Thanks,
+      Mr. Costa
+      Head of Physics
+      Tel. ext. 214 | Office hours Tue/Thu 13:00 to 13:45
+      This email and any attachments are confidential and intended solely for the addressee. If you have received it in error, please notify the sender and delete it.
+
+      -----Original Message-----
+      From: Priya S.
+      Date: Tuesday 21 October, 19:40
+      Subject: RE: Physics lab report
+
+      Hi Mr Costa, is it ok if we use the class average for the length measurements? Mine got smudged. Also is the deadline still Monday?
+
+      -----Original Message-----
+      From: Mr. Costa
+      Date: Monday 20 October, 16:05
+      Subject: Physics lab report
+
+      Hi all,
+      Reminder that the lab report on the pendulum period is due Monday 3 November at 23:59. Submit through the class portal as a single PDF. Include your raw data table and an uncertainty for g. Max 6 pages. Remember to use the equipment-list template from the shared drive. Good luck, and enjoy the half-term break.
       Mr. Costa
     scoring:
       type: checklist
@@ -57,7 +99,7 @@ prompts:
           description: "Gives 7 November as the due date."
           automatic: {type: regex, pattern: "7(th)? Nov|Nov(ember)? 7", case_sensitive: false}
         - id: due_time
-          description: "Gives 23:59 (or 11:59 pm) as the time."
+          description: "Gives 23:59 (or 11:59 pm)."
           automatic: {type: regex, pattern: "23[:.]59|11[:.]59 ?(pm|p\\.m\\.)", case_sensitive: false}
         - id: pdf
           description: "Mentions a single PDF via the portal."
@@ -69,7 +111,7 @@ prompts:
           description: "Mentions the raw data table or the uncertainty for g."
           human: true
         - id: faithful
-          description: "Adds no facts that are not in the email."
+          description: "Adds no facts that are not in the thread; does not turn Priya's question into an instruction."
           human: true
         - id: length
           description: "At most 60 words."
@@ -77,15 +119,31 @@ prompts:
 
   - id: summary-03
     task_type: summarisation
-    prompt: "Summarise this bug report in two sentences: first a one-line description a developer could use as a ticket title, then the likely cause."
+    prompt: "Summarise this issue thread in two sentences: first a one-line description a developer could use as a ticket title, then the likely cause."
     input: |
       Issue #214: Timer notification fires twice
-      Reported by: dmitri-k
+      Opened by dmitri-k | labels: bug, notifications | 6 comments
+
+      dmitri-k:
       Steps: set a 5-minute timer from the menu bar panel, lock the screen, unlock after the timer ends.
       Expected: one notification. Actual: two identical notifications, about 1 second apart.
       Happens on macOS 26.1, not on 25.6. Does not happen if the screen stays unlocked.
-      Workaround: none found. Attached logs show the scheduler registering the timer twice after the unlock event.
       Priority: low, but annoying.
+
+      ana-v:
+      +1, same on my MacBook Air. Also on 26.1.
+
+      jules42:
+      Could this be the Do Not Disturb setting? I had something similar with another app last year and turning off Focus fixed it.
+
+      dmitri-k:
+      @jules42 tried that, Focus is off and it still happens.
+
+      ana-v:
+      Not sure if related, but the dark mode icon in the menu bar looks slightly blurry on external monitors since the last update.
+
+      rkoval (maintainer):
+      Thanks all. The logs attached by dmitri-k show the scheduler registering the timer a second time when the app receives the unlock event, so the notification is delivered by both registrations. Workaround: none yet; restarting the app doesn't help. The blurry icon is a separate issue, @ana-v could you open a new one? Not planning a fix for 3.4.1, will look at it after.
     scoring:
       type: checklist
       items:
@@ -96,13 +154,16 @@ prompts:
           description: "Mentions locking/unlocking the screen as the trigger."
           automatic: {type: regex, pattern: "lock", case_sensitive: false}
         - id: cause
-          description: "Identifies the scheduler registering the timer twice after unlock as the likely cause."
+          description: "Identifies the scheduler registering the timer again on unlock as the likely cause."
+          human: true
+        - id: not_focus
+          description: "Does not present Focus / Do Not Disturb as the cause."
           human: true
         - id: no_fake_fix
           description: "Does not claim a workaround or fix exists."
           human: true
-        - id: faithful
-          description: "Adds no facts that are not in the report."
+        - id: on_topic
+          description: "Does not mix in the blurry icon issue."
           human: true
         - id: length
           description: "At most 60 words."
@@ -110,9 +171,24 @@ prompts:
 
   - id: summary-04
     task_type: summarisation
-    prompt: "Summarise this news article in exactly three bullet points."
+    prompt: "Summarise the bike-share news in this article in exactly three bullet points."
     input: |
-      Port Elmira's city council approved an expansion of the BiciPort bike-share on Tuesday. The network will grow from 40 to 65 stations by June next year, with 300 new e-bikes. The expansion costs EUR 2.1 million, of which EUR 1.4 million comes from a regional transport grant. Annual membership rises from EUR 35 to EUR 42; single rides stay at EUR 1. Councillor Ana Ferrer said usage grew 18% last year, mostly among commuters. Opposition councillors voted against, arguing the money should go to bus frequency instead. Construction of the first ten stations starts in March.
+      Port Elmira approves bike-share expansion after heated session
+      By Clara Mendes, City Desk
+
+      Port Elmira's city council approved an expansion of the BiciPort bike-share on Tuesday evening, after a session that ran more than two hours over schedule.
+
+      The network, launched in 2019 with 25 stations near the harbour, will grow from its current 40 to 65 stations by June next year, with 300 new e-bikes added to the fleet. The new stations will mostly serve the northern residential districts and the university campus, which councillors said had been "left out" of the first phase.
+
+      The expansion costs EUR 2.1 million, of which EUR 1.4 million comes from a regional transport grant; the rest comes from the city's mobility budget. Annual membership rises from EUR 35 to EUR 42, the first increase since launch. Single rides stay at EUR 1.
+
+      "Usage grew 18% last year, mostly among commuters," said Councillor Ana Ferrer, who has championed the scheme. "People are voting with their legs."
+
+      Opposition councillors voted against, arguing the money should go to bus frequency instead. "Buses carry ten times more people," said Councillor Tomas Riera. The motion passed by 14 votes to 9.
+
+      Construction of the first ten stations starts in March.
+
+      In other council business, members postponed a vote on extending terrace hours for harbour-front restaurants and approved renaming Plaza Nova to Plaza de la Marina, effective in January. A public consultation on the city's new parking zones opens next week.
     scoring:
       type: checklist
       items:
@@ -131,8 +207,8 @@ prompts:
         - id: single_ride
           description: "Does not claim the single-ride price changes."
           human: true
-        - id: faithful
-          description: "Adds no facts that are not in the article."
+        - id: on_topic
+          description: "Does not include the unrelated council business (terraces, renaming, parking)."
           human: true
         - id: length
           description: "At most 90 words."
@@ -143,13 +219,29 @@ prompts:
     prompt: "Summarise the plan this group chat ended with, in one or two sentences."
     input: |
       [Sat 10:02] Nina: so are we doing Montserrat on Sunday?
+      [10:03] Jae: morning
+      [10:03] Jae: wait which sunday
+      [10:04] Nina: tomorrow!!
       [10:05] Oscar: forecast says rain sunday afternoon
-      [10:06] Nina: ok what about saturday next week instead
-      [10:09] Oscar: works for me. train at 8:36 from Placa Espanya?
+      [10:05] Oscar: [screenshot]
+      [10:06] Nina: ugh ok what about saturday next week instead
+      [10:07] Jae: did anyone see the match last night btw
+      [10:07] Oscar: don't, I'm still upset
+      [10:08] Nina: focus pls
+      [10:09] Oscar: saturday works for me. train at 8:36 from Placa Espanya?
+      [10:09] Oscar: the 9:36 is too late if we want to do the Sant Jeroni trail
       [10:11] Jae: I can't do Saturday, I have a tournament. Sunday 26th?
+      [10:12] Nina: Oscar?
+      [10:14] Oscar: sunday 26th fine but my sister might come, is that ok
+      [10:14] Nina: of course
       [10:15] Nina: fine, Sunday 26th then, same 8:36 train
-      [10:16] Oscar: ok, I'll buy the tickets tonight, it's EUR 13.40 return each
-      [10:20] Jae: send me the payment request and I'll pay you back
+      [10:15] Jae: ok
+      [10:16] Oscar: I'll buy the tickets tonight, it's EUR 13.40 return each
+      [10:16] Oscar: 4 tickets with my sister
+      [10:18] Nina: I'll bring sandwiches
+      [10:19] Jae: I'll bring nothing because I'm useless
+      [10:20] Jae: jk send me the payment request and I'll pay you back
+      [10:21] Nina: also we could take the rack railway back down, it's like EUR 12 extra, let's decide on the day
     scoring:
       type: checklist
       items:
@@ -160,10 +252,13 @@ prompts:
           description: "Mentions the 8:36 train."
           automatic: {type: regex, pattern: "8[:.]36", case_sensitive: false}
         - id: final_plan
-          description: "Presents Sunday 26th as the final plan, not this Sunday or next Saturday."
+          description: "Presents Sunday 26th as the final plan, not tomorrow or next Saturday."
           human: true
         - id: tickets
-          description: "Mentions Oscar buying the tickets (price optional)."
+          description: "Mentions Oscar buying the tickets."
+          human: true
+        - id: undecided_railway
+          description: "Does not present the rack railway as decided."
           human: true
         - id: faithful
           description: "Adds no facts that are not in the chat."
@@ -176,12 +271,34 @@ prompts:
     task_type: summarisation
     prompt: "Summarise these release notes for a user deciding whether to update, in at most four bullet points."
     input: |
-      Notely 3.4 release notes
-      New: offline mode for notes created in the last 30 days. Search now matches text inside PDF attachments.
-      Changed: sync interval reduced from 10 minutes to 2 minutes on Wi-Fi; on mobile data it stays at 10 minutes. The free plan now allows 3 devices instead of 2.
-      Fixed: crash when renaming a folder whose name contains an emoji; low contrast in dark mode on the tag picker.
-      Removed: the legacy Evernote importer. Use the new universal importer instead.
-      Known issue: offline edits to shared notes may create duplicates; a fix is planned for 3.4.1.
+      Notely 3.4 release notes (build 3412)
+
+      Highlights
+      - Offline mode for notes created in the last 30 days.
+      - Search now matches text inside PDF attachments.
+
+      Changed
+      - Sync interval reduced from 10 minutes to 2 minutes on Wi-Fi; on mobile data it stays at 10 minutes.
+      - The free plan now allows 3 devices instead of 2.
+      - Default editor font size increased slightly (from 14 to 15 pt). You can change it back in Settings > Editor.
+      - The Share menu has been reordered so that "Copy link" appears first.
+      - Updated translations: Catalan, Polish, Vietnamese.
+
+      Fixed
+      - Crash when renaming a folder whose name contains an emoji.
+      - Low contrast in dark mode on the tag picker.
+      - Checkbox state sometimes not saved when the note was closed within 1 second.
+      - Typo on the onboarding screen ("Wellcome").
+      - Rare issue where the app icon badge showed a count of -1.
+
+      Removed
+      - The legacy Evernote importer. Use the new universal importer instead (File > Import).
+
+      Known issues
+      - Offline edits to shared notes may create duplicates; a fix is planned for 3.4.1.
+      - On some Android 13 devices, the widget may need to be re-added after updating.
+
+      Thank you to everyone in the beta programme, especially the 1,200 testers who sent feedback this cycle.
     scoring:
       type: checklist
       items:
@@ -209,16 +326,32 @@ prompts:
 
   - id: summary-07
     task_type: summarisation
-    prompt: "Summarise this procedure in three sentences for a student who will do the practical tomorrow."
+    prompt: "Summarise this practical sheet in three sentences for a student who will do the practical tomorrow."
     input: |
-      Practical 4: specific heat capacity of an aluminium block
+      Practical 4: Specific heat capacity of an aluminium block
+      IB Physics, Topic B.1
+
+      Background
+      The specific heat capacity c of a material is the energy needed to raise the temperature of 1 kg of it by 1 K. In this practical you supply a known amount of electrical energy to a metal block and measure its temperature rise. You met the equation Q = mc deltaT in the previous lesson.
+
+      Equipment
+      Aluminium block (about 1 kg) with two holes, 12 V heater, thermometer or temperature probe, power supply, ammeter, voltmeter, stopwatch, top-pan balance, small dropper of oil, insulating jacket (optional), heat-proof mat.
+
+      Risk assessment
+      The heater and block become hot enough to burn. The heater stays hot for several minutes after switch-off; do not touch it or remove it from the block until your teacher says it is safe. Keep water away from the power supply.
+
+      Method
       1. Measure the block's mass on the top-pan balance (record to 0.1 g).
-      2. Insert the 12 V heater and the thermometer; add a drop of oil to each hole for thermal contact.
+      2. Insert the heater and the thermometer; add a drop of oil to each hole for thermal contact.
       3. Record the starting temperature, then switch on and start the stopwatch at the same moment.
       4. Record voltage and current every minute; they should stay roughly constant.
       5. Switch off after 10 minutes but keep recording the temperature until it stops rising. Use the maximum temperature, not the temperature at switch-off.
-      6. Calculate c = VIt / (m x deltaT). Expect a value below the textbook 900 J/kg K because of heat loss; insulating the block reduces the gap.
-      Safety: the heater stays hot for several minutes after switch-off.
+      6. Calculate c = VIt / (m x deltaT).
+
+      Analysis and evaluation
+      Expect a value below the textbook 900 J/kg K because of heat loss to the surroundings; insulating the block reduces the gap. In your evaluation, discuss at least two sources of uncertainty and how they affect your result. Extension: repeat with the insulating jacket and compare.
+
+      The write-up is due one week after the practical. Use the standard template.
     scoring:
       type: checklist
       items:
@@ -232,10 +365,10 @@ prompts:
           description: "Gives the formula or says energy is calculated from voltage, current and time."
           human: true
         - id: safety
-          description: "Mentions that the heater stays hot."
+          description: "Mentions that the heater stays hot after switch-off."
           human: true
         - id: faithful
-          description: "Adds no facts or numbers that are not in the procedure."
+          description: "Adds no facts or numbers that are not in the sheet."
           human: true
         - id: length
           description: "At most 90 words."
@@ -243,10 +376,30 @@ prompts:
 
   - id: summary-08
     task_type: summarisation
-    prompt: "Summarise this notice in two sentences for a resident who lives on the 4th floor."
+    prompt: "In two sentences, tell a resident who lives on the 4th floor what this notice means for them on 12 November."
     input: |
-      Edifici Albada, notice to residents
-      Water will be shut off on Wednesday 12 November from 09:00 to 14:00 for pipe replacement on floors 3 to 6. Floors 1 and 2 are not affected. Please fill containers in advance if needed. The lift will also be out of service from 08:00 to 12:00 the same day while materials are moved. If the work finishes early, water will be restored without further notice. Questions: the administrator's office, weekdays 10:00 to 13:00.
+      Edifici Albada, notice to residents, October
+
+      1. Water shut-off
+      Water will be shut off on Wednesday 12 November from 09:00 to 14:00 for pipe replacement on floors 3 to 6. Floors 1 and 2 are not affected. Please fill containers in advance if needed. If the work finishes early, water will be restored without further notice.
+
+      2. Lift
+      The lift will be out of service from 08:00 to 12:00 the same day while materials are moved. Residents with reduced mobility who need assistance should contact the administrator's office in advance.
+
+      3. Recycling
+      From November, the glass container moves from the entrance to the courtyard, next to the bicycle racks. Please do not leave glass outside the container.
+
+      4. Community fees
+      The quarterly community fee will be charged on 5 November as usual. The amount does not change.
+
+      5. Facade painting
+      The facade painting planned for October has been postponed to spring because of the weather. Balconies do not need to be cleared yet.
+
+      6. Lost and found
+      A child's blue scooter has been found in the courtyard. It is in the porter's lodge.
+
+      Questions: the administrator's office, weekdays 10:00 to 13:00.
+      Thank you for your cooperation.
     scoring:
       type: checklist
       items:
@@ -262,8 +415,8 @@ prompts:
         - id: lift
           description: "Mentions the lift being out of service 08:00 to 12:00."
           human: true
-        - id: faithful
-          description: "Adds no facts that are not in the notice."
+        - id: on_topic
+          description: "Does not include items unrelated to 12 November (recycling, fees, painting, scooter)."
           human: true
         - id: length
           description: "At most 60 words."
@@ -271,13 +424,23 @@ prompts:
 
   - id: summary-09
     task_type: summarisation
-    prompt: "Summarise this study abstract in two sentences, including the main result and one limitation."
+    prompt: "Summarise this press release in two sentences, including the main result and one limitation."
     input: |
-      Background: Short daytime naps are often recommended for students, but evidence on their effect on afternoon test performance is mixed.
-      Methods: 96 secondary-school students were randomly assigned to a 20-minute nap, a 20-minute quiet rest, or normal activity after lunch, on three non-consecutive days. They then sat a 15-minute arithmetic test.
-      Results: The nap group scored 6% higher than the normal-activity group (p = 0.03). Quiet rest scored 3% higher, which was not statistically significant. Students who slept longer than 25 minutes performed worse than the quiet-rest group.
-      Limitations: single school, self-reported sleep onset, short follow-up.
-      Conclusion: Brief naps may modestly improve afternoon arithmetic performance; longer naps may not.
+      Press release, Northfield University, 9 October
+
+      Study finds short naps may help students' afternoon maths
+
+      A new study from Northfield University's Department of Education suggests that a short nap after lunch may modestly improve secondary-school students' performance in afternoon arithmetic.
+
+      "Naps are basically a free grade boost," said co-author Dr. Helen Marsh. "Every school should build them into the timetable."
+
+      The study, published in the Northfield Review of Education, followed 96 secondary-school students who were randomly assigned to a 20-minute nap, a 20-minute quiet rest, or normal activity after lunch, on three non-consecutive days. They then sat a 15-minute arithmetic test.
+
+      The nap group scored 6% higher than the normal-activity group (p = 0.03). Quiet rest scored 3% higher, which was not statistically significant. Students who slept longer than 25 minutes performed worse than the quiet-rest group.
+
+      The authors note several limitations: the study took place in a single school, sleep onset was self-reported, and follow-up was short. "We need larger, multi-school trials before making firm recommendations," the paper concludes.
+
+      The research was funded by the Northfield Education Trust. Northfield University is ranked among the top 50 universities in the country for education research. For media enquiries, contact the press office.
     scoring:
       type: checklist
       items:
@@ -291,10 +454,10 @@ prompts:
           description: "Does not claim quiet rest had a significant effect."
           human: true
         - id: hedged
-          description: "Does not overstate the conclusion (e.g. 'naps improve grades' without qualification)."
+          description: "Does not repeat the co-author's overstatement (free grade boost, every school should) as the finding."
           human: true
         - id: faithful
-          description: "Adds no facts that are not in the abstract."
+          description: "Adds no facts that are not in the press release."
           human: true
         - id: length
           description: "At most 70 words."
@@ -302,11 +465,22 @@ prompts:
 
   - id: summary-10
     task_type: summarisation
-    prompt: "Using only these search results, answer in at most two sentences: when is the library open on Saturdays? Say so if the sources disagree."
+    prompt: "Today is 20 October. Using only these search results, answer in at most two sentences: when is the library open on Saturdays? Say so if the sources disagree."
     input: |
-      Result 1 (city library website, updated 2 October): Biblioteca del Turo is open on Saturdays from 10:00 to 14:00. Closed on Sundays.
-      Result 2 (travel blog, 2023): Biblioteca del Turo opens on Saturdays from 10:00 to 20:00, a great quiet place to study.
-      Result 3 (city library website, news page, 9 October): From 1 November until 31 January, Saturday opening is extended to 10:00 to 18:00 for the exam season.
+      Result 1. Biblioteca del Turo | City Libraries (official website, page updated 2 October)
+      We use cookies to improve your experience. Accept all / Settings.
+      Opening hours: Monday to Friday 09:00 to 20:30. Saturday 10:00 to 14:00. Closed on Sundays and public holidays. The children's section closes 30 minutes earlier.
+      Address and accessible entrance information below.
+
+      Result 2. "Best quiet places to study in the city" (travel blog, March 2023)
+      ...Biblioteca del Turo opens on Saturdays from 10:00 to 20:00, a great quiet place to study, with fast wifi and plenty of plugs. Grab a coffee at the bakery opposite first! [Sponsored: book cheap flights now]
+
+      Result 3. City Libraries news (official website, 9 October)
+      Exam season opening: from 1 November until 31 January, Saturday opening at Biblioteca del Turo and Biblioteca Central is extended to 10:00 to 18:00. Sunday opening is not affected.
+
+      Result 4. Student forum thread, "is turo open on sundays now??" (posted 3 days ago)
+      user123: someone told me it'll open sundays during exams
+      mira_b: I don't think so, I asked at the desk and they said only saturdays get longer hours
     scoring:
       type: checklist
       items:
@@ -317,10 +491,13 @@ prompts:
           description: "Mentions the 10:00 to 18:00 hours."
           automatic: {type: regex, pattern: "18[:.]00|6 ?(pm|p\\.m\\.)", case_sensitive: false}
         - id: from_november
-          description: "Says the extended hours apply from 1 November (until 31 January)."
+          description: "Says the extended hours start on 1 November."
           human: true
         - id: outdated_source
           description: "Does not present 10:00 to 20:00 as current; treats the 2023 blog as outdated or conflicting."
+          human: true
+        - id: no_sunday
+          description: "Does not claim the library opens on Sundays."
           human: true
         - id: length
           description: "At most 60 words."
