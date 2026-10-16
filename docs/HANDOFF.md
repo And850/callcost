@@ -3,7 +3,7 @@
 ## Current authorization
 
 - Code/docs edits, offline tests, small commits/pushes are authorized.
-- Owner authorized a roughly 15-minute pre-check only after confirming a clean restart: exactly three held-out calls each on local-q8/local-q3, new swap observations and sudo-backed energy validation. Owner confirmed ready after restart. Boot time changed to 16 October 21:00:50 UTC; AC power and headless service were checked. One held-out local-q3 call completed before required-energy failure stopped the pre-check. No further model calls are authorized without confirming the replacement check.
+- Owner authorized a roughly 15-minute pre-check only after confirming a clean restart: exactly three held-out calls each on local-q8/local-q3, new swap observations and sudo-backed energy validation. Owner confirmed ready after restart. Boot time changed to 16 October 21:00:50 UTC; AC power and headless service were checked. The first check stopped after one call. The owner then approved a fresh six-call check; it completed and validated successfully, as recorded below. No further model calls are authorized here.
 - Neither full local nor full cloud pass is authorized. Wait for the pre-check report and owner approval. Owner confirmed Tier 1 prepaid billing with no auto-reload. AI Studio verification matched the environment key masked suffix to the sole listed key, confirmed Tier 1/Prepay/auto-reload off and the model limits; a contradictory outstanding-balance alert remains a cloud-readiness blocker. See private runs/billing-verification-20261016.json. No cloud inference was used.
 - Ask before model calls beyond this pre-check, downloads, system settings or other long runs. Never auto-commit run artifacts or credentials.
 
@@ -16,23 +16,15 @@
 - `cf49892` implements explicit `--pass local` / `--pass cloud`, separate directories, pass identity, checkpoints and `LATEST-local` / `LATEST-cloud`. Local needs no Gemini key; cloud needs no LM Studio/model files/local-RAM gate. Cloud quota/rate-limit errors stop as `rate_limited` after a durable failed checkpoint, without an automatic retry loop.
 - Pre-check mode uses only local-q8/local-q3 and the separate pencil prompt, exactly three calls each, no benchmark prompts or extra warm-ups/pilots. It records a 120-second unloaded idle window plus 120-second loaded-before/after windows for each model, roughly ten minutes idle within an approximately 15-minute check.
 - Pre-check requires sudo and valid collector/baseline before calls. Missing in-call energy or requested swap observations preserves the completed response and stops before further inference. Separate validation requires all six calls, new metrics, same-segment idle windows and initial/post energy qualifications. Missing diagnostics after interruption remain `validation_incomplete`, never a false pass; completed calls are not repeated.
-- Independent review identified and prompted these pre-check safeguards; final follow-up found no remaining material blocker, and offline regressions cover them. Latest fresh verification after energy timing correction: 89 tests and Ruff pass. The live pre-check failed after one completed call; replacement validation requires owner approval.
+- Independent review identified and prompted these pre-check safeguards; final follow-up found no remaining material blocker, and offline regressions cover them. Latest fresh verification after energy timing correction: 89 tests and Ruff pass. The first live pre-check failed after one completed call; the separately approved replacement passed six calls, as recorded below.
 - Approved summaries were committed unchanged in `6f6de97`. Ignored `prompts/private/full.yaml` contains 30 pinned GSM8K + 10 approved summaries, preserving IDs, source records and scoring rules; schema and full-dataset checks pass. No benchmark prompt has been sent to a model.
 - Saved-run reporting includes costs/quality, observation counts/missing reasons, secondary footprint/RSS, thinking/billable output, payloads, list-price equivalent, energy qualifications and per-prompt counts. Weight bytes are descriptive memory; no runtime-memory gate. Human summary scores remain pending; blind review tooling/charts remain unfinished.
 
 ## Next actions
 
-1. Implementation and independent review are complete; obtain the owner's clean-restart confirmation. Keep charger/lid open, close unused apps and start LM Studio headlessly, server enabled, no model loaded. Check boot time and available RAM before the approved pre-check. Pre-check guard is 4 GiB RAM / 10 GiB disk. Do not lower guards or change system settings.
-2. Launch the pre-check in Terminal so sudo authentication stays local to the user. Exact command:
-
-```sh
-cd /Users/andreyryzhanskiy/Documents/CallCost/callcost && sudo -v && ./scripts/run_full.sh --precheck --config configs/experiment.yaml
-```
-
-Enter sudo password only in Terminal. `--precheck` rejects `--no-energy`, `--smoke` and `--pass`. Monitor `runs/LATEST-precheck`, status/log, checkpoints and validation. Compare idle and inference swap rates with raw counter-window timestamps. These observations cannot prove causal process attribution. Audit parsed power samples, CPU/GPU/ANE units/domains, coverage, baseline qualifications and cleanup before calling energy validated.
-
-3. Report back and wait for approval of each full pass. Full local retains its 10 GiB available-RAM and 10 GiB disk entry guards; neither guard proves swap-free inference, and swapping no longer invalidates answers. Preserve swapping as cost rather than trying to eliminate it by changing machine settings.
-4. After owner confirms paid billing, inspect Google AI Studio for environment key/project mapping, paid plan/usage tier, active limits and actual spend-cap setting. Record evidence/project/tier/limits/check time without the key. Metadata GET or a successful inference is not proof of tier. Alerts-only budgets are not spend caps. Tier/billing/limits were checked in AI Studio without inference. A contradictory outstanding-balance alert remains despite positive prepaid credit; no cloud request is authorized.
+1. Fresh held-out pre-check completed and passed. Give the owner the local-only command below for their Terminal launch tonight, with Codex and unused apps closed, charger connected, lid and Terminal open, headless LM Studio server running and no model loaded. Do not start the full pass from chat.
+2. Full local retains its 10 GiB available-RAM and 10 GiB disk entry guards. After cleanup, available RAM was 10.04 GiB, only just above the guard. If the guard fails, stop and close unused apps; do not lower it or change system settings. Passing it does not prove swap-free inference.
+3. Cloud stays blocked until the owner resolves the AI Studio outstanding-balance warning and separately approves cloud collection. This must not block local. Before cloud collection, recheck billing/key/project/tier/limits without printing credentials. No cloud call is authorized now.
 
 ## Full passes, only after separate approval
 
@@ -49,7 +41,7 @@ Resume with `./scripts/run_full.sh --pass local --resume` or `--pass cloud --res
 
 ## Existing evidence and caveats
 
-- `runs/LATEST` and `runs/LATEST-precheck` point to `20261016T210833.862187Z-precheck`, failed required-energy diagnostic. Local/cloud pointers do not yet exist. Before run work, read the appropriate pointer, status, then end of run.log. Check recorded PID if status may be stale; checkpoints are authoritative.
+- `runs/LATEST` and `runs/LATEST-precheck` point to `20261016T212019.875153Z-precheck`, completed and validated. The failed prior check remains preserved separately. Local/cloud pointers do not yet exist. Before run work, read the appropriate pointer, status, then end of run.log. Check recorded PID if status may be stale; checkpoints are authoritative.
 - Earlier smoke had six completed held-out calls plus one retained interrupted 6-bit attempt across two segments; completed 4-bit was skipped on resume. Zero benchmark calls. All five local thinking checks passed; Gemini recorded 28 thinking tokens. Six local load/unload operations left no models loaded. Caffeinate cleanup and notification delivery commands succeeded.
 - Every completed old smoke call flagged swap activity under the old flag (which included pageouts). Re-reading raw counters confirmed nonzero swap-in bytes in all six completed calls, independently of pageouts; the 8-bit call had 1,298,546,688 swap-in bytes. These are excluded instrumentation observations, not benchmark findings. Old smoke energy was unavailable without cached sudo. Fairy secondary memory was unavailable because a sampled process exited.
 - Four converted models had usable secondary samples in smoke; physical-footprint validation previously lacked complete 8-bit coverage. Exact encoded weights remain descriptive memory. Missing secondary metrics are valid unavailable observations with reasons.
@@ -68,3 +60,19 @@ Resume with `./scripts/run_full.sh --pass local --resume` or `--pass cloud --res
 - README has a dated energy instrumentation amendment before benchmark data. Original failed checkpoint/report remain unchanged. Offline replay lives ignored in `runs/power-timing-replay-20261016.json` and is not accepted live validation.
 - Source changes intentionally prevent resuming the failed check. Ask approval for a fresh ~15-minute pre-check of six new held-out calls; keep the first attempt separate and retained. Do not issue more calls or either full pass automatically.
 - Computer Use cannot control Terminal (tool safety restriction). User manually ran the exact sudo/pre-check command. Any replacement check must also authenticate in their Terminal, never by sending a password to chat.
+
+## Fresh pre-check outcome, 16 October 2026
+
+- Owner approved six new held-out calls and started the fresh Terminal command. Run `20261016T212019.875153Z-precheck` finished with exit 0, completed 6/6, `precheck_validation.valid: true`, no errors and zero benchmark calls. Every saved request matches the separate pencil pilot; all six local thinking checks passed. Prior failed evidence remains unchanged.
+- Local-q3: latencies 1.77/1.67/1.75 s, zero swap-in/out in all calls and both loaded idle windows. Unloaded idle also had zero swap traffic.
+- Local-q8: latencies 8.94/3.26/3.12 s, decode rates 19.15/18.94/19.66 tokens/s. Swap traffic was 1,122,304,000 / 14,172,160 / 1,376,256 bytes, mostly swap-in. Swapped share 3/3, median volume 14,172,160 bytes; no swap-free call latency is available for q8. Its loaded-before and loaded-after 120-second idle windows recorded 2,655,764,480 and 3,128,606,720 bytes. Swapping therefore occurs outside inference too; whole-machine counters cannot establish process causality. The short prompt does not prove comfortable headroom for long benchmark inputs. Swapping remains a measured cost, not a quality exclusion.
+- All requested swap/storage/compressor fields are present. Q8 compressor memory before/after calls is retained in raw evidence, including approximately 8.44 to 1.22 GB during its first call. Secondary sampled footprint reached 10.89 GB; encoded weight bytes remain the descriptive memory metric.
+- Sudo-backed powermetrics produced 537 q3 and 579 q8 parsed samples, mW converted to watts for CPU + GPU + ANE, with no collector errors. All six energy estimates were usable: q3 32.20/32.78/32.69 J; q8 78.70/52.50/49.43 J. Label as estimate, whole-machine delta. Baselines shifted (q3 1.44 to 2.42 W; q8 2.16 to 1.76 W); initial receipt-anchor uncertainty remains. These are instrumentation observations, not benchmark findings.
+- Both models unloaded, launcher exited, sudo refresh failures were zero. Post-cleanup available RAM was 10,777,821,184 bytes (10.04 GiB), swap used 2,298,347,520 bytes. GPU wired limit was observed as 12288 MiB; no system settings were changed by this work.
+- Local-only launch, executed by the owner after closing Codex:
+
+```sh
+cd /Users/andreyryzhanskiy/Documents/CallCost/callcost && sudo -v && ./scripts/run_full.sh --pass local --config configs/experiment.yaml --prompts prompts/private/full.yaml
+```
+
+- Local has 1,015 scheduled calls. Reserve roughly 12 to 14 hours as a planning allowance, not a measured full-workload prediction. Longer prompts, output lengths and swapping can extend it. Cloud is separate and blocked; no Gemini key/billing is needed locally. Neither full pass was started here.
