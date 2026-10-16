@@ -44,9 +44,14 @@ def latest_run(runs, pointer='LATEST'):
 
 
 def select_pass(config, run_pass):
-    provider = {'local': 'lmstudio', 'cloud': 'gemini'}[run_pass]
+    provider = {'local': 'lmstudio', 'cloud': 'gemini', 'precheck': 'lmstudio'}[run_pass]
     selected = config.model_copy(deep=True)
     selected.configurations = [c for c in selected.configurations if c.provider == provider]
+    if run_pass == 'precheck':
+        selected.configurations = [c for c in selected.configurations if c.id in ('local-q8', 'local-q3')]
+        if {c.id for c in selected.configurations} != {'local-q8', 'local-q3'}:
+            raise ValueError('Pre-check requires local-q8 and local-q3')
+        selected.measurement.energy.mode = 'required_powermetrics'
     if not selected.configurations:
         raise ValueError(f'No {run_pass} configurations selected')
     return selected
@@ -261,6 +266,7 @@ def main(argv=None):
     parser.add_argument('--pass', dest='run_pass', choices=('local', 'cloud'), help='Independent full-run pass')
     parser.add_argument('--resume', action='store_true', help='Resume runs/LATEST using its saved inputs')
     parser.add_argument('--smoke', action='store_true', help='One held-out call/configuration; no benchmark evidence')
+    parser.add_argument('--precheck', action='store_true', help='Six held-out local calls with idle windows and required energy')
     parser.add_argument('--no-energy', action='store_true', help='Decline sudo and record energy unavailable')
     args = parser.parse_args(argv)
     runs = ROOT / 'runs'
@@ -282,13 +288,18 @@ def main(argv=None):
         except BlockingIOError:
             raise ValueError('Another unattended launcher is active') from None
         previous = None
+        if args.precheck and (args.run_pass or args.smoke or args.no_energy):
+            raise ValueError('--precheck cannot be combined with --pass, --smoke or --no-energy')
         if args.resume:
-            directory = latest_run(runs, f'LATEST-{args.run_pass}' if args.run_pass else 'LATEST')
+            directory = latest_run(runs, 'LATEST-precheck' if args.precheck else f'LATEST-{args.run_pass}' if args.run_pass else 'LATEST')
             previous = json.loads((directory / 'metadata.json').read_text())
             config = Config.model_validate(previous['config'])
             dataset = Dataset.model_validate(previous['dataset'])
             smoke = previous.get('smoke', False)
             run_pass = previous.get('run_pass')
+            precheck = previous.get('precheck', False)
+            if args.precheck and not precheck:
+                raise ValueError('Resume refused: not a pre-check run')
             if args.run_pass and run_pass != args.run_pass:
                 raise ValueError('Resume refused: pass identity does not match')
             inputs = previous['input_files']
@@ -303,24 +314,25 @@ def main(argv=None):
         else:
             config = Config.model_validate(load_document(args.config))
             smoke = args.smoke
-            run_pass = args.run_pass
-            if not smoke and not run_pass:
+            precheck = args.precheck
+            run_pass = 'precheck' if precheck else args.run_pass
+            if not smoke and not precheck and not run_pass:
                 raise ValueError('Full collection requires --pass local or --pass cloud')
             if run_pass:
                 config = select_pass(config, run_pass)
-            dataset = Dataset(schema_version=1, prompts=[PILOT]) if smoke else Dataset.model_validate(load_document(args.prompts))
+            dataset = Dataset(schema_version=1, prompts=[PILOT]) if smoke or precheck else Dataset.model_validate(load_document(args.prompts))
             for setting in config.configurations:
                 if setting.provider == 'lmstudio':
                     setting.model_files = [(args.config.resolve().parent / p.expanduser()).resolve() for p in setting.model_files]
-            if not smoke:
+            if not smoke and not precheck:
                 check_full_dataset(config, dataset)
-            inputs = [file_identity(args.config)] + ([] if smoke else [file_identity(args.prompts)])
+            inputs = [file_identity(args.config)] + ([] if smoke or precheck else [file_identity(args.prompts)])
             directory = runs / (datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ') + f'-{run_pass or "smoke"}')
         log = RunLog(original_out, directory)
         sys.stdout = sys.stderr = log
-        print(f'Preflight: {"SMOKE ONLY" if smoke else "full benchmark"}; {directory.name}')
+        print(f'Preflight: {"PRE-CHECK ONLY" if precheck else "SMOKE ONLY" if smoke else "full benchmark"}; {directory.name}')
         with httpx.Client(trust_env=False) as client:
-            launch = environment_preflight(config, ROOT, client, smoke=smoke, resume_metadata=previous)
+            launch = environment_preflight(config, ROOT, client, smoke=smoke or precheck, require_five=not precheck, resume_metadata=previous)
         print(f'Clean-state checklist: restart and close other apps before a full run. Boot: {launch["boot_time"]}; '
               f'uptime {launch["uptime_seconds"]/60:.1f} min.')
         print(f'LM Studio headless: {launch["headless"]["headless"]}; charger: AC; '
@@ -331,6 +343,8 @@ def main(argv=None):
         energy = sudo.start(args.no_energy or config.measurement.energy.mode == 'off')
         launch['sudo'] = sudo.record
         print(f'Energy: {sudo.record["reason"]}')
+        if config.measurement.energy.mode == 'required_powermetrics' and not energy:
+            raise ValueError('Required energy needs sudo authorization in this Terminal; stopped before any model call')
         print('Keep this Terminal open and the lid open. Codex and other apps may now be quit.')
         caffeinate = subprocess.Popen(['/usr/bin/caffeinate', '-i', '-s', '-w', str(os.getpid())],
                                       stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -348,7 +362,7 @@ def main(argv=None):
             print(message, **kwargs)
         metadata = run_experiment(config, dataset, directory, resume=args.resume, smoke=smoke,
                                   input_files=inputs, launch_metadata=launch,
-                                  energy_mode=None if energy else 'off', progress=progress, run_pass=run_pass)
+                                  energy_mode=None if energy else 'off', progress=progress, run_pass=run_pass, precheck=precheck)
         print(f'Run {metadata["status"]}: {directory}')
         for error in metadata['errors']:
             print(error)

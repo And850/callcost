@@ -1,80 +1,58 @@
-# Update in progress, 16 October 2026
+# Current handoff, 16 October 2026
 
-Owner authorized the new swap instrumentation and reporting, separate resumable local/cloud passes, and a post-restart held-out pre-check (three calls each on local-q8/local-q3 with required energy validation). Neither full pass is authorized. Wait for clean-state confirmation before pre-check; wait for billing-on confirmation and key/project paid-tier verification before the cloud pass. The 16 October README amendment supersedes old swap exclusions below and was committed/pushed as `4b7f7e1` before implementation. No benchmark checkpoints exist; the prior held-out smoke is excluded instrumentation evidence.
+## Current authorization
 
-# Current handoff, 15 October 2026
+- Code/docs edits, offline tests, small commits/pushes are authorized.
+- Owner authorized a roughly 15-minute pre-check only after confirming a clean restart: exactly three held-out calls each on local-q8/local-q3, new swap observations and sudo-backed energy validation. Clean-state confirmation is pending. No new model calls have been made in this work.
+- Neither full local nor full cloud pass is authorized. Wait for the pre-check report and owner approval. Wait for the owner's "billing is on" message, then verify the actual key/project paid tier and active limits before any cloud pass.
+- Ask before model calls beyond this pre-check, downloads, system settings or other long runs. Never auto-commit run artifacts or credentials.
 
-## Done
+## Built and committed
 
-- Four pinned text-only MLX conversions and Fairy's production reference passed held-out preparation pilots. Fairy retains vision weights and is outside the knee sequence.
-- Quality-only knee and local/cloud thinking amendments are committed and pushed before benchmark or launcher smoke data. Earlier excluded preparation/instrumentation pilots exist; no scored benchmark data exists. An excluded launcher smoke now exists, described below.
-- Local thinking is off. Gemini 3.8 Flash runs at thinking level low; thinking tokens are reported separately and included once in billable output. Cloud is outside the knee sequence.
-- Physical-footprint validation lacked complete 8-bit coverage. Exact encoded weight bytes are descriptive memory; physical footprint/RSS are secondary. Prior swap exclusions are superseded by the 16 October amendment above.
-- Durable call checkpoints, CSV recovery, writer locking, resume input/source checks and live status are implemented. Failed/interrupted attempts are retained; completed checkpoints must not be repeated.
-- Launcher includes preflight, sudo keepalive, caffeinate, logging, notifications and LATEST handling. Live smoke verified credential inheritance, local/cloud requests, deliberate interruption/resume, logs/status, notifications, model cleanup and caffeinate cleanup. Sudo keepalive and privileged energy remain unverified because no cached authorization was available.
-- Launcher/report independent source review completed. Separate fixes committed and pushed: incomplete collection cannot yield knee conclusions; resume restores pilot verification from checkpoints; pending quality does not suppress step costs; reports show metric counts/reasons, secondary footprint/RSS, tokens, billable output, payloads, list-price costs, energy qualifications and eligible counts; standalone LM Studio daemon roots join the sampled process group.
-- Fresh offline verification after code fixes: 75 tests passed; Ruff passed. Independent follow-up found no remaining source-level blockers in reviewed changes. These checks do not establish unattended readiness.
-- Ignored `prompts/private/full.yaml` now contains 30 pinned GSM8K problems plus 10 owner-approved summaries, retaining original IDs, source records and scoring rules. Schema, unique IDs, pinned maths identity and full-launcher dataset checks pass. Source CLI validates six configurations, 40 prompts and five repeats. No benchmark prompt has been sent to a model.
-- `max_words` and regex `pattern` alias are implemented. Owner approved summaries on 15 October 2026. The existing file was committed unchanged after the smoke in `6f6de97` and pushed.
-- Config contains five local configurations and Gemini 3.8 Flash at low thinking. Recorded standard USD prices are 0.75/3.75 per million input/output tokens, including thinking. Update rates for runs from 1 January 2027, when they double.
-- Earlier key-presence and authenticated metadata GET succeeded without printing credentials; this was not inference. LM Studio was last started with `--run-as-service`.
+- Four pinned text-only MLX 3/4/6/8-bit conversions and Fairy's production reference passed earlier held-out preparation pilots. Fairy retains vision weights and is outside the knee sequence, alongside cloud.
+- Quality-only knee and thinking amendments are committed. Local reasoning is off and checked on every call. Gemini 3.8 Flash uses low thinking, with thinking tokens separate and counted once in billable output.
+- The dated 16 October pre-registration amendment was committed/pushed as `4b7f7e1` before implementation. It supersedes old swap exclusions: all completed calls enter quality/knee and the unchanged variance rule. All-call latency is primary; swap-free latency is secondary. Swap is a configuration cost on this 16 GB Mac, with whole-machine attribution limits. No benchmark observations exist.
+- `c5c9671` implements per-call swap-in/out bytes, total swap-used and physical compressor memory before/after, raw snapshots/timestamps/missing reasons, configuration swapped share among known-counter calls, unknown counts and median volume (including known zero-volume calls). Pageouts alone no longer flag swapping. Unknown swap data never removes completed quality observations.
+- `cf49892` implements explicit `--pass local` / `--pass cloud`, separate directories, pass identity, checkpoints and `LATEST-local` / `LATEST-cloud`. Local needs no Gemini key; cloud needs no LM Studio/model files/local-RAM gate. Cloud quota/rate-limit errors stop as `rate_limited` after a durable failed checkpoint, without an automatic retry loop.
+- Pre-check mode uses only local-q8/local-q3 and the separate pencil prompt, exactly three calls each, no benchmark prompts or extra warm-ups/pilots. It records a 120-second unloaded idle window plus 120-second loaded-before/after windows for each model, roughly ten minutes idle within an approximately 15-minute check.
+- Pre-check requires sudo and valid collector/baseline before calls. Missing in-call energy or requested swap observations preserves the completed response and stops before further inference. Separate validation requires all six calls, new metrics, same-segment idle windows and initial/post energy qualifications. Missing diagnostics after interruption remain `validation_incomplete`, never a false pass; completed calls are not repeated.
+- Independent review identified and prompted these pre-check safeguards; final follow-up found no remaining material blocker, and offline regressions cover them. Latest fresh verification: 84 tests and Ruff pass. Live pre-check is still pending.
+- Approved summaries were committed unchanged in `6f6de97`. Ignored `prompts/private/full.yaml` contains 30 pinned GSM8K + 10 approved summaries, preserving IDs, source records and scoring rules; schema and full-dataset checks pass. No benchmark prompt has been sent to a model.
+- Saved-run reporting includes costs/quality, observation counts/missing reasons, secondary footprint/RSS, thinking/billable output, payloads, list-price equivalent, energy qualifications and per-prompt counts. Weight bytes are descriptive memory; no runtime-memory gate. Human summary scores remain pending; blind review tooling/charts remain unfinished.
 
-## Permissions
+## Next actions
 
-- Owner authorizes repository reads, code/docs edits, test suite and small commits/pushes.
-- Ask before every model call (local or Gemini), any download, system-setting changes and any run longer than a few minutes.
-- Summaries are now owner-approved. Smoke authorization covered six completed held-out calls and one interrupted attempt; those calls are complete. The full benchmark still requires separate approval. Do not make additional model calls without approval.
-- Do not auto-commit benchmark artifacts. Never force-push or rewrite history.
-
-## Remaining full-run blockers, in order
-
-1. Restart the Mac and close unused apps. Every completed smoke call recorded whole-machine swap activity; smoke cannot establish swap-free full-run readiness. Keep AC power and lid open. Full preflight still requires at least 10 GiB available RAM and 10 GiB free disk. Do not lower guards or change system settings silently.
-2. Start LM Studio headlessly with its server enabled and no model instances loaded. In the same interactive Terminal, ensure `GEMINI_API_KEY` is present without printing it. Key inheritance was confirmed for the smoke by running through an interactive login shell; Codex's default tool shell did not inherit the key.
-3. Choose energy: authorize it in Terminal with `sudo -v`, or explicitly decline with `--no-energy`. Privileged collector/schema and sudo keepalive were not exercised in the smoke. With optional energy, unavailable collection must remain unavailable with reasons; do not claim it was validated.
-4. Obtain separate full-run approval, then use the command below. Reserve roughly 12 to 14 hours conservatively; the actual workload may finish earlier. There are 1,200 measured requests plus six held-out pilots and 12 warm-ups, 1,218 scheduled requests. Tiny-prompt smoke timings are not a measured full-workload runtime estimate.
-
-Human review tooling, reviewed summary scores and charts are still required for final results by 22 November 2026. They do not need to precede raw collection; pending human scores must remain insufficient data for summary knee conclusions. CI budget mode remains a later milestone.
-
-## Untested limits and command caveats
-
-- Full preflight needs 10 GiB available RAM and 10 GiB free disk; smoke needs 4 GiB RAM. These entry guards do not prove swap-free 8-bit inference. Earlier available RAM was about 5.6 GiB and instrumentation pilots recorded swap activity.
-- Resume checks RAM before owned-instance recovery. If a prior run left a large model loaded, explicitly unload that recorded instance before resuming; never silently unload another client's model.
-- Live service-mode memory samples were available for all four converted models. Fairy's secondary RSS/footprint were unavailable because a sampled process exited; this was retained with its reason. Standalone llmster mode remains unexercised. Privileged powermetrics schema and sudo keepalive remain unverified.
-- `.venv/bin/callcost` currently loads an older installed package and rejects the current thinking-level config. Use `PYTHONPATH=src .venv/bin/python -m callcost` for current source. The launcher already sets its own source path. No packages were installed or downloaded during this review.
-- README older milestone status and methodology RSS-knee wording were updated to match the committed amendments. The registered thresholds and exclusions were not changed.
-
-## Run state and commands
-
-`runs/LATEST` points to `20261015T194429.663048Z`, completed smoke only. Before future run work, read LATEST if present, its referenced `status.json`, then the end of `run.log`. A hard kill can leave stale status; check the recorded process. Checkpoints are authoritative.
-
-## Completed held-out smoke, 15 October 2026
-
-- One separate `held-out-pilot` prompt, checked against all 40 benchmark prompt IDs/texts before launch. All actual saved requests match that held-out prompt. No benchmark prompts were used.
-- Six completed configuration calls, one retained interrupted 6-bit attempt, two segments. A completed 4-bit checkpoint was skipped on resume. Exactly one successful checkpoint per schedule slot; CSV retains all seven attempts. Zero measured benchmark calls.
-- All five local configurations verified zero reasoning tokens and no observed reasoning content/tags. Gemini low-thinking reference completed, with 28 thinking tokens recorded separately and counted once in billable output.
-- Six local load and unload operations, including interrupted/reloaded 6-bit. No model left loaded. Caffeinate child exited after each segment. Completion notifications reported delivered for interruption and completion; visible receipt was not independently observed.
-- All six completed calls recorded swap activity. Fairy secondary memory was unavailable with a process-exit reason. Energy was unavailable because no cached sudo authorization existed and the tool shell was noninteractive; no password was requested.
-- Audit confirmed completed status 6/6, immutable completed-call identity on resume, retained interrupted attempt, correct thinking accounting, request isolation and cleanup. Raw artifacts remain ignored and were not committed.
-- Local decode rates on the tiny held-out prompt ranged from about 17.6 to 33.2 tokens/s. Extrapolating every local measured call to the 1,024-token output limit gives about 10.8 hours of local decoding alone, before input processing/cloud/telemetry. Reserve 12 to 14 hours; this is a planning estimate, not a benchmark result.
-
-Full command, after the clean-state checklist and separate full-run approval:
+1. Implementation and independent review are complete; obtain the owner's clean-restart confirmation. Keep charger/lid open, close unused apps and start LM Studio headlessly, server enabled, no model loaded. Check boot time and available RAM before the approved pre-check. Pre-check guard is 4 GiB RAM / 10 GiB disk. Do not lower guards or change system settings.
+2. Launch the pre-check in Terminal so sudo authentication stays local to the user. Exact command:
 
 ```sh
-cd /Users/andreyryzhanskiy/Documents/CallCost/callcost && ./scripts/run_full.sh --config configs/experiment.yaml --prompts prompts/private/full.yaml
+cd /Users/andreyryzhanskiy/Documents/CallCost/callcost && sudo -v && ./scripts/run_full.sh --precheck --config configs/experiment.yaml
 ```
 
-Append `--no-energy` to explicitly decline energy. Keep Terminal and the lid open; Codex may quit once the run starts.
+Enter sudo password only in Terminal. `--precheck` rejects `--no-energy`, `--smoke` and `--pass`. Monitor `runs/LATEST-precheck`, status/log, checkpoints and validation. Compare idle and inference swap rates with raw counter-window timestamps. These observations cannot prove causal process attribution. Audit parsed power samples, CPU/GPU/ANE units/domains, coverage, baseline qualifications and cleanup before calling energy validated.
 
-Resume an authorized interrupted launcher run with `./scripts/run_full.sh --resume`; it uses saved inputs and refuses changed input/source files. Completed checkpoints are not repeated; an interrupted request without a completed checkpoint may need a new attempt.
+3. Report back and wait for approval of each full pass. Full local retains its 10 GiB available-RAM and 10 GiB disk entry guards; neither guard proves swap-free inference, and swapping no longer invalidates answers. Preserve swapping as cost rather than trying to eliminate it by changing machine settings.
+4. After owner confirms paid billing, inspect Google AI Studio for environment key/project mapping, paid plan/usage tier, active limits and actual spend-cap setting. Record evidence/project/tier/limits/check time without the key. Metadata GET or a successful inference is not proof of tier. Alerts-only budgets are not spend caps. This check has not been performed and no new cloud request is authorized.
 
-Saved-run reporting without model calls:
+## Full passes, only after separate approval
 
 ```sh
-PYTHONPATH=src .venv/bin/python -m callcost report --run "runs/$(cat runs/LATEST)"
+./scripts/run_full.sh --pass local --config configs/experiment.yaml --prompts prompts/private/full.yaml
+./scripts/run_full.sh --pass cloud --config configs/experiment.yaml --prompts prompts/private/full.yaml
 ```
 
-This writes `report.json` and `report.md`. Incomplete collection, missing eligible prompts and pending human scores cannot establish a knee or no knee. Results stay ignored by Git.
+Local: 1,015 calls (1,000 measured + five pilots + ten warm-ups), overnight. Cloud: **203 calls** (200 measured + one pilot + two warm-ups), before failed-request attempts explicitly authorized later. Input/settings are identical across passes, with source/input hashes and collection times preserved. Keep Terminal/lid open. Optional full-run energy uses `sudo -v` first or explicit `--no-energy`; pre-check always requires energy.
 
-- 16 October instrumentation/report fix: per-call swap-in/out volume, raw before/after vm_stat + vm.swapusage and physical compressor bytes; pageouts alone do not flag swapping. All completed answers now contribute to knee/quality, with all-call latency primary and swap-free latency secondary, configuration share/unknown counts/median volume. Offline regressions pass; live pre-check still awaits restart.
+Cloud smoke usage was 27 input, five visible output and 28 thinking tokens, 33 billable output. At configured USD 0.75/3.75 per million input/output, that is USD 0.000144 per smoke-size call, **USD 0.029232 for 203 such calls**. Actual benchmark inputs/answers are longer; this is a tiny-prompt list-price extrapolation, not the real cost or a spending cap. Paid billing is pending owner confirmation; no tier has been verified.
 
-- 16 October separate passes implemented: `--pass local` filters to five local configurations, `--pass cloud` to one cloud reference. Full launch requires an explicit pass. Separate directories, pass identity and `LATEST-local`/`LATEST-cloud` pointers prevent cross-pass resume. Cloud needs no local model/server or local-RAM threshold; local needs no Gemini key. Cloud HTTP 429 / RESOURCE_EXHAUSTED stops as `rate_limited` after a durable error checkpoint, no retry loop. Verified: 80 tests and Ruff. Full collection remains unauthorized.
+Resume with `./scripts/run_full.sh --pass local --resume` or `--pass cloud --resume`; read the matching pointer/status/log first. `LATEST` tracks only the most recently touched run. Input/source changes refuse resume; completed checkpoints are never repeated. A cloud quota/rate-limit stop retains the attempt; resolve quota and obtain new-request approval before explicit resume. No automatic retry loop exists.
+
+## Existing evidence and caveats
+
+- `runs/LATEST` currently points to `20261015T194429.663048Z`, completed smoke only. Local/cloud/pre-check pointers do not yet exist. Before run work, read the appropriate pointer, status, then end of run.log. Check recorded PID if status may be stale; checkpoints are authoritative.
+- Earlier smoke had six completed held-out calls plus one retained interrupted 6-bit attempt across two segments; completed 4-bit was skipped on resume. Zero benchmark calls. All five local thinking checks passed; Gemini recorded 28 thinking tokens. Six local load/unload operations left no models loaded. Caffeinate cleanup and notification delivery commands succeeded.
+- Every completed old smoke call flagged swap activity under the old flag (which included pageouts). Re-reading raw counters confirmed nonzero swap-in bytes in all six completed calls, independently of pageouts; the 8-bit call had 1,298,546,688 swap-in bytes. These are excluded instrumentation observations, not benchmark findings. Old smoke energy was unavailable without cached sudo. Fairy secondary memory was unavailable because a sampled process exited.
+- Four converted models had usable secondary samples in smoke; physical-footprint validation previously lacked complete 8-bit coverage. Exact encoded weights remain descriptive memory. Missing secondary metrics are valid unavailable observations with reasons.
+- `.venv/bin/callcost` contains an older installed package. Use current source with `PYTHONPATH=src .venv/bin/python -m callcost`; launcher sets this itself. No packages/downloads/system settings were changed.
+- Last known LM Studio mode was app `--run-as-service`. Standalone llmster discovery is tested offline but not live. Resume checks RAM before owned-instance recovery; explicitly unload a recorded leftover instance if needed, never someone else's model.
+- Real results target: 22 November 2026; WAICY submission: 29 November. Human summary review and charts remain needed after raw collection. CI budget mode is a later milestone.

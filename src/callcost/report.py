@@ -130,7 +130,8 @@ def aggregate(rows, prompts=None, phase='measured', configurations=None):
                            failed_call_ids=[r['call_id'] for r in attempts if r['status'] != 'completed'],
                            currencies=sorted({r['currency'] for r in calls if r.get('currency')}),
                            **{k: v for k, v in swap_summary(calls).items() if k != 'swap_volume_bytes'},
-                           swap_free_latency_s=distribution(r.get('latency_s') for r in swap_free),
+                           swap_free_latency_s=dict(distribution(r.get('latency_s') for r in swap_free),
+                                                   unavailable_reason=None if swap_free else 'No calls with known zero swap-in and swap-out'),
                            quality=quality(calls, task_prompts), **summary(calls),
                            knee_eligible=dict(calls=len(eligible), quality=quality(eligible, task_prompts), **summary(eligible)),
                            call_ids=[r['call_id'] for r in calls],
@@ -209,10 +210,10 @@ def report_run(directory):
     directory = Path(directory)
     metadata = json.loads((directory / 'metadata.json').read_text())
     rows = [json.loads(p.read_text()) for p in sorted((directory / 'checkpoints').glob('*.json'))]
-    phase = 'smoke' if metadata.get('smoke') else 'measured'
+    phase = 'precheck' if metadata.get('precheck') else 'smoke' if metadata.get('smoke') else 'measured'
     groups = aggregate(rows, metadata['dataset']['prompts'] if phase == 'measured' else [], phase,
                        metadata['config']['configurations'])
-    findings = [] if phase == 'smoke' else knee_findings(groups, metadata['config']['configurations'],
+    findings = [] if phase != 'measured' else knee_findings(groups, metadata['config']['configurations'],
                                                        sorted({p['task_type'] for p in metadata['dataset']['prompts']}))
     collection = collection_status(metadata, rows)
     if not collection['complete']:
@@ -220,7 +221,10 @@ def report_run(directory):
             finding.update(finding='insufficient data: collection incomplete', knee=None)
             for step in finding['steps']:
                 step['qualifies'] = None
-    result = dict(run_status=metadata['status'], collection=collection, smoke=metadata.get('smoke', False),
+    result = dict(run_status=metadata['status'], run_pass=metadata.get('run_pass'), collection=collection,
+                  precheck=metadata.get('precheck', False), smoke=metadata.get('smoke', False),
+                  diagnostic_windows=metadata.get('diagnostic_windows', []),
+                  precheck_validation=metadata.get('precheck_validation'),
                   quantiles='p50 median; p95 nearest rank; Q1/Q3 linear interpolation',
                   memory_for_knee='none; quality-only knee, amendment 2026-10-15; weight bytes are descriptive cost',
                   energy_scope='estimate, whole-machine delta; CPU + GPU + ANE; client device only',
@@ -233,7 +237,7 @@ def report_run(directory):
                   energy_blocks=metadata.get('energy_blocks', []),
                   production_reference_caveat=metadata.get('production_reference_caveat'))
     write_json(directory / 'report.json', result)
-    lines = ['SMOKE ONLY, no benchmark conclusions' if phase == 'smoke' else 'CallCost saved-run report',
+    lines = [f'{phase.upper()} ONLY, no benchmark conclusions' if phase != 'measured' else 'CallCost saved-run report',
              f'Collection: {collection["completed_slots"]}/{collection["expected_slots"]} scheduled slots completed; '
              f'complete={collection["complete"]}.',
              'All completed answers enter quality/knee analysis, including swap-active and swap-unknown calls (amendment 2026-10-16).',
@@ -302,6 +306,14 @@ def report_run(directory):
     for block in result['energy_blocks']:
         lines.append(cell(json.dumps({k: block.get(k) for k in (
             'configuration_id', 'segment_id', 'mode', 'assessment', 'unavailable_reason')}, ensure_ascii=False)))
+    if result['precheck']:
+        lines += ['', f'Pre-check validation: {result["precheck_validation"]}', 'Idle swap diagnostics (whole-machine, no causal process attribution):',
+                  '| Configuration | Window | Seconds | Swap-in bytes | Swap-out bytes | Swap volume bytes/s |',
+                  '| --- | --- | --- | --- | --- | --- |']
+        for w in result['diagnostic_windows']:
+            rate = w['swap_volume_bytes'] / w['duration_s'] if w.get('swap_volume_bytes') is not None and w['duration_s'] else None
+            lines.append(f'| {w.get("configuration_id") or "unloaded"} | {w["label"]} | {w["duration_s"]:.2f} | '
+                         f'{w.get("swapins_bytes")} | {w.get("swapouts_bytes")} | {rate} |')
     text = '\n'.join(lines) + '\n'
     (directory / 'report.md').write_text(text)
     return text

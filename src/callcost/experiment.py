@@ -18,6 +18,7 @@ from callcost.measurements.machine import command, conditions, machine_metadata
 from callcost.measurements.memory import MemorySampler, peak_footprint
 from callcost.measurements.swap import snapshot, swap_delta
 from callcost.measurements.weights import inspect_weights
+from callcost.precheck import REQUIRED_SWAP_FIELDS, assess_precheck, observe_idle
 from callcost.providers.gemini import GeminiProvider
 from callcost.providers.lmstudio import LMStudioProvider
 from callcost.records import CallResult
@@ -107,9 +108,9 @@ def measured_call(provider, prompt, config, store, phase, repeat, load, files, p
     swap = swap_delta(swap_before, swap_after)
     try:
         if setting.provider == 'gemini' and setting.thinking.thinking_level is not None:
-            evidence = verify_cloud_thinking(result, setting.thinking.thinking_level, require_answer=phase in ('pilot', 'smoke'))
+            evidence = verify_cloud_thinking(result, setting.thinking.thinking_level, require_answer=phase in ('pilot', 'smoke', 'precheck'))
         else:
-            evidence = verify_thinking_off(result, require_answer=phase in ('pilot', 'smoke'))
+            evidence = verify_thinking_off(result, require_answer=phase in ('pilot', 'smoke', 'precheck'))
     except ValueError as error:
         result.status = 'error'
         result.error = result.error or str(error)
@@ -135,20 +136,15 @@ def measured_call(provider, prompt, config, store, phase, repeat, load, files, p
     return row, evidence
 
 
-def run_experiment(config, dataset, directory, *, pilot_only=False, client=None, input_files=None,
-                   progress=print, resume=False, smoke=False, launch_metadata=None, energy_mode=None, run_pass=None):
-    files = preflight(config)
-    components = {s.id: inspect_weights(s.model_files)
-                  for s in config.configurations if isinstance(s, LocalConfig)}
-    machine = machine_metadata()
-    if machine['platform'] != 'Darwin':
-        raise ValueError('Milestone 1 runs are supported only on macOS')
-    directory = Path(directory)
+def build_schedule(config, dataset, *, pilot_only=False, smoke=False, precheck=False):
     rng = random.Random(config.run.shuffle_seed)
     settings = list(config.configurations)
     rng.shuffle(settings)
     schedule = []
     for setting in settings:
+        if precheck:
+            schedule.extend((setting, PILOT, 'precheck', r) for r in range(1, 4))
+            continue
         schedule.append((setting, PILOT, 'smoke' if smoke else 'pilot', 1 if smoke else 0))
         if not pilot_only and not smoke:
             schedule.extend((setting, PILOT, 'warmup', n + 1) for n in range(config.run.warmup_runs))
@@ -156,9 +152,22 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
                 prompts = list(dataset.prompts)
                 rng.shuffle(prompts)
                 schedule.extend((setting, prompt, 'measured', repeat) for prompt in prompts)
+    return settings, schedule
+
+
+def run_experiment(config, dataset, directory, *, pilot_only=False, client=None, input_files=None,
+                   progress=print, resume=False, smoke=False, launch_metadata=None, energy_mode=None, run_pass=None, precheck=False):
+    files = preflight(config)
+    components = {s.id: inspect_weights(s.model_files)
+                  for s in config.configurations if isinstance(s, LocalConfig)}
+    machine = machine_metadata()
+    if machine['platform'] != 'Darwin':
+        raise ValueError('Milestone 1 runs are supported only on macOS')
+    directory = Path(directory)
+    settings, schedule = build_schedule(config, dataset, pilot_only=pilot_only, smoke=smoke, precheck=precheck)
     runtime_identity = {str(p.relative_to(Path(__file__).parent)): file_identity(p)['sha256']
                         for p in sorted(Path(__file__).parent.rglob('*.py'))}
-    metadata = {'schema_version': 2, 'run_pass': run_pass, 'smoke': smoke, 'runtime_identity': runtime_identity, 'status': 'running', 'pilot_only': pilot_only,
+    metadata = {'schema_version': 2, 'run_pass': run_pass, 'precheck': precheck, 'smoke': smoke, 'runtime_identity': runtime_identity, 'status': 'running', 'pilot_only': pilot_only,
                 'started_at': datetime.now(timezone.utc).isoformat(), 'machine': machine,
                 'config': config.model_dump(mode='json'), 'dataset': dataset.model_dump(mode='json'),
                 'input_files': input_files or [], 'model_files': files,
@@ -175,7 +184,7 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
                 'thinking_verification': {}, 'loads': [], 'energy_blocks': [], 'errors': [], 'segments': []}
     if resume:
         previous = json.loads((directory / 'metadata.json').read_text())
-        for key in ('config', 'dataset', 'model_files', 'input_files', 'runtime_identity', 'schedule', 'smoke', 'pilot_only', 'software', 'run_pass'):
+        for key in ('config', 'dataset', 'model_files', 'input_files', 'runtime_identity', 'schedule', 'smoke', 'pilot_only', 'software', 'run_pass', 'precheck'):
             if previous.get(key) != metadata.get(key):
                 raise ValueError(f'Resume refused: {key} changed since this run started')
         for key in ('chip', 'ram_bytes', 'macos_build', 'lmstudio_version'):
@@ -208,7 +217,7 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
             # A hard kill may occur after the durable pilot checkpoint but before
             # its metadata update. Verify that observation again, never repeat it.
             for row in rows:
-                if row['phase'] not in ('pilot', 'smoke') or row['status'] != 'completed':
+                if row['phase'] not in ('pilot', 'smoke', 'precheck') or row['status'] != 'completed':
                     continue
                 setting = next(s for s in settings if s.id == row['configuration_id'])
                 result = CallResult(**{key: row[key] for key in CallResult.__dataclass_fields__ if key in row})
@@ -223,6 +232,15 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
         store.write_metadata(metadata)
         if resume:
             recover_owned_instances(metadata, config, client, store.directory / 'raw')
+        def idle(label, configuration_id=None):
+            observation = observe_idle(label, progress=progress)
+            observation.update(configuration_id=configuration_id, segment_id=segment['id'])
+            metadata.setdefault('diagnostic_windows', []).append(observation)
+            store.write_metadata(metadata)
+            if any(observation.get(key) is None for key in REQUIRED_SWAP_FIELDS):
+                raise ValueError('Pre-check idle swap/storage/compressor observations unavailable; stopped before inference')
+        if precheck:
+            idle('unloaded')
         for setting in settings:
             if not any(i not in done and item[0].id == setting.id for i, item in enumerate(schedule)):
                 continue
@@ -236,6 +254,8 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
                 if load:
                     metadata['loads'].append(load)
                     store.write_metadata(metadata)
+            if precheck:
+                idle('loaded-before', setting.id)
             baseline = None
             energy_block = {'configuration_id': setting.id, 'segment_id': segment['id'],
                             'scope': SCOPE, 'mode': segment['energy_mode']}
@@ -244,7 +264,7 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
                 if current.id != setting.id or index in done:
                     continue
                 # Instrument energy after pilot/warm-up, with a loaded idle model baseline.
-                if phase in ('measured', 'smoke') and 'attempted' not in energy_block:
+                if phase in ('measured', 'smoke', 'precheck') and 'attempted' not in energy_block:
                     energy_block['attempted'] = True
                     energy = config.measurement.energy
                     if energy_block['mode'] != 'off':
@@ -273,12 +293,16 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
                     store.append_call(row)
                     rows.append(row)
                     status()
-                    if phase in ('pilot', 'smoke') and evidence is not None:
+                    if phase in ('pilot', 'smoke', 'precheck') and evidence is not None:
                         metadata['thinking_verification'][setting.id] = dict(
                             evidence, call_id=row['call_id'],
                             method='reasoning: off' if isinstance(setting, LocalConfig) else
                                     f'thinkingConfig.thinkingLevel: {setting.thinking.thinking_level}' if setting.thinking.thinking_level else 'thinkingConfig.thinkingBudget: 0')
                         store.write_metadata(metadata)
+                if precheck and row['status'] == 'completed' and row['energy_j'] is None:
+                    raise ValueError('Required pre-check energy unavailable; completed call retained, stopped before next inference')
+                if precheck and row['status'] == 'completed' and any(row.get(key) is None for key in REQUIRED_SWAP_FIELDS):
+                    raise ValueError('Required pre-check swap/storage/compressor observations unavailable; call retained, stopped before next inference')
                 if row['error'] == 'Interrupted by user':
                     raise KeyboardInterrupt
                 if row['status'] != 'completed':
@@ -288,6 +312,8 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
                     raise ValueError(f'Call {row["call_id"]} failed: {row["error"]}')
                 if config.run.cooldown_seconds:
                     time.sleep(config.run.cooldown_seconds)
+            if precheck:
+                idle('loaded-after', setting.id)
             if power:
                 energy_block['post_baseline_watts'] = power.baseline(config.measurement.energy.idle_baseline_seconds)
                 energy_block['errors'] = list(power.errors)
@@ -316,6 +342,12 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
             if 'assessment' not in block:
                 block['assessment'] = baseline_assessment(block.get('baseline_watts'), None,
                     [r for r in rows if r['configuration_id'] == block['configuration_id'] and r['segment_id'] == block['segment_id']])
+        if precheck:
+            metadata['precheck_validation'] = assess_precheck(
+                rows, metadata['energy_blocks'], metadata.get('diagnostic_windows', []), [s.id for s in settings])
+            if metadata['status'] == 'completed' and not metadata['precheck_validation']['valid']:
+                metadata['status'] = 'validation_incomplete'
+                metadata['errors'].append('Pre-check diagnostics/energy incomplete; completed calls preserved, no automatic repeat')
         metadata['finished_at'] = datetime.now(timezone.utc).isoformat()
         segment['finished_at'] = metadata['finished_at']
         segment['status'] = metadata['status']

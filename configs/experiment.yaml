@@ -1,6 +1,6 @@
 # Experiment config. Summarisation prompts require owner review before inference.
 # Standard USD rates below apply through 2026-12-31. From 2027-01-01 they double.
-# Free-tier usage is reported as list-price equivalent, including thinking output tokens.
+# Usage is reported as list-price equivalent regardless of billing tier, including thinking output tokens.
 schema_version: 1
 run:
   repeats: 5

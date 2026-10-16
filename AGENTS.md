@@ -44,7 +44,7 @@ The hypothesis, knee definition, variance rule and both kill criteria live in [R
 - `configs/experiment.yaml`: experiment configurations, thinking controls and dated prices.
 - `prompts/`: prompt files and preregistered scoring rules; private combined inputs belong under `prompts/private/`.
 - `scripts/run_full.sh`: unattended launcher, currently subject to the readiness checks in HANDOFF.md.
-- `runs/LATEST`: latest launcher-run directory name. If present, read its `status.json`, then `run.log`; checkpoints are authoritative. Never repeat completed checkpoints on resume.
+- `runs/LATEST-local`, `runs/LATEST-cloud`, `runs/LATEST-precheck`: independent run pointers. `runs/LATEST` is only the most recently touched run. Read the matching `status.json`, then `run.log`; checkpoints are authoritative. Never repeat completed checkpoints on resume.
 - `docs/HANDOFF.md`: current state and first read for each new chat.
 - `docs/model-preparation.md`: model pins, conversions, production-reference caveats and instrumentation evidence.
 
