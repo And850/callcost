@@ -13,7 +13,9 @@ from callcost.storage import write_json
 
 METRICS = ('latency_s', 'ttft_s', 'decode_tokens_per_second', 'memory_peak_footprint_bytes',
            'memory_peak_rss_bytes', 'loaded_weight_bytes', 'input_tokens', 'output_tokens', 'thinking_tokens', 'billable_output_tokens',
-           'request_payload_bytes', 'response_payload_bytes', 'list_price_cost', 'energy_j')
+           'request_payload_bytes', 'response_payload_bytes', 'list_price_cost', 'energy_j',
+           'swap_volume_bytes', 'swap_used_before_bytes', 'swap_used_after_bytes',
+           'compressed_memory_before_bytes', 'compressed_memory_after_bytes')
 
 
 def distribution(values):
@@ -84,6 +86,15 @@ def quality(rows, prompts):
                 parse_attempts=sum(s['parseable'] is not None for s in scores), call_scores=scores)
 
 
+def swap_summary(calls):
+    known = [r for r in calls if r.get('swapping_occurred') is not None]
+    swapped = sum(r.get('swapping_occurred') is True for r in known)
+    return dict(swapped_calls=swapped, swap_known_calls=len(known),
+                swap_unknown_calls=len(calls) - len(known),
+                swapped_share_known=swapped / len(known) if known else None,
+                swap_volume_bytes=distribution(r.get('swap_volume_bytes') for r in known))
+
+
 def aggregate(rows, prompts=None, phase='measured', configurations=None):
     grouped = defaultdict(list)
     for config in configurations or []:
@@ -98,7 +109,8 @@ def aggregate(rows, prompts=None, phase='measured', configurations=None):
     result = []
     for (config, task, stratum), attempts in sorted(grouped.items()):
         calls = [r for r in attempts if r['status'] == 'completed']
-        eligible = [r for r in calls if r.get('swapping_occurred') is False]
+        eligible = calls  # Amendment 2026-10-16: swapping is cost, not a quality exclusion.
+        swap_free = [r for r in calls if r.get('swapping_occurred') is False]
         task_prompts = {p['id']: p for p in prompts or [] if p['task_type'] == task}
         def summary(group):
             result = {}
@@ -107,7 +119,8 @@ def aggregate(rows, prompts=None, phase='measured', configurations=None):
             for metric in METRICS:
                 d = distribution(r.get(metric) for r in group)
                 d['missing_reasons'] = dict(Counter(
-                    r.get(reason_fields.get(metric)) or r.get('missing', {}).get(metric) or 'Not recorded for this call'
+                    r.get(reason_fields.get(metric)) or r.get('missing', {}).get(metric)
+                    or r.get('swap_observation_missing', {}).get(metric) or 'Not recorded for this call'
                     for r in group if r.get(metric) is None))
                 d['unavailable_reason'] = 'No completed calls in this group' if not group else None
                 result[metric] = d
@@ -116,8 +129,8 @@ def aggregate(rows, prompts=None, phase='measured', configurations=None):
                            failed_attempts=len(attempts) - len(calls),
                            failed_call_ids=[r['call_id'] for r in attempts if r['status'] != 'completed'],
                            currencies=sorted({r['currency'] for r in calls if r.get('currency')}),
-                           swapped_calls=sum(r.get('swapping_occurred') is True for r in calls),
-                           swap_unknown_calls=sum(r.get('swapping_occurred') is None for r in calls),
+                           **{k: v for k, v in swap_summary(calls).items() if k != 'swap_volume_bytes'},
+                           swap_free_latency_s=distribution(r.get('latency_s') for r in swap_free),
                            quality=quality(calls, task_prompts), **summary(calls),
                            knee_eligible=dict(calls=len(eligible), quality=quality(eligible, task_prompts), **summary(eligible)),
                            call_ids=[r['call_id'] for r in calls],
@@ -213,20 +226,24 @@ def report_run(directory):
                   energy_scope='estimate, whole-machine delta; CPU + GPU + ANE; client device only',
                   failed_attempts=sum(r['status'] != 'completed' for r in rows), groups=groups,
                   knee=findings, variation=metadata.get('variation'),
+                  analysis_policy='2026-10-16: all completed calls; all-call latency primary; swap-free latency secondary',
+                  configuration_swap=[dict(configuration_id=c['id'], **swap_summary(
+                      [r for r in rows if r['phase'] == phase and r['status'] == 'completed' and r['configuration_id'] == c['id']]))
+                      for c in metadata['config']['configurations']],
                   energy_blocks=metadata.get('energy_blocks', []),
                   production_reference_caveat=metadata.get('production_reference_caveat'))
     write_json(directory / 'report.json', result)
     lines = ['SMOKE ONLY, no benchmark conclusions' if phase == 'smoke' else 'CallCost saved-run report',
              f'Collection: {collection["completed_slots"]}/{collection["expected_slots"]} scheduled slots completed; '
              f'complete={collection["complete"]}.',
-             'All completed calls shown. Knee inputs exclude swap-active and swap-unknown calls.',
+             'All completed answers enter quality/knee analysis, including swap-active and swap-unknown calls (amendment 2026-10-16).',
              'Memory: descriptive weight bytes; sampled physical footprint is secondary. Knee uses quality only.',
              'Energy: estimate, whole-machine delta; CPU + GPU + ANE; client device only.',
              'Values are p50/p95 with valid observation counts. GB uses 1e9 bytes.',
-             'Step costs use swap-free observations only. Costs remain available while human quality is pending.',
+             'Step costs and variance use all completed observations; swap-free latency is secondary. Costs remain available while human quality is pending.',
              '',
-             '| Configuration / task / cache | Calls / failed | Swap / unknown | Knee eligible | Quality all / eligible | Latency s | TTFT s | Weight GB | Footprint GB, secondary | RSS GB, secondary | Energy J |',
-             '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |']
+             '| Configuration / task / cache | Calls / failed | Swap / unknown | Knee eligible | Quality all completed | Latency all s | Latency swap-free s | TTFT s | Weight GB | Footprint GB, secondary | RSS GB, secondary | Energy J |',
+             '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |']
     def cell(value):
         return str(value).replace('|', r'\|').replace('\n', ' ')
     def pair(group, metric, scale=1):
@@ -242,8 +259,8 @@ def report_run(directory):
         return f'{g["configuration_id"]} / {g["task_type"]} / {g["cache_stratum"]}'
     for g in groups:
         lines.append(f'| {label(g)} | {g["calls"]}/{g["failed_attempts"]} | {g["swapped_calls"]}/{g["swap_unknown_calls"]} | '
-                     f'{g["knee_eligible"]["calls"]} | {score(g["quality"])} / {score(g["knee_eligible"]["quality"])} | '
-                     f'{pair(g,"latency_s")} | {pair(g,"ttft_s")} | '
+                     f'{g["knee_eligible"]["calls"]} | {score(g["quality"])} | '
+                     f'{pair(g,"latency_s")} | {pair(g,"swap_free_latency_s")} | {pair(g,"ttft_s")} | '
                      f'{pair(g,"loaded_weight_bytes",1e9)} | {pair(g,"memory_peak_footprint_bytes",1e9)} | '
                      f'{pair(g,"memory_peak_rss_bytes",1e9)} | {pair(g,"energy_j")} |')
     lines += ['', '| Configuration / task / cache | Input tokens | Visible output tokens | Thinking tokens | Billable output tokens | Decode tokens/s | Request bytes | Response bytes | List-price equivalent |',
@@ -267,10 +284,18 @@ def report_run(directory):
             lines.append(f'| {finding["task_type"]} / {step["upper"]} to {step["lower"]} | {drop} | '
                          f'{percent("weight_byte_saving")} | {percent("latency_p50_saving")}/{percent("latency_p95_saving")} | '
                          f'{footprints} | {step["indistinguishable"]} | {step["qualifies"]} |')
-    lines += ['', 'Eligible calls per prompt (swap-active and swap-unknown excluded):']
+    lines += ['', 'Completed calls per prompt (swapping retained):']
     for g in groups:
         counts = g['knee_eligible']['quality'].get('calls_per_prompt', {})
         lines.append(f'{label(g)}: ' + (', '.join(f'{p}={n}' for p, n in counts.items()) or 'Scoring rules unavailable'))
+    lines += ['', 'Swap is part of configuration cost on this 16 GB Mac; counters are whole-machine observations.',
+              '| Configuration | Swapped / known | Unknown | Swapped share, known calls | Median swap-in + swap-out bytes, known calls | Volume observations |',
+              '| --- | --- | --- | --- | --- | --- |']
+    for swap in result['configuration_swap']:
+        share = 'unavailable' if swap['swapped_share_known'] is None else f'{100*swap["swapped_share_known"]:.1f}%'
+        volume = swap['swap_volume_bytes']
+        lines.append(f'| {swap["configuration_id"]} | {swap["swapped_calls"]}/{swap["swap_known_calls"]} | '
+                     f'{swap["swap_unknown_calls"]} | {share} | {volume["p50"] if volume["n"] else "unavailable"} | {volume["n"]} |')
     if result['production_reference_caveat']:
         lines += ['', result['production_reference_caveat']]
     lines += ['', 'Energy baseline qualifications (descriptive, no registered drift cutoff):']

@@ -40,6 +40,9 @@ CALL_FIELDS = [
     'memory_peak_footprint_bytes', 'footprint_missing_reason', 'loaded_weight_bytes',
     'swapins_pages', 'swapouts_pages', 'pageouts_pages', 'swapins_bytes', 'swapouts_bytes', 'pageouts_bytes',
     'swapping_occurred', 'swap_missing_reason', 'knee_eligible',
+    'swap_volume_bytes', 'swap_used_before_bytes', 'swap_used_after_bytes',
+    'compressed_memory_before_bytes', 'compressed_memory_after_bytes',
+    'swap_observation_missing', 'swap_snapshot_before', 'swap_snapshot_after',
     'energy_j', 'energy_missing_reason', 'energy_scope', 'conditions',
     'answer_sha256', 'varies_from_first_answer', 'raw_request', 'raw_response',
 ]

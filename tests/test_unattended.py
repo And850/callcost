@@ -22,7 +22,7 @@ def test_preflight_rejects_low_ram_before_loading_any_model(tmp_path, config_dat
             environment_preflight(Config.model_validate(config_data), tmp_path, client, require_five=False)
 
 
-def test_report_excludes_swapped_calls_from_knee_but_keeps_all_calls(tmp_path):
+def test_report_keeps_swapped_calls_in_quality_and_separates_swap_free_latency(tmp_path):
     from callcost.report import aggregate
     rows = [dict(status='completed', phase='measured', configuration_id='a', task_type='maths',
                  prompt_id='p', call_id=str(i), cache_stratum='repeat', latency_s=t, swapping_occurred=swap,
@@ -32,9 +32,11 @@ def test_report_excludes_swapped_calls_from_knee_but_keeps_all_calls(tmp_path):
     assert len(result) == 2  # Combined observations and repeat-only stratum.
     assert result[0]['latency_s']['p50'] == 51.5
     assert result[0]['latency_s']['p95'] == 200
-    assert result[0]['knee_eligible']['latency_s']['p50'] == 2
+    assert result[0]['knee_eligible']['latency_s']['p50'] == 51.5
+    assert result[0]['swap_free_latency_s']['p50'] == 2
     assert result[0]['swapped_calls'] == 1 and result[0]['swap_unknown_calls'] == 1
-    assert result[0]['knee_eligible']['calls'] == 2
+    assert result[0]['knee_eligible']['calls'] == 4
+    assert result[0]['swapped_share_known'] == 1/3
 
 
 def test_latest_pointer_cannot_escape_runs_directory(tmp_path):

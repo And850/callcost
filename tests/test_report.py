@@ -85,7 +85,7 @@ def test_partial_schedule_cannot_establish_knee_even_when_every_prompt_is_scored
     result = json.loads((tmp_path / 'report.json').read_text())
     assert result['collection']['complete'] is True
     assert result['knee'][0]['finding'] == 'no knee found'
-    assert all(g['knee_eligible']['calls'] == 1 for g in result['groups'] if g['cache_stratum'] == 'all')
+    assert all(g['knee_eligible']['calls'] == 5 for g in result['groups'] if g['cache_stratum'] == 'all')
 
 
 def test_pending_quality_keeps_all_adjacent_costs_and_secondary_footprints():
@@ -145,5 +145,16 @@ def test_saved_report_exposes_missing_measurements_tokens_costs_and_empty_groups
     assert '0.001' in text and 'USD' in text
     assert '100.000/100.000' in text and '200.000/200.000' in text
     assert 'n=1' in text and 'No completed calls' in text
-    assert 'Quality all / eligible' in text
+    assert 'Quality all completed' in text
     assert 'Weight saving' in text and 'Latency p50/p95 saving' in text
+
+
+def test_configuration_swap_summary_includes_zero_volume_and_unknown_counts():
+    from callcost.report import swap_summary
+    calls = [dict(status='completed', swapping_occurred=swap, swap_volume_bytes=volume)
+             for swap, volume in [(False, 0), (True, 100), (True, 300), (None, None)]]
+    result = swap_summary(calls)
+    assert result['swapped_share_known'] == 2/3
+    assert result['swap_unknown_calls'] == 1
+    assert result['swap_volume_bytes']['p50'] == 100
+    assert result['swap_volume_bytes']['n'] == 3

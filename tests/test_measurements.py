@@ -102,7 +102,7 @@ def test_swap_deltas_do_not_confuse_pageins_with_swapins():
     assert result['swapins_pages'] == 2 and result['swapins_bytes'] == 32768
     assert result['pageouts_pages'] == 0 and result['swapping_occurred'] is True
     assert swap_delta(first, dict(first, pageins=99))['swapping_occurred'] is False
-    assert swap_delta(first, dict(first, pageouts=5))['swapping_occurred'] is True
+    assert swap_delta(first, dict(first, pageouts=5))['swapping_occurred'] is False
     assert swap_delta(first, dict(first, swapins=5))['swapping_occurred'] is None
     assert swap_delta(first, None)['swapping_occurred'] is None
     assert parse_vm_stat('Pageouts: 0.') is None
@@ -166,3 +166,29 @@ def test_headless_daemon_is_a_memory_root_but_does_not_replace_worker_evidence(m
     monkeypatch.setattr(daemon, 'children', lambda recursive: [])
     with pytest.raises(ValueError, match='worker not identified'):
         discover_processes([10] if explicit else [])
+
+
+def test_swap_usage_compressor_and_volume_are_recorded_without_pageout_false_positive(monkeypatch):
+    from callcost.measurements.swap import snapshot, swap_delta
+    readings = iter([
+        'Mach Virtual Memory Statistics: (page size of 16384 bytes)\n'
+        'Pageins: 20.\nPageouts: 4.\nSwapins: 6.\nSwapouts: 8.\nPages occupied by compressor: 100.\n',
+        'total = 1024.00M used = 128.50M free = 895.50M (encrypted)',
+    ])
+    monkeypatch.setattr('callcost.measurements.swap.command', lambda args: next(readings))
+    before = snapshot()
+    assert before['swap_used_bytes'] == 134742016
+    assert before['compressed_memory_bytes'] == 1638400
+    assert before['vm_stat_raw'] and before['swapusage_raw']
+    after = dict(before, swapins=8, swapouts=11, compressed_memory_bytes=1802240, swap_used_bytes=268435456)
+    delta = swap_delta(before, after)
+    assert delta['swapins_bytes'] == 32768 and delta['swapouts_bytes'] == 49152
+    assert delta['swap_volume_bytes'] == 81920
+    assert delta['swap_used_before_bytes'] == 134742016
+    assert delta['swap_used_after_bytes'] == 268435456
+    assert delta['compressed_memory_before_bytes'] == 1638400
+    assert delta['compressed_memory_after_bytes'] == 1802240
+    assert swap_delta(before, dict(before, pageouts=99))['swapping_occurred'] is False
+    unknown = swap_delta(before, None)
+    assert unknown['swap_used_before_bytes'] == 134742016
+    assert unknown['swap_volume_bytes'] is None

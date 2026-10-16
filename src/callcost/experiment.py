@@ -127,7 +127,7 @@ def measured_call(provider, prompt, config, store, phase, repeat, load, files, p
                loaded_weight_bytes=inspect_weights(setting.model_files)['tensor_payload_bytes'] if sampler else None,
                **{k: v for k, v in swap.items() if k != 'missing_reason'},
                swap_missing_reason=swap['missing_reason'],
-               knee_eligible=result.status == 'completed' and swap['swapping_occurred'] is False,
+               knee_eligible=result.status == 'completed',
                energy_j=energy, energy_missing_reason=energy_reason, energy_scope=SCOPE,
                conditions={'before': before, 'after': after}, answer_sha256=answer_hash(result.answer),
                varies_from_first_answer=None, raw_request=f'raw/{call_id}.request.json',

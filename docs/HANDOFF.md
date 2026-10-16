@@ -1,6 +1,6 @@
 # Update in progress, 16 October 2026
 
-Owner authorized the new swap instrumentation and reporting, separate resumable local/cloud passes, and a post-restart held-out pre-check (three calls each on local-q8/local-q3 with required energy validation). Neither full pass is authorized. Wait for clean-state confirmation before pre-check; wait for billing-on confirmation and key/project paid-tier verification before the cloud pass. The 16 October README amendment supersedes old swap exclusions below and is being committed/pushed before implementation. No benchmark checkpoints exist; the prior held-out smoke is excluded instrumentation evidence.
+Owner authorized the new swap instrumentation and reporting, separate resumable local/cloud passes, and a post-restart held-out pre-check (three calls each on local-q8/local-q3 with required energy validation). Neither full pass is authorized. Wait for clean-state confirmation before pre-check; wait for billing-on confirmation and key/project paid-tier verification before the cloud pass. The 16 October README amendment supersedes old swap exclusions below and was committed/pushed as `4b7f7e1` before implementation. No benchmark checkpoints exist; the prior held-out smoke is excluded instrumentation evidence.
 
 # Current handoff, 15 October 2026
 
@@ -74,3 +74,5 @@ PYTHONPATH=src .venv/bin/python -m callcost report --run "runs/$(cat runs/LATEST
 ```
 
 This writes `report.json` and `report.md`. Incomplete collection, missing eligible prompts and pending human scores cannot establish a knee or no knee. Results stay ignored by Git.
+
+- 16 October instrumentation/report fix: per-call swap-in/out volume, raw before/after vm_stat + vm.swapusage and physical compressor bytes; pageouts alone do not flag swapping. All completed answers now contribute to knee/quality, with all-call latency primary and swap-free latency secondary, configuration share/unknown counts/median volume. Offline regressions pass; live pre-check still awaits restart.
