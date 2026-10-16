@@ -1,3 +1,7 @@
+# Update in progress, 16 October 2026
+
+Owner authorized the new swap instrumentation and reporting, separate resumable local/cloud passes, and a post-restart held-out pre-check (three calls each on local-q8/local-q3 with required energy validation). Neither full pass is authorized. Wait for clean-state confirmation before pre-check; wait for billing-on confirmation and key/project paid-tier verification before the cloud pass. The 16 October README amendment supersedes old swap exclusions below and is being committed/pushed before implementation. No benchmark checkpoints exist; the prior held-out smoke is excluded instrumentation evidence.
+
 # Current handoff, 15 October 2026
 
 ## Done
@@ -5,7 +9,7 @@
 - Four pinned text-only MLX conversions and Fairy's production reference passed held-out preparation pilots. Fairy retains vision weights and is outside the knee sequence.
 - Quality-only knee and local/cloud thinking amendments are committed and pushed before benchmark or launcher smoke data. Earlier excluded preparation/instrumentation pilots exist; no scored benchmark data exists. An excluded launcher smoke now exists, described below.
 - Local thinking is off. Gemini 3.8 Flash runs at thinking level low; thinking tokens are reported separately and included once in billable output. Cloud is outside the knee sequence.
-- Physical-footprint validation lacked complete 8-bit coverage. Exact encoded weight bytes are descriptive memory; physical footprint/RSS are secondary. Swap-active/unknown observations remain reported but are excluded from knee inputs.
+- Physical-footprint validation lacked complete 8-bit coverage. Exact encoded weight bytes are descriptive memory; physical footprint/RSS are secondary. Prior swap exclusions are superseded by the 16 October amendment above.
 - Durable call checkpoints, CSV recovery, writer locking, resume input/source checks and live status are implemented. Failed/interrupted attempts are retained; completed checkpoints must not be repeated.
 - Launcher includes preflight, sudo keepalive, caffeinate, logging, notifications and LATEST handling. Live smoke verified credential inheritance, local/cloud requests, deliberate interruption/resume, logs/status, notifications, model cleanup and caffeinate cleanup. Sudo keepalive and privileged energy remain unverified because no cached authorization was available.
 - Launcher/report independent source review completed. Separate fixes committed and pushed: incomplete collection cannot yield knee conclusions; resume restores pilot verification from checkpoints; pending quality does not suppress step costs; reports show metric counts/reasons, secondary footprint/RSS, tokens, billable output, payloads, list-price costs, energy qualifications and eligible counts; standalone LM Studio daemon roots join the sampled process group.

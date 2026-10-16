@@ -36,7 +36,8 @@ The hypothesis, knee definition, variance rule and both kill criteria live in [R
 - 2026-10-15: Dataset is 30 GSM8K test problems with pinned revision, original row IDs and reproducible selection, plus 10 invented-text summaries. N=5 measured repeats; temperature 0; pilots and warm-ups are additional and excluded.
 - 2026-10-15: Descriptive memory metric is exact encoded tensor payload bytes in the loaded safetensors files, excluding headers and support files. It is not runtime peak memory. Measured physical footprint and RSS are secondary labelled observations.
 - 2026-10-15: Knee amended to quality-only. Cost is reported per step, not a gate. Exact criteria and reasons are in the README.
-- 2026-10-15: Calls with system swap activity are reported but excluded from knee inputs and counted. Unknown/reset swap counters also exclude calls and are counted separately; missing eligible data is not zero quality or evidence of no knee.
+- 2026-10-16: Superseding swap amendment: all completed calls contribute to quality/knee and the unchanged variance rule. All-call latency is primary; swap-free latency is secondary. Record swap-in/out bytes, before/after vm.swapusage and compressor memory; report swapped share, unknown counts and median swap volume. Swap is a configuration cost on this 16 GB Mac, with whole-machine attribution limits.
+- 2026-10-16: Local (five configurations) and cloud (one reference) are independently resumable passes. Cloud quota/rate-limit errors stop without automatic retries. Confirm paid-tier evidence after the owner enables billing and before cloud collection.
 
 ## Key paths
 
