@@ -3,8 +3,8 @@
 ## Current authorization
 
 - Code/docs edits, offline tests, small commits/pushes are authorized.
-- Owner authorized a roughly 15-minute pre-check only after confirming a clean restart: exactly three held-out calls each on local-q8/local-q3, new swap observations and sudo-backed energy validation. Clean-state confirmation is pending. No new model calls have been made in this work.
-- Neither full local nor full cloud pass is authorized. Wait for the pre-check report and owner approval. Wait for the owner's "billing is on" message, then verify the actual key/project paid tier and active limits before any cloud pass.
+- Owner authorized a roughly 15-minute pre-check only after confirming a clean restart: exactly three held-out calls each on local-q8/local-q3, new swap observations and sudo-backed energy validation. Owner confirmed ready after restart. Boot time changed to 16 October 21:00:50 UTC; AC power and headless service were checked. No new model calls yet.
+- Neither full local nor full cloud pass is authorized. Wait for the pre-check report and owner approval. Owner confirmed Tier 1 prepaid billing with no auto-reload. AI Studio verification matched the environment key masked suffix to the sole listed key, confirmed Tier 1/Prepay/auto-reload off and the model limits; a contradictory outstanding-balance alert remains a cloud-readiness blocker. See private runs/billing-verification-20261016.json. No cloud inference was used.
 - Ask before model calls beyond this pre-check, downloads, system settings or other long runs. Never auto-commit run artifacts or credentials.
 
 ## Built and committed
@@ -56,3 +56,6 @@ Resume with `./scripts/run_full.sh --pass local --resume` or `--pass cloud --res
 - `.venv/bin/callcost` contains an older installed package. Use current source with `PYTHONPATH=src .venv/bin/python -m callcost`; launcher sets this itself. No packages/downloads/system settings were changed.
 - Last known LM Studio mode was app `--run-as-service`. Standalone llmster discovery is tested offline but not live. Resume checks RAM before owned-instance recovery; explicitly unload a recorded leftover instance if needed, never someone else's model.
 - Real results target: 22 November 2026; WAICY submission: 29 November. Human summary review and charts remain needed after raw collection. CI budget mode is a later milestone.
+
+- Exhausted prepaid balance now stops the whole cloud pass through the same durable `rate_limited`/no-retry path as quota errors, including HTTP 402 and PAYMENT_REQUIRED. Regression coverage includes depleted-balance responses. Verified: 86 tests and Ruff.
+- Tier verification via AI Studio is complete, but the Rate Limit page reports an outstanding-balance warning despite positive prepaid credit. Do not make payment/change billing automatically; cloud approval remains pending resolution. Browser used for verification was quit before the pre-check.

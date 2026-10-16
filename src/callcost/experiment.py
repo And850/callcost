@@ -306,9 +306,9 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
                 if row['error'] == 'Interrupted by user':
                     raise KeyboardInterrupt
                 if row['status'] != 'completed':
-                    if setting.provider == 'gemini' and (row.get('http_status') == 429 or row.get('provider_error_status') == 'RESOURCE_EXHAUSTED'):
+                    if setting.provider == 'gemini' and (row.get('http_status') in (402, 429) or row.get('provider_error_status') in ('RESOURCE_EXHAUSTED', 'PAYMENT_REQUIRED')):
                         metadata['stop_reason'] = 'quota_or_rate_limit'
-                        raise ValueError('Cloud quota/rate-limit reached; stopped with no automatic retry. Resolve quota before manually resuming.')
+                        raise ValueError('Cloud quota, rate-limit or prepaid balance exhausted; stopped with no automatic retry. Resolve billing/quota before manually resuming.')
                     raise ValueError(f'Call {row["call_id"]} failed: {row["error"]}')
                 if config.run.cooldown_seconds:
                     time.sleep(config.run.cooldown_seconds)

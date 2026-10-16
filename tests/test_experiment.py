@@ -230,7 +230,8 @@ def test_resume_recovers_pilot_verification_without_repeating_completed_call(tmp
     assert resumed['thinking_verification']['cloud']['call_id'] == pilot_id
 
 
-def test_cloud_quota_stops_with_checkpoint_and_no_retry(tmp_path, config_data, prompt_data, monkeypatch):
+@pytest.mark.parametrize('http_status,error_status', [(429, 'RESOURCE_EXHAUSTED'), (402, 'RESOURCE_EXHAUSTED'), (402, 'PAYMENT_REQUIRED')])
+def test_cloud_quota_stops_with_checkpoint_and_no_retry(tmp_path, config_data, prompt_data, monkeypatch, http_status, error_status):
     monkeypatch.setenv('GEMINI_API_KEY', 'key')
     monkeypatch.setattr('callcost.experiment.machine_metadata', lambda: {'platform': 'Darwin'})
     monkeypatch.setattr('callcost.experiment.conditions', dict)
@@ -238,8 +239,8 @@ def test_cloud_quota_stops_with_checkpoint_and_no_retry(tmp_path, config_data, p
 
     def handler(request):
         requests.append(request)
-        return httpx.Response(429, stream=httpx.ByteStream(json.dumps(
-            {'error': {'status': 'RESOURCE_EXHAUSTED', 'message': 'quota exceeded'}}).encode()))
+        return httpx.Response(http_status, stream=httpx.ByteStream(json.dumps(
+            {'error': {'status': error_status, 'message': 'quota or prepaid balance exhausted'}}).encode()))
 
     with httpx.Client(transport=httpx.MockTransport(handler)) as client:
         meta = run_experiment(Config.model_validate(config_data), Dataset.model_validate(prompt_data),
@@ -249,5 +250,5 @@ def test_cloud_quota_stops_with_checkpoint_and_no_retry(tmp_path, config_data, p
     state = json.loads((tmp_path/'run/status.json').read_text())
     assert state['state'] == 'rate_limited' and 'no automatic retry' in state['error']
     row = json.loads(next((tmp_path/'run/checkpoints').glob('*.json')).read_text())
-    assert row['http_status'] == 429 and row['provider_error_status'] == 'RESOURCE_EXHAUSTED'
+    assert row['http_status'] == http_status and row['provider_error_status'] == error_status
     assert row['status'] == 'error'
