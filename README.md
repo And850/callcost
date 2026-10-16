@@ -60,6 +60,12 @@ Report latency p50/p95 for all completed calls and separately for calls with kno
 
 Collect the five local configurations in an independently resumable local pass and the single Gemini reference in an independently resumable cloud pass. Both retain the same approved 40 prompts, five measured repeats, fixed settings, pilots and warm-ups. Preserve pass identity, input/source hashes and separate pointers/checkpoints. The cloud and Fairy reference remain outside the four-level knee sequence. A cloud quota/rate-limit error stops the pass with a clear status and retained attempt, without an automatic retry loop. Splitting collection changes neither the knee rule nor the reference roles; timestamps and conditions expose the different collection windows.
 
+### Energy instrumentation amendment, 16 October 2026
+
+Before any benchmark data, a held-out required-energy pre-check stopped after its first completed 3-bit call. All 48 raw power records parsed, but receipt-based interval reconstruction created apparent overlaps up to 18.6 ms and the existing 10 ms overlap guard correctly rejected the energy estimate. The original failed run and completed response remain unchanged; an offline replay is a diagnostic, not a passed live validation.
+
+Require powermetrics `is_delta: true` and reconstruct successive intervals from reported `elapsed_ns`, anchored to the first sample receipt. Retain each actual receipt and its lag from the reconstructed end. Reject timing drift of at least half a reported interval, which guards against treating a missed full interval as continuous coverage. Parser failures invalidate attribution. The first receipt has unknown fixed delivery delay, so call-boundary attribution remains approximate. The existing two-sample, 90% coverage and 10 ms overlap guards remain unchanged. This is an instrumentation correction to the estimate, whole-machine delta; it changes no quality, knee, variance or swap rule. A fresh held-out validation needs owner authorization; completed calls are not silently repeated or relabelled.
+
 ### Kill criteria
 
 If quality and cost fall together smoothly with no knee, or run-to-run variance is larger than the difference between quantisation levels, the hypothesis fails and the README will say so. The registered variance rule above determines when adjacent levels are indistinguishable.

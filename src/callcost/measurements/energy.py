@@ -13,15 +13,34 @@ SCOPE = 'estimate, whole-machine delta; CPU + GPU + ANE; client device only'
 
 def parse_power_sample(payload, received_monotonic):
     sample = plistlib.loads(payload)
+    if sample.get('is_delta') is not True:
+        raise ValueError('Power timing requires provider delta intervals')
     seconds = sample['elapsed_ns'] / 1_000_000_000
     processor = sample.get('processor', {})
     values = [processor.get(key) for key in DOMAINS]
     if not seconds > 0 or not all(type(v) in (float, int) and math.isfinite(v) and v >= 0 for v in values):
         raise ValueError('Unsupported powermetrics sample or missing power domains')
     return {'start': received_monotonic - seconds, 'end': received_monotonic,
-            'watts': sum(values) / 1000, 'domains': DOMAINS,
+            'watts': sum(values) / 1000, 'domains': DOMAINS, 'elapsed_s': seconds,
             'timing_basis': 'receipt monotonic minus reported elapsed_ns',
             'power_source_unit': 'mW', 'timestamp_raw': str(sample.get('timestamp'))}
+
+
+def align_power_sample(sample, previous_end):
+    """Anchor once; subsequent device-reported delta intervals are contiguous.
+
+    Receipt jitter is retained, not misinterpreted as overlapping power windows.
+    A discrepancy of half a sample interval makes timing unavailable.
+    The first receipt anchor has unknown delivery lag; attribution is approximate.
+    """
+    received = sample['end']
+    elapsed = sample.get('elapsed_s', sample['end'] - sample['start'])
+    end = received if previous_end is None else previous_end + elapsed
+    if elapsed <= 0 or abs(received - end) >= elapsed / 2:
+        raise ValueError('Power timing differs by at least half a reported sample interval')
+    return dict(sample, start=end-elapsed, end=end, received_monotonic=received,
+                receipt_lag_s=received-end,
+                timing_basis='first receipt anchor plus cumulative reported elapsed_ns; receipt lag retained')
 
 
 def integrate_delta(samples, start, end, baseline_watts):
@@ -49,6 +68,7 @@ class PowerCollector:
         self.directory = directory
         self.sample_ms = sample_ms
         self.samples = []
+        self.timeline_end = None
         self.errors = []
         self.process = None
         self.thread = None
@@ -88,7 +108,8 @@ class PowerCollector:
                     if not payload.strip():
                         continue
                     try:
-                        sample = parse_power_sample(payload, time.perf_counter())
+                        sample = align_power_sample(parse_power_sample(payload, time.perf_counter()), self.timeline_end)
+                        self.timeline_end = sample['end']
                         self.samples.append(sample)
                         parsed.write(json.dumps(sample) + '\n')
                         parsed.flush()

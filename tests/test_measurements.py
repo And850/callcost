@@ -19,13 +19,13 @@ def test_rss_uses_contemporaneous_sum_and_rejects_missing_workers():
 
 
 def test_power_sample_units_and_domain_scope():
-    sample = parse_power_sample(plistlib.dumps({'elapsed_ns': 250_000_000,
+    sample = parse_power_sample(plistlib.dumps({'elapsed_ns': 250_000_000, 'is_delta': True,
         'processor': {'cpu_power': 1000, 'gpu_power': 2000, 'ane_power': 0}}), 10)
     assert sample['start'] == 9.75 and sample['end'] == 10
     assert sample['watts'] == 3
     assert sample['domains'] == ['cpu_power', 'gpu_power', 'ane_power']
     with pytest.raises(ValueError):
-        parse_power_sample(plistlib.dumps({'elapsed_ns': 1, 'processor': {'cpu_power': 1}}), 10)
+        parse_power_sample(plistlib.dumps({'elapsed_ns': 1, 'is_delta': True, 'processor': {'cpu_power': 1}}), 10)
 
 
 def test_integrates_overlap_keeps_negative_and_rejects_gaps():
@@ -192,3 +192,33 @@ def test_swap_usage_compressor_and_volume_are_recorded_without_pageout_false_pos
     unknown = swap_delta(before, None)
     assert unknown['swap_used_before_bytes'] == 134742016
     assert unknown['swap_volume_bytes'] is None
+
+
+def test_power_timeline_uses_reported_intervals_and_retains_receipt_jitter():
+    from callcost.measurements.energy import align_power_sample
+    samples = []
+    end = None
+    for receipt in (.25, .52, .75, 1.02):
+        raw = dict(start=receipt-.25, end=receipt, watts=10)
+        sample = align_power_sample(raw, end)
+        samples.append(sample)
+        end = sample['end']
+    assert samples[1]['start'] == .25 and samples[1]['end'] == .5
+    assert samples[1]['received_monotonic'] == .52
+    energy, reason = integrate_delta(samples, .25, .75, 2)
+    assert energy == 4 and reason is None
+    # A real missing/delayed interval cannot be silently repaired by alignment.
+    with pytest.raises(ValueError, match='timing'):
+        align_power_sample(dict(start=1.75, end=2, watts=10), .25)
+    with pytest.raises(ValueError, match='timing'):
+        align_power_sample(dict(start=.5, end=.75, watts=10), .25)
+
+
+@pytest.mark.parametrize('delta', [False, None])
+def test_power_timeline_requires_provider_delta_intervals(delta):
+    payload = {'elapsed_ns': 250_000_000, 'is_delta': delta,
+               'processor': {'cpu_power': 1000, 'gpu_power': 0, 'ane_power': 0}}
+    if delta is None:
+        payload.pop('is_delta')
+    with pytest.raises(ValueError, match='delta'):
+        parse_power_sample(plistlib.dumps(payload), 10)
