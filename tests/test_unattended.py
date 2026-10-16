@@ -15,6 +15,8 @@ def test_preflight_missing_key_does_not_start_server_or_create_output(tmp_path, 
 
 def test_preflight_rejects_low_ram_before_loading_any_model(tmp_path, config_data, monkeypatch):
     from callcost.unattended import environment_preflight
+    config_data['configurations'] = [dict(id='local', provider='lmstudio', model_key='test',
+                                          expected_quantisation='4bit', model_files=[str(tmp_path/'model.safetensors')])]
     monkeypatch.setenv('GEMINI_API_KEY', 'key')
     monkeypatch.setattr('callcost.unattended.conditions', lambda: {'ac_power': True, 'available_memory_bytes': 10})
     with httpx.Client(transport=httpx.MockTransport(lambda r: pytest.fail('HTTP before RAM validation'))) as client:
@@ -44,3 +46,28 @@ def test_latest_pointer_cannot_escape_runs_directory(tmp_path):
     (tmp_path / 'LATEST').write_text('../private')
     with pytest.raises(ValueError, match='LATEST'):
         latest_run(tmp_path)
+
+
+def test_selected_pass_has_independent_configurations_and_cloud_needs_no_local_server(config_data, tmp_path, monkeypatch):
+    from callcost.unattended import environment_preflight, select_pass
+    mixed = Config.model_validate(config_data)
+    cloud = select_pass(mixed, 'cloud')
+    assert len(cloud.configurations) == 1
+    with pytest.raises(ValueError, match='No local'):
+        select_pass(mixed, 'local')
+    monkeypatch.setenv('GEMINI_API_KEY', 'key')
+    monkeypatch.setattr('callcost.unattended.conditions', lambda: {'ac_power': True, 'available_memory_bytes': 1024})
+    with httpx.Client(transport=httpx.MockTransport(lambda r: pytest.fail('Cloud pass touched LM Studio'))) as client:
+        result = environment_preflight(cloud, tmp_path, client)
+    assert result['headless']['reason'] == 'Cloud-only pass; LM Studio not required'
+
+
+def test_pass_specific_pointers_resume_independently(tmp_path):
+    from callcost.unattended import latest_run
+    for name in ('local-run', 'cloud-run'):
+        (tmp_path/name).mkdir()
+    (tmp_path/'LATEST-local').write_text('local-run')
+    (tmp_path/'LATEST-cloud').write_text('cloud-run')
+    (tmp_path/'LATEST').write_text('cloud-run')
+    assert latest_run(tmp_path, 'LATEST-local').name == 'local-run'
+    assert latest_run(tmp_path, 'LATEST-cloud').name == 'cloud-run'

@@ -228,3 +228,26 @@ def test_resume_recovers_pilot_verification_without_repeating_completed_call(tmp
     assert count == 1
     assert resumed['thinking_verification']['cloud']['verified'] is True
     assert resumed['thinking_verification']['cloud']['call_id'] == pilot_id
+
+
+def test_cloud_quota_stops_with_checkpoint_and_no_retry(tmp_path, config_data, prompt_data, monkeypatch):
+    monkeypatch.setenv('GEMINI_API_KEY', 'key')
+    monkeypatch.setattr('callcost.experiment.machine_metadata', lambda: {'platform': 'Darwin'})
+    monkeypatch.setattr('callcost.experiment.conditions', dict)
+    requests = []
+
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(429, stream=httpx.ByteStream(json.dumps(
+            {'error': {'status': 'RESOURCE_EXHAUSTED', 'message': 'quota exceeded'}}).encode()))
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        meta = run_experiment(Config.model_validate(config_data), Dataset.model_validate(prompt_data),
+                              tmp_path/'run', client=client)
+    assert len(requests) == 1
+    assert meta['status'] == 'rate_limited'
+    state = json.loads((tmp_path/'run/status.json').read_text())
+    assert state['state'] == 'rate_limited' and 'no automatic retry' in state['error']
+    row = json.loads(next((tmp_path/'run/checkpoints').glob('*.json')).read_text())
+    assert row['http_status'] == 429 and row['provider_error_status'] == 'RESOURCE_EXHAUSTED'
+    assert row['status'] == 'error'

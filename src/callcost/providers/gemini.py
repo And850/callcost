@@ -70,6 +70,8 @@ class GeminiProvider:
     @staticmethod
     def _consume(event, now, result):
         if event.get('error'):
+            if event['error'].get('status') == 'RESOURCE_EXHAUSTED':
+                result.provider_error_status = 'RESOURCE_EXHAUSTED'
             result.error = 'Provider reported a streaming error'
         if 'modelVersion' in event:
             result.model_reported = event['modelVersion']

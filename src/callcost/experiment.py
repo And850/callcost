@@ -136,7 +136,7 @@ def measured_call(provider, prompt, config, store, phase, repeat, load, files, p
 
 
 def run_experiment(config, dataset, directory, *, pilot_only=False, client=None, input_files=None,
-                   progress=print, resume=False, smoke=False, launch_metadata=None, energy_mode=None):
+                   progress=print, resume=False, smoke=False, launch_metadata=None, energy_mode=None, run_pass=None):
     files = preflight(config)
     components = {s.id: inspect_weights(s.model_files)
                   for s in config.configurations if isinstance(s, LocalConfig)}
@@ -158,7 +158,7 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
                 schedule.extend((setting, prompt, 'measured', repeat) for prompt in prompts)
     runtime_identity = {str(p.relative_to(Path(__file__).parent)): file_identity(p)['sha256']
                         for p in sorted(Path(__file__).parent.rglob('*.py'))}
-    metadata = {'schema_version': 2, 'smoke': smoke, 'runtime_identity': runtime_identity, 'status': 'running', 'pilot_only': pilot_only,
+    metadata = {'schema_version': 2, 'run_pass': run_pass, 'smoke': smoke, 'runtime_identity': runtime_identity, 'status': 'running', 'pilot_only': pilot_only,
                 'started_at': datetime.now(timezone.utc).isoformat(), 'machine': machine,
                 'config': config.model_dump(mode='json'), 'dataset': dataset.model_dump(mode='json'),
                 'input_files': input_files or [], 'model_files': files,
@@ -175,13 +175,14 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
                 'thinking_verification': {}, 'loads': [], 'energy_blocks': [], 'errors': [], 'segments': []}
     if resume:
         previous = json.loads((directory / 'metadata.json').read_text())
-        for key in ('config', 'dataset', 'model_files', 'input_files', 'runtime_identity', 'schedule', 'smoke', 'pilot_only', 'software'):
+        for key in ('config', 'dataset', 'model_files', 'input_files', 'runtime_identity', 'schedule', 'smoke', 'pilot_only', 'software', 'run_pass'):
             if previous.get(key) != metadata.get(key):
                 raise ValueError(f'Resume refused: {key} changed since this run started')
         for key in ('chip', 'ram_bytes', 'macos_build', 'lmstudio_version'):
             if previous['machine'].get(key) != machine.get(key):
                 raise ValueError(f'Resume refused: machine {key} changed')
         metadata = previous
+        metadata.pop('stop_reason', None)
         metadata['status'] = 'running'
     store = RunStore(directory, resume=resume)
     rows, first_answers = list(store.rows), {}
@@ -281,6 +282,9 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
                 if row['error'] == 'Interrupted by user':
                     raise KeyboardInterrupt
                 if row['status'] != 'completed':
+                    if setting.provider == 'gemini' and (row.get('http_status') == 429 or row.get('provider_error_status') == 'RESOURCE_EXHAUSTED'):
+                        metadata['stop_reason'] = 'quota_or_rate_limit'
+                        raise ValueError('Cloud quota/rate-limit reached; stopped with no automatic retry. Resolve quota before manually resuming.')
                     raise ValueError(f'Call {row["call_id"]} failed: {row["error"]}')
                 if config.run.cooldown_seconds:
                     time.sleep(config.run.cooldown_seconds)
@@ -296,7 +300,8 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
             provider = None
         metadata['status'] = 'completed'
     except (Exception, KeyboardInterrupt) as error:
-        metadata['status'] = 'interrupted' if isinstance(error, KeyboardInterrupt) else 'failed'
+        metadata['status'] = ('interrupted' if isinstance(error, KeyboardInterrupt) else
+                              'rate_limited' if metadata.get('stop_reason') == 'quota_or_rate_limit' else 'failed')
         # Avoid including HTTP exception text, which may include secret headers/URLs.
         metadata['errors'].append(str(error) if isinstance(error, ValueError) else type(error).__name__)
     finally:
@@ -314,7 +319,7 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
         metadata['finished_at'] = datetime.now(timezone.utc).isoformat()
         segment['finished_at'] = metadata['finished_at']
         segment['status'] = metadata['status']
-        status('completed' if metadata['status'] == 'completed' else 'failed',
+        status(metadata['status'],
                None if metadata['status'] == 'completed' else metadata['errors'][-1])
         metadata['variation'] = variation_report(config, dataset, rows)
         metadata['completed_measured_calls'] = sum(r['phase'] == 'measured' and r['status'] == 'completed' for r in rows)

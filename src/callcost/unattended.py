@@ -33,14 +33,23 @@ MIN_DISK = 10 * GIB
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def latest_run(runs):
-    name = (runs / 'LATEST').read_text().strip()
+def latest_run(runs, pointer='LATEST'):
+    name = (runs / pointer).read_text().strip()
     if not re.fullmatch(r'[A-Za-z0-9_.-]+', name) or name in ('.', '..'):
         raise ValueError('Invalid runs/LATEST pointer')
     path = (runs / name).resolve(strict=True)
     if path.parent != runs.resolve():
         raise ValueError('runs/LATEST points outside runs directory')
     return path
+
+
+def select_pass(config, run_pass):
+    provider = {'local': 'lmstudio', 'cloud': 'gemini'}[run_pass]
+    selected = config.model_copy(deep=True)
+    selected.configurations = [c for c in selected.configurations if c.provider == provider]
+    if not selected.configurations:
+        raise ValueError(f'No {run_pass} configurations selected')
+    return selected
 
 
 def lms_path():
@@ -71,17 +80,17 @@ def environment_preflight(config, disk_path, client, *, smoke=False, require_fiv
             raise ValueError(f'Preflight failed: set {env} in this Terminal, do not put it in config')
     local = [c for c in config.configurations if c.provider == 'lmstudio']
     cloud = [c for c in config.configurations if c.provider == 'gemini']
-    if require_five:
+    if require_five and local:
         series = [c for c in local if c.comparison_role == 'quantisation_series']
         refs = [c for c in local if c.comparison_role == 'production_reference']
         if len(local) != 5 or len(refs) != 1 or {c.expected_quantisation for c in series} != {'3bit', '4bit', '6bit', '8bit'}:
             raise ValueError('Preflight failed: need four MLX levels (3/4/6/8 bit) and Fairy production reference')
-        if not smoke and len(cloud) != 1:
-            raise ValueError('Preflight failed: full run needs exactly one Gemini reference')
+    if require_five and cloud and len(cloud) != 1:
+        raise ValueError('Preflight failed: cloud pass needs exactly one Gemini reference')
     current = conditions()
     if current.get('ac_power') is not True:
         raise ValueError('Preflight failed: connect the charger (or charger state unavailable)')
-    minimum = SMOKE_MIN_MEMORY if smoke else FULL_MIN_MEMORY
+    minimum = (SMOKE_MIN_MEMORY if smoke else FULL_MIN_MEMORY) if local else 0
     # A previous run can leave its own model loaded. Check RAM after explicit recovery,
     # never silently unload another client's model to pass this gate.
     if current['available_memory_bytes'] < minimum:
@@ -95,6 +104,12 @@ def environment_preflight(config, disk_path, client, *, smoke=False, require_fiv
         for path in setting.model_files:
             if not path.is_file():
                 raise ValueError(f'Preflight failed: missing model file {path}')
+    if not local:
+        return dict(conditions=current, minimum_available_memory_bytes=minimum,
+                    minimum_disk_bytes=MIN_DISK, disk_free_bytes=free_disk,
+                    headless={'headless': None, 'reason': 'Cloud-only pass; LM Studio not required'},
+                    boot_time=datetime.fromtimestamp(psutil.boot_time(), timezone.utc).isoformat(),
+                    uptime_seconds=time.time() - psutil.boot_time(), gpu_wired_limit_raw='Not applicable')
     headers = {'Authorization': f'Bearer {os.environ[config.lmstudio.api_key_env]}'} if config.lmstudio.api_key_env else {}
     url = config.lmstudio.base_url + '/api/v1/models'
     try:
@@ -243,6 +258,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description='Unattended CallCost run, keep this Terminal open')
     parser.add_argument('--config', type=Path, default=ROOT / 'configs/experiment.yaml')
     parser.add_argument('--prompts', type=Path, default=ROOT / 'prompts/private/full.yaml')
+    parser.add_argument('--pass', dest='run_pass', choices=('local', 'cloud'), help='Independent full-run pass')
     parser.add_argument('--resume', action='store_true', help='Resume runs/LATEST using its saved inputs')
     parser.add_argument('--smoke', action='store_true', help='One held-out call/configuration; no benchmark evidence')
     parser.add_argument('--no-energy', action='store_true', help='Decline sudo and record energy unavailable')
@@ -267,11 +283,14 @@ def main(argv=None):
             raise ValueError('Another unattended launcher is active') from None
         previous = None
         if args.resume:
-            directory = latest_run(runs)
+            directory = latest_run(runs, f'LATEST-{args.run_pass}' if args.run_pass else 'LATEST')
             previous = json.loads((directory / 'metadata.json').read_text())
             config = Config.model_validate(previous['config'])
             dataset = Dataset.model_validate(previous['dataset'])
             smoke = previous.get('smoke', False)
+            run_pass = previous.get('run_pass')
+            if args.run_pass and run_pass != args.run_pass:
+                raise ValueError('Resume refused: pass identity does not match')
             inputs = previous['input_files']
             for identity in inputs:
                 if file_identity(Path(identity['path'])) != identity:
@@ -284,6 +303,11 @@ def main(argv=None):
         else:
             config = Config.model_validate(load_document(args.config))
             smoke = args.smoke
+            run_pass = args.run_pass
+            if not smoke and not run_pass:
+                raise ValueError('Full collection requires --pass local or --pass cloud')
+            if run_pass:
+                config = select_pass(config, run_pass)
             dataset = Dataset(schema_version=1, prompts=[PILOT]) if smoke else Dataset.model_validate(load_document(args.prompts))
             for setting in config.configurations:
                 if setting.provider == 'lmstudio':
@@ -291,7 +315,7 @@ def main(argv=None):
             if not smoke:
                 check_full_dataset(config, dataset)
             inputs = [file_identity(args.config)] + ([] if smoke else [file_identity(args.prompts)])
-            directory = runs / datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ')
+            directory = runs / (datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ') + f'-{run_pass or "smoke"}')
         log = RunLog(original_out, directory)
         sys.stdout = sys.stderr = log
         print(f'Preflight: {"SMOKE ONLY" if smoke else "full benchmark"}; {directory.name}')
@@ -303,7 +327,7 @@ def main(argv=None):
               f'available RAM: {launch["conditions"]["available_memory_bytes"]/GIB:.2f} GiB; '
               f'free disk: {launch["disk_free_bytes"]/GIB:.1f} GiB; GPU wired limit: {launch["gpu_wired_limit_raw"]}')
         print('Checklist: restarted [verify boot time]; apps closed [verify yourself]; '
-              'LM Studio headless [checked]; GPU wired limit [read above, 0 means system default].')
+              'LM Studio headless [checked for local pass; not required for cloud]; GPU wired limit [0 means system default].')
         energy = sudo.start(args.no_energy or config.measurement.energy.mode == 'off')
         launch['sudo'] = sudo.record
         print(f'Energy: {sudo.record["reason"]}')
@@ -317,13 +341,14 @@ def main(argv=None):
         def progress(message, **kwargs):
             # RunStore has created the directory before its first progress message.
             if directory.is_dir():
-                pointer = runs / 'LATEST.tmp'
-                pointer.write_text(directory.name + '\n')
-                pointer.replace(runs / 'LATEST')
+                for name in ('LATEST', f'LATEST-{run_pass}') if run_pass else ('LATEST',):
+                    pointer = runs / f'{name}.tmp'
+                    pointer.write_text(directory.name + '\n')
+                    pointer.replace(runs / name)
             print(message, **kwargs)
         metadata = run_experiment(config, dataset, directory, resume=args.resume, smoke=smoke,
                                   input_files=inputs, launch_metadata=launch,
-                                  energy_mode=None if energy else 'off', progress=progress)
+                                  energy_mode=None if energy else 'off', progress=progress, run_pass=run_pass)
         print(f'Run {metadata["status"]}: {directory}')
         for error in metadata['errors']:
             print(error)

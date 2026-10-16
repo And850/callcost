@@ -2,6 +2,7 @@
 
 import codecs
 import json
+import re
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -51,6 +52,7 @@ def stream_request(client: httpx.Client, url: str, payload: dict, headers: dict,
     try:
         with (raw_directory / f'{call_id}.response.bin').open('wb') as raw:
             with client.stream('POST', url, content=body, headers=request_headers, timeout=timeout) as response:
+                result.http_status = response.status_code
                 encoding = response.headers.get('content-encoding', 'identity')
                 if encoding != 'identity':
                     raise ValueError('Compressed response despite identity request; byte interpretation unsupported')
@@ -67,6 +69,13 @@ def stream_request(client: httpx.Client, url: str, payload: dict, headers: dict,
                                 consume(json.loads(data), now, result)
                 if not success:
                     result.error = f'HTTP {response.status_code}; response body retained'
+                    raw.flush()
+                    try:
+                        status = json.loads((raw_directory / f'{call_id}.response.bin').read_bytes()).get('error', {}).get('status')
+                        if isinstance(status, str) and re.fullmatch(r'[A-Z_]{1,64}', status):
+                            result.provider_error_status = status
+                    except (ValueError, AttributeError, TypeError):
+                        pass
                 else:
                     for data in decoder.feed(b'', final=True):
                         if data != '[DONE]':

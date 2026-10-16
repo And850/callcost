@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 @dataclass
 class CallResult:
     status: str = 'error'
+    http_status: int | None = None
+    provider_error_status: str | None = None
     error: str | None = None
     answer: str = ''
     started_at: str | None = None
