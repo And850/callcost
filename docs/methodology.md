@@ -1,6 +1,6 @@
 # Measurement method
 
-Collection, exact-answer variation, automatic and imported human checklist scoring, percentile aggregation and saved-run reports are implemented. The blind summary review export was imported on 17 October 2026 using the strict [offline workflow](blind-review.md). Raw observations remain unchanged. Held-out sudo-backed energy validation passed before collection; saved full-run timing and process-coverage gaps remain unavailable with reasons. The combined scored audit covers primary and length-sensitivity scores, all registered adjacent variance steps, knee findings and actual evidence for the practical-usefulness criterion. See [HANDOFF.md](HANDOFF.md) for current private artifact paths and remaining work.
+Collection, exact-answer variation, automatic and imported human checklist scoring, percentile aggregation and saved-run reports are implemented. The blind summary review export was imported on 17 October 2026 using the strict [offline workflow](blind-review.md). Raw observations remain unchanged. Held-out sudo-backed energy validation passed before collection; saved full-run timing and process-coverage gaps remain unavailable with reasons. The combined scored audit covers primary and length-sensitivity scores, all registered adjacent variance steps, knee findings and actual evidence for the practical-usefulness criterion. See [HANDOFF.md](log.md) for current private artifact paths and remaining work.
 
 ## Timing and tokens
 
@@ -175,7 +175,7 @@ Google's [Gemini billing documentation](https://ai.google.dev/gemini-api/docs/bi
 
 ## Summary length sensitivity, 17 October 2026
 
-See the [dated README deviation note](../README.md#summarisation-protocol-deviation-17-october-2026). Collection used the committed tight prompt/rubric version, not the intended later revision with longer allowances. Preserve `prompts/summarisation.yaml`, saved requests, outputs and blind-review packet unchanged.
+See the [dated README deviation note](preregistration.md#summarisation-protocol-deviation-17-october-2026). Collection used the committed tight prompt/rubric version, not the intended later revision with longer allowances. Preserve `prompts/summarisation.yaml`, saved requests, outputs and blind-review packet unchanged.
 
 For every summary configuration, `quality` remains the primary pre-registered checklist score including `max_words`. `quality_without_max_words` is a separately labelled post-collection sensitivity analysis: validate the full original human/automatic checklist first, remove only automatic criteria whose type is `max_words`, then average retained criteria per answer, repeats per prompt and prompts equally. Keep other constraints, including sentence-related criteria. Missing human criteria or an empty retained checklist make the score unavailable, never zero. Knee and variance calculations continue to read only the primary score. Import the existing blind review as usual; regenerating reports will populate both versions from the same decisions without changing the review packet or issuing inference.
 

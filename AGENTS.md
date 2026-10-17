@@ -1,6 +1,6 @@
 # CallCost for LLMs
 
-Read [docs/HANDOFF.md](docs/HANDOFF.md) first for current state, untested work and ordered next steps. Read the README pre-registration before changing the experiment. Keep current progress in HANDOFF.md, not in this file.
+Read [docs/log.md](docs/log.md) first for current state, untested work and ordered next steps. Read the README pre-registration before changing the experiment. Keep current progress in HANDOFF.md, not in this file.
 
 CallCost is a Python CLI that measures what one language-model call costs on Andrii's own Mac, alongside answer quality on a developer's task set. It compares separately installed LM Studio configurations with a Gemini cloud reference, retaining raw evidence for every reported number. It is the main technical project behind Andrii's university applications for Computer Science in 2027. Every number must survive hostile questioning, and Andrii must be able to explain every design decision himself.
 
@@ -25,7 +25,7 @@ CallCost is a Python CLI that measures what one language-model call costs on And
 
 ## Pre-registration
 
-The hypothesis, knee definition, variance rule and both kill criteria live in [README.md](README.md), the authoritative specification. They are frozen once any benchmark data exists. Before that point, any change requires a dated amendment with its reason, committed and pushed before collecting benchmark data. Check the run state before assuming an amendment is still permitted. Do not reinterpret an instrumentation pilot as a task-set benchmark result.
+The hypothesis, knee definition, variance rule and both kill criteria live in [README.md](docs/preregistration.md), the authoritative specification. They are frozen once any benchmark data exists. Before that point, any change requires a dated amendment with its reason, committed and pushed before collecting benchmark data. Check the run state before assuming an amendment is still permitted. Do not reinterpret an instrumentation pilot as a task-set benchmark result.
 
 ## Decisions log
 
@@ -46,9 +46,9 @@ The hypothesis, knee definition, variance rule and both kill criteria live in [R
 - 2026-10-17: Applying the frozen quality-only knee and variance rules gives maths a 4→3-bit knee and summaries no knee found. This is consistent with the registered hypothesis on this task set, not proof; cost reductions are not uniformly steady. Kill criterion 1 is not triggered. Kill criterion 2 remains unmet pending a Fairy-style maths test and an actual recorded production decision change; no new model calls are authorized by this log.
 - 2026-10-17: Owner selected aggregate results, charts and README for publication together in 70aab5d. Raw run/review artifacts stay private. Provider-billing reconciliation awaits the matching billed figure; VAT applicability is unconfirmed.
 
-- 2026-10-17: Owner refocuses CallCost on single-call energy first, then model GiB/swap, latency/money and secondary quality; the agreed plan is copied to docs/plan-2026-10-17.md. The configurator plan is superseded. Initial human scores and frozen experiment rules remain unchanged. App recommendations and new derived metrics are exploratory, not pre-registered. DeepEval/Gemini judge policy is a draft prospective exception only; no code, inference, downloads or system changes are authorized. The owner reviewed the week-1 drafts and authorizes small documentation commits/pushes after the requested corrections; CI budget mode and SCI units wait until after December.
+- 2026-10-17: Owner refocuses CallCost on single-call energy first, then model GiB/swap, latency/money and secondary quality; the agreed plan is copied to docs/archive/plan-2026-10-17.md. The configurator plan is superseded. Initial human scores and frozen experiment rules remain unchanged. App recommendations and new derived metrics are exploratory, not pre-registered. DeepEval/Gemini judge policy is a draft prospective exception only; no code, inference, downloads or system changes are authorized. The owner reviewed the week-1 drafts and authorizes small documentation commits/pushes after the requested corrections; CI budget mode and SCI units wait until after December.
 
-- 2026-10-17: Owner removes automatic-criterion G-Eval calls: validation proposal is 1,380 physical requests, with a hard monetary cap still awaiting owner confirmation after a prepaid-balance check. PrismML Ternary Bonsai 2 27B is a demo-only candidate outside the initial benchmark/knee sequence; compatibility, thinking controls and runtime caveats are planning items in docs/plan-2026-10-17.md. No download, model call or adapter code is authorized. Vendor benchmark numbers are not CallCost results.
+- 2026-10-17: Owner removes automatic-criterion G-Eval calls: validation proposal is 1,380 physical requests, with a hard monetary cap still awaiting owner confirmation after a prepaid-balance check. PrismML Ternary Bonsai 2 27B is a demo-only candidate outside the initial benchmark/knee sequence; compatibility, thinking controls and runtime caveats are planning items in docs/archive/plan-2026-10-17.md. No download, model call or adapter code is authorized. Vendor benchmark numbers are not CallCost results.
 
 ## Key paths
 
@@ -56,7 +56,7 @@ The hypothesis, knee definition, variance rule and both kill criteria live in [R
 - `prompts/`: prompt files and preregistered scoring rules; private combined inputs belong under `prompts/private/`.
 - `scripts/run_full.sh`: unattended launcher, currently subject to the readiness checks in HANDOFF.md.
 - `runs/LATEST-local`, `runs/LATEST-cloud`, `runs/LATEST-precheck`: independent run pointers. `runs/LATEST` is only the most recently touched run. Read the matching `status.json`, then `run.log`; checkpoints are authoritative. Never repeat completed checkpoints on resume.
-- `docs/HANDOFF.md`: current state and first read for each new chat.
+- `docs/log.md`: current state and first read for each new chat.
 - `docs/model-preparation.md`: model pins, conversions, production-reference caveats and instrumentation evidence.
 
 ## Device and deadlines

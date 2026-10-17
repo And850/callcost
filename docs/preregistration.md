@@ -8,9 +8,9 @@ CallCost measures single calls on a 16 GB Mac, comparing installed LM Studio con
 
 The initial 17 October collection, blind human summary review, offline audit and published charts are complete. Those human scores remain primary and will never be rescored. The registered maths knee is 4→3 bit; no summary knee was found. Kill criterion 2 remains unmet because no actual Fairy deployment decision has changed. Provider-billing reconciliation and disclosed measurement gaps remain outstanding. Last recorded offline verification: 113 tests and Ruff pass.
 
-**Presentation refocus, 17 October 2026, draft for review:** energy and memory now lead the presentation. This is not an amendment to the initial experiment. New priorities, recommendation rules and newly derived analyses are exploratory, not pre-registered. See the [agreed plan](docs/plan-2026-10-17.md), [saved-call cost inventory](docs/cost-inventory-2026-10-17.md) and [draft prospective judge protocol](docs/judge-preregistration.md). Week 1 is documentation and offline analysis here; no judge validation or app implementation has run. The WAICY target is a macOS local web app demo by 22 November. No model calls, downloads or system changes are authorized by this note; raw answers and review artifacts remain private under runs/.
+**Presentation refocus, 17 October 2026, draft for review:** energy and memory now lead the presentation. This is not an amendment to the initial experiment. New priorities, recommendation rules and newly derived analyses are exploratory, not pre-registered. See the [agreed plan](archive/plan-2026-10-17.md), [saved-call cost inventory](../results/2026-10-17-initial/cost-inventory.md) and [draft prospective judge protocol](judge-preregistration.md). Week 1 is documentation and offline analysis here; no judge validation or app implementation has run. The WAICY target is a macOS local web app demo by 22 November. No model calls, downloads or system changes are authorized by this note; raw answers and review artifacts remain private under runs/.
 
-The local family is Qwen3.5-9B in MLX format, with thinking off. The 3-, 4-, 6- and 8-bit variants have been independently converted from pinned official Qwen weights using mlx-lm 0.32.0 and group size 64. Each loads in LM Studio and passes a held-out thinking-off pilot. Fairy's existing 4-bit model is a fifth local configuration, labelled "Fairy's production model" and treated as a separate reference. See [model preparation](docs/model-preparation.md) for the inspected published candidates and conversion pins. The experiment config selects Gemini 3.8 Flash at thinking level low, with standard list prices checked on 15 October 2026. The 8-bit pilots had less than 1 GB available RAM, and sampled process RSS did not track total model memory; the collected run retains swapping as a configuration cost with explicit measurement limitations.
+The local family is Qwen3.5-9B in MLX format, with thinking off. The 3-, 4-, 6- and 8-bit variants have been independently converted from pinned official Qwen weights using mlx-lm 0.32.0 and group size 64. Each loads in LM Studio and passes a held-out thinking-off pilot. Fairy's existing 4-bit model is a fifth local configuration, labelled "Fairy's production model" and treated as a separate reference. See [model preparation](model-preparation.md) for the inspected published candidates and conversion pins. The experiment config selects Gemini 3.8 Flash at thinking level low, with standard list prices checked on 15 October 2026. The 8-bit pilots had less than 1 GB available RAM, and sampled process RSS did not track total model memory; the collected run retains swapping as a configuration cost with explicit measurement limitations.
 
 Fairy is a separate project. The initial summaries are Fairy-style prompts written for the benchmark (invented texts), not real Fairy usage. Fairy code and integration are outside this repository.
 
@@ -122,7 +122,7 @@ Log when repeated calls for the same prompt and configuration produce different 
 
 Automatic quality checks run first. Blind human review shuffles answers, hides configuration and timing, and records checklist decisions separately. Unreviewed criteria remain pending. Maths scoring checks the numeric final line with a declared decimal tolerance and logs parseability separately. No LLM is the primary judge.
 
-See [the measurement method](docs/methodology.md) and [the implementation plan](docs/implementation-plan.md).
+See [the measurement method](methodology.md) and [the implementation plan](archive/implementation-plan.md).
 
 ## Reproduction
 
@@ -138,7 +138,7 @@ PYTHONPATH=src .venv/bin/python -m callcost run --prompts prompts/private/datase
 .venv/bin/pytest -q
 ```
 
-See the [pilot validation record](docs/pilot-validation.md) for what has and has not been exercised on this Mac.
+See the [pilot validation record](archive/pilot-validation.md) for what has and has not been exercised on this Mac.
 
 Commands above use the current checkout source. A previously installed `.venv/bin/callcost` can contain an older packaged version; the launcher also explicitly uses checkout source.
 
@@ -148,11 +148,11 @@ The output directory must not exist. Each run saves `calls.csv`, `metadata.json`
 
 LM Studio must already be running with its local server enabled and existing model instances unloaded. CallCost only unloads the instance it loaded. Set the configured Gemini credential environment variable before running; credentials are not written to run artifacts. Input and output text are saved locally, so treat run directories as private unless deliberately publishing them.
 
-Energy is optional by default. If you want power measurement, run `sudo -v` yourself immediately before the benchmark. CallCost invokes only the collector through `sudo -n`; it never prompts for a password and the benchmark stays unprivileged. Without access or supported samples, energy remains unavailable. `required_powermetrics` stops the run when collection cannot start or establish a baseline. See [measurement details](docs/methodology.md) for coverage and scope limits.
+Energy is optional by default. If you want power measurement, run `sudo -v` yourself immediately before the benchmark. CallCost invokes only the collector through `sudo -n`; it never prompts for a password and the benchmark stays unprivileged. Without access or supported samples, energy remains unavailable. `required_powermetrics` stops the run when collection cannot start or establish a baseline. See [measurement details](methodology.md) for coverage and scope limits.
 
-Before a full run, review the [completed preparation and its measurement limits](docs/model-preparation.md), use the registered weight proxy and check 8-bit headroom, fill in exact model identifiers and verified Gemini prices, fix the thinking setting, complete owner review of the ten invented-text summaries and their checklists, and validate the complete 40-prompt dataset. Credentials are read from environment variables and never committed.
+Before a full run, review the [completed preparation and its measurement limits](model-preparation.md), use the registered weight proxy and check 8-bit headroom, fill in exact model identifiers and verified Gemini prices, fix the thinking setting, complete owner review of the ten invented-text summaries and their checklists, and validate the complete 40-prompt dataset. Credentials are read from environment variables and never committed.
 
-The committed [GSM8K sample](datasets/gsm8k/prompts.json) records original zero-based test-row indices. Rebuild it with `python3 scripts/prepare_gsm8k.py`. The [selection manifest](datasets/gsm8k/selection.json) pins the source commit, source SHA-256, row indices and stable hash-ranking procedure using seed 2027. Its upstream licence is retained alongside the sample. The ten Fairy-style prompts written for the benchmark (invented texts) are in `prompts/summarisation.yaml`. Owner review was confirmed on 15 October 2026. The ignored `prompts/private/full.yaml` contains all 40 approved prompts and passes the full-dataset guard, including pinned maths identity. The launcher validates this input; it does not merge files. Collection and imported-review status are recorded in HANDOFF.md; selected aggregate results are published below, while raw run artifacts remain private.
+The committed [GSM8K sample](../datasets/gsm8k/prompts.json) records original zero-based test-row indices. Rebuild it with `python3 scripts/prepare_gsm8k.py`. The [selection manifest](../datasets/gsm8k/selection.json) pins the source commit, source SHA-256, row indices and stable hash-ranking procedure using seed 2027. Its upstream licence is retained alongside the sample. The ten Fairy-style prompts written for the benchmark (invented texts) are in `prompts/summarisation.yaml`. Owner review was confirmed on 15 October 2026. The ignored `prompts/private/full.yaml` contains all 40 approved prompts and passes the full-dataset guard, including pinned maths identity. The launcher validates this input; it does not merge files. Collection and imported-review status are recorded in HANDOFF.md; selected aggregate results are published below, while raw run artifacts remain private.
 
 Run artifacts and private prompt files are ignored by Git by default. Publish only deliberately selected artifacts.
 
@@ -168,7 +168,7 @@ Cloud reliability: **16 of 203 completed cloud calls needed automatic retries fo
 
 ### Energy and memory first, exploratory presentation on 17 October 2026
 
-The [cost inventory](docs/cost-inventory-2026-10-17.md) gives energy p50/p95, availability and reasons, weight GiB and sampled footprint coverage, per-task swap, all-call/swap-free latency, payloads and money for all six configurations, with source file paths. The metrics retain their original measurement definitions; the new presentation and recommendation are exploratory, not pre-registered.
+The [cost inventory](../results/2026-10-17-initial/cost-inventory.md) gives energy p50/p95, availability and reasons, weight GiB and sampled footprint coverage, per-task swap, all-call/swap-free latency, payloads and money for all six configurations, with source file paths. The metrics retain their original measurement definitions; the new presentation and recommendation are exploratory, not pre-registered.
 
 | Local configuration | Weight GiB | Maths energy median / p95 J (available / 150) | Summary energy median / p95 J (available / 50) |
 | --- | ---: | ---: | ---: |
@@ -184,11 +184,11 @@ Applying the app's post-data rule selects 4 bit on observed energy for both task
 
 ### Registered secondary quality and knee findings, unchanged
 
-![Maths quality against all-call latency](docs/figures/quality-cost-maths.png)
+![Maths quality against all-call latency](../results/2026-10-17-initial/figures/quality-cost-maths.png)
 
 Maths: 30 independent problems × five repeats = 150 calls per configuration. The line connects 8→6→4→3 bit at median latency; each horizontal whisker runs from p50 to p95, not a confidence interval. Fairy and cloud are separate reference points outside the knee calculation. All completed calls, including swapping, contribute. The quality axis starts at 50%.
 
-![Summary quality against all-call latency](docs/figures/quality-cost-summarisation.png)
+![Summary quality against all-call latency](../results/2026-10-17-initial/figures/quality-cost-summarisation.png)
 
 Summaries: 10 independent prompts × five repeats = 50 calls per configuration, scored using one blinded human review and the automatic checklist checks. The primary score includes `max_words`. The line and whiskers use the same conventions as maths; the quality axis starts at 75%. Local thinking is off; cloud thinking is low. Cloud latency measures successful attempts and excludes failed attempts and retry waits.
 
@@ -215,7 +215,7 @@ Interpretation is limited by 30 public maths problems, 10 invented summary texts
 
 **Kill criterion 2 is currently unmet.** The registered criterion says: “If running the tool on Andrii's own projects changes no decision, with no model swapped, no quantisation changed and nothing moved between local and cloud, the tool has failed at its purpose and the README will say so.” No actual Fairy model, quantisation or local/cloud deployment decision has changed in the recorded evidence. The benchmark findings alone do not satisfy this practical-usefulness criterion.
 
-Chart sources are the [aggregate snapshot](docs/data/results-20261017.json), with saved-report hashes, and [offline plotting script](scripts/plot_results.py). Vector exports: [maths SVG](docs/figures/quality-cost-maths.svg), [summary SVG](docs/figures/quality-cost-summarisation.svg); print exports: [maths PDF](docs/figures/quality-cost-maths.pdf), [summary PDF](docs/figures/quality-cost-summarisation.pdf).
+Chart sources are the [aggregate snapshot](../results/2026-10-17-initial/data.json), with saved-report hashes, and [offline plotting script](../scripts/plot_results.py). Vector exports: [maths SVG](../results/2026-10-17-initial/figures/quality-cost-maths.svg), [summary SVG](../results/2026-10-17-initial/figures/quality-cost-summarisation.svg); print exports: [maths PDF](../results/2026-10-17-initial/figures/quality-cost-maths.pdf), [summary PDF](../results/2026-10-17-initial/figures/quality-cost-summarisation.pdf).
 
 ## Limitations
 
@@ -259,7 +259,7 @@ Current non-goals: self-built configurator, Fairy integration, model downloads, 
 
 ## Licence
 
-MIT. See [LICENSE](LICENSE). Third-party datasets retain their own licence notices.
+MIT. See [LICENSE](../LICENSE). Third-party datasets retain their own licence notices.
 
 ## Summarisation prompt review
 
@@ -281,7 +281,7 @@ The configured standard prices are USD 0.75 per million input tokens and USD 3.7
 
 ## Resuming after a run
 
-The initial local and cloud passes are complete; do not resume them or repeat completed calls. For any separately authorized future resume, read the matching `runs/LATEST-local` or `runs/LATEST-cloud`, then that run's `status.json` and `run.log`; follow [HANDOFF.md](docs/HANDOFF.md). Resume local with `./scripts/run_full.sh --pass local --resume`, or cloud with `./scripts/run_full.sh --pass cloud --resume`. Read `runs/LATEST-local` or `runs/LATEST-cloud` first; `runs/LATEST` is only the most recently touched run. To produce a saved-run report without inference, from the repository root run:
+The initial local and cloud passes are complete; do not resume them or repeat completed calls. For any separately authorized future resume, read the matching `runs/LATEST-local` or `runs/LATEST-cloud`, then that run's `status.json` and `run.log`; follow [HANDOFF.md](log.md). Resume local with `./scripts/run_full.sh --pass local --resume`, or cloud with `./scripts/run_full.sh --pass cloud --resume`. Read `runs/LATEST-local` or `runs/LATEST-cloud` first; `runs/LATEST` is only the most recently touched run. To produce a saved-run report without inference, from the repository root run:
 
 ```sh
 PYTHONPATH=src .venv/bin/python -m callcost report --run "runs/$(cat runs/LATEST)"

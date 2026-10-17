@@ -11,7 +11,7 @@ Decision recorded on 15 October 2026: use Qwen3.5-9B, MLX at 3, 4, 6 and 8 bits,
 | [mlx-community/Qwen3.5-9B-6bit](https://huggingface.co/mlx-community/Qwen3.5-9B-6bit/tree/76fe4065e622cf34990d3c13ef80ec8531c9a0f7) | 8,188,406,421 | Published weights. |
 | [mlx-community/Qwen3.5-9B-8bit](https://huggingface.co/mlx-community/Qwen3.5-9B-8bit/tree/16daa4818c54ce5f5436f929d52542eb65bbed9d) | 10,426,592,423 | Published weights. |
 
-These file sizes are not runtime memory. The full pinned identities are retained in [model-candidates.json](model-candidates.json). Model-tree metadata for the 4/6/8 candidates names Qwen3.5-9B-Base, while their descriptive cards name Qwen3.5-9B. This does not establish which weights were converted and is another reason to retain our own source provenance.
+These file sizes are not runtime memory. The full pinned identities are retained in [model-candidates.json](archive/model-candidates.json). Model-tree metadata for the 4/6/8 candidates names Qwen3.5-9B-Base, while their descriptive cards name Qwen3.5-9B. This does not establish which weights were converted and is another reason to retain our own source provenance.
 
 ## Approved preparation plan
 
@@ -74,7 +74,7 @@ Inspect all output layer settings for the requested bit counts and common group 
 
 Start with the highest precision to inspect available RAM, swap growth and model/runtime RSS under the intended context length and output budget. The published multimodal 8-bit candidate's 10.43 GB file size does not predict the new text-only output or establish comfortable RAM headroom. Conversion feasibility and runtime headroom are separate checks. Resolve substantial memory pressure before collecting full-run results.
 
-The installed production reference passed functional thinking-off and RSS collection pilots. Those pilot rows are excluded from the experimental dataset. See [pilot validation](pilot-validation.md).
+The installed production reference passed functional thinking-off and RSS collection pilots. Those pilot rows are excluded from the experimental dataset. See [pilot validation](archive/pilot-validation.md).
 
 ## Conversion memory monitoring
 

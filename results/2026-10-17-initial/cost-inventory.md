@@ -8,7 +8,7 @@ Each row below cites a source alias. All paths are relative to the repository ro
 
 - **L**: `runs/20261016T213431.178691Z-local/report.json` and `runs/20261016T213431.178691Z-local/calls.csv`.
 - **C**: `runs/20261017T082234.706092Z-cloud/report.json` and `runs/20261017T082234.706092Z-cloud/calls.csv`.
-- **A**: `docs/data/results-20261017.json` (published quality/latency).
+- **A**: `results/2026-10-17-initial/data.json` (published quality/latency).
 - **S**: `runs/audit-20261017-scored/audit.json` (score counts and qualifications).
 
 For report values, select `groups[]` by `configuration_id`, `task_type` and `cache_stratum: all`; the field names are specified per table. For CSV calculations select the report group's `call_ids`, which are completed measured calls only. Pilots and warm-ups are excluded. Each local configuration has 150 maths and 50 summary calls; cloud has the same measured counts. p50 is the median, p95 nearest rank. All report metrics retain their original availability rules.

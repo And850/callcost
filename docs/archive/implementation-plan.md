@@ -4,7 +4,7 @@
 
 **Architecture:** A small Python package coordinates sequential experiments. Provider adapters return a shared per-call record. Independent measurement collectors retain raw samples, and reporting reads saved artifacts without rerunning inference.
 
-**Specification:** [README and pre-registration](../README.md), [measurement method](methodology.md).
+**Specification:** [README and pre-registration](../preregistration.md), [measurement method](../methodology.md).
 
 ## Constraints
 
