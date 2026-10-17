@@ -254,10 +254,17 @@ def test_cloud_quota_stops_with_checkpoint_and_no_retry(tmp_path, config_data, p
     assert row['status'] == 'error'
 
 
-def test_cloud_retry_upgrade_is_explicit_and_narrow():
+def test_cloud_retry_upgrade_is_explicit_and_narrow(tmp_path, monkeypatch):
+    import json
+
+    from callcost import experiment
     from callcost.experiment import validate_runtime_resume
+
     old = {'providers/gemini.py': 'a', 'experiment.py': 'a', 'schemas.py': 'a'}
     new = dict(old, **{'providers/gemini.py': 'b'})
+    record = tmp_path / 'upgrade.json'
+    record.write_text(json.dumps({'transitions': [{'old': old, 'new': new}]}))
+    monkeypatch.setattr(experiment, 'CLOUD_RETRY_UPGRADE_RECORD', record, raising=False)
     import pytest
     with pytest.raises(ValueError):
         validate_runtime_resume(old, new, 'cloud', False)
@@ -266,3 +273,5 @@ def test_cloud_retry_upgrade_is_explicit_and_narrow():
         validate_runtime_resume(old, new, 'local', True)
     with pytest.raises(ValueError):
         validate_runtime_resume(old, dict(new, **{'schemas.py': 'b'}), 'cloud', True)
+    with pytest.raises(ValueError):
+        validate_runtime_resume(old, dict(new, **{'experiment.py': 'unreviewed'}), 'cloud', True)

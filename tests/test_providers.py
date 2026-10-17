@@ -255,3 +255,15 @@ def test_cloud_never_retries_auth_billing_quota(config_data, prompt_data, tmp_pa
         result = GeminiProvider(config.configurations[0], config.run, client, 'key').generate(
             Dataset.model_validate(prompt_data).prompts[0], tmp_path, 'forbidden')
     assert result.status == 'error' and len(calls) == 1 and waits == []
+
+
+def test_streaming_internal_status_alone_is_not_retryable(config_data, prompt_data, tmp_path, monkeypatch):
+    import time
+    waits = []
+    monkeypatch.setattr(time, 'sleep', waits.append)
+    config = Config.model_validate(config_data)
+    body = sse([{'error': {'status': 'INTERNAL', 'message': 'failed'}}])
+    with httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(200, stream=Fragments(body)))) as client:
+        result = GeminiProvider(config.configurations[0], config.run, client, 'key').generate(
+            Dataset.model_validate(prompt_data).prompts[0], tmp_path, 'internal')
+    assert result.status == 'error' and waits == []

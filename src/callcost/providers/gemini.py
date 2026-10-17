@@ -33,7 +33,7 @@ class GeminiProvider:
             write_json(raw_directory / f'{call_id}.attempts.json', attempts)
             forbidden = result.http_status in (401, 403, 402, 429) or result.provider_error_status in (
                 'RESOURCE_EXHAUSTED', 'PAYMENT_REQUIRED', 'UNAUTHENTICATED', 'PERMISSION_DENIED')
-            transient = result.http_status in (500, 503) or result.provider_error_status in ('UNAVAILABLE', 'INTERNAL')
+            transient = result.http_status in (500, 503) or result.provider_error_status == 'UNAVAILABLE'
             if result.status == 'completed' or forbidden or not transient or number == 4:
                 return result
             for suffix in ('request.json', 'response.bin'):

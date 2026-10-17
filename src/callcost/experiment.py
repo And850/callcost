@@ -155,11 +155,19 @@ def build_schedule(config, dataset, *, pilot_only=False, smoke=False, precheck=F
     return settings, schedule
 
 
+CLOUD_RETRY_UPGRADE_RECORD = Path(__file__).resolve().parents[2] / 'docs/data/cloud-retry-upgrade-20261017.json'
+
+
 def validate_runtime_resume(old, new, run_pass, approved):
     changed = {key for key in old.keys() | new.keys() if old.get(key) != new.get(key)}
     allowed = {'providers/gemini.py', 'experiment.py', 'report.py', 'unattended.py'}
-    if changed and not (approved and run_pass == 'cloud' and changed <= allowed):
-        raise ValueError('Resume refused: runtime_identity changed since this run started')
+    if not changed:
+        return
+    if approved and run_pass == 'cloud' and changed <= allowed:
+        record = json.loads(CLOUD_RETRY_UPGRADE_RECORD.read_text())
+        if any(t['old'] == old and t['new'] == new for t in record['transitions']):
+            return
+    raise ValueError('Resume refused: runtime_identity changed outside the pinned cloud retry upgrade')
 
 
 def run_experiment(config, dataset, directory, *, pilot_only=False, client=None, input_files=None,
@@ -191,7 +199,9 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
                 'thinking_verification': {}, 'loads': [], 'energy_blocks': [], 'errors': [], 'segments': []}
     if resume:
         previous = json.loads((directory / 'metadata.json').read_text())
-        validate_runtime_resume(previous.get('runtime_identity', {}), runtime_identity, run_pass, accept_cloud_retry_upgrade)
+        validate_runtime_resume(next((s['runtime_identity'] for s in reversed(previous.get('segments', []))
+                                      if s.get('runtime_identity')), previous.get('runtime_identity', {})),
+                                runtime_identity, run_pass, accept_cloud_retry_upgrade)
         for key in ('config', 'dataset', 'model_files', 'input_files', 'schedule', 'smoke', 'pilot_only', 'software', 'run_pass', 'precheck'):
             if previous.get(key) != metadata.get(key):
                 raise ValueError(f'Resume refused: {key} changed since this run started')

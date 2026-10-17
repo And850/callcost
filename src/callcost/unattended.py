@@ -289,6 +289,8 @@ def main(argv=None):
         except BlockingIOError:
             raise ValueError('Another unattended launcher is active') from None
         previous = None
+        if args.accept_cloud_retry_upgrade and not (args.resume and args.run_pass == 'cloud'):
+            raise ValueError('--accept-cloud-retry-upgrade requires --pass cloud --resume')
         if args.precheck and (args.run_pass or args.smoke or args.no_energy):
             raise ValueError('--precheck cannot be combined with --pass, --smoke or --no-energy')
         if args.resume:
