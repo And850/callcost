@@ -98,6 +98,28 @@ Next: obtain the matching billing figure; obtain the judge monetary cap; prepare
 | 15 December | Repository/chart freeze. |
 | After December | CI budget mode and SCI units remain deferred. |
 
-The WAICY target is the AI Showcase track: demonstrate the single-call measurement, quality constraint and local-model recommendation, with the validated Gemini judge as the planned AI element. If summary validation fails, demonstrate maths only. Energy probes take minutes, so disclose sped-up/earlier recordings. Prepare the slides, presentation/demo videos and 250-word texts listed above. Official duration, file-format and submission-form constraints are not recorded here; check them before preparing the final submission rather than inventing requirements.
+The WAICY 2026 target is AI Showcase (High School): demonstrate the single-call measurement, quality constraint and local-model recommendation, with the validated Gemini judge as the planned AI element. If summary validation fails, demonstrate maths only. Energy probes take minutes, so disclose sped-up/earlier recordings.
+
+Owner-supplied submission requirements, recorded 17 October 2026: place all deliverables in a Google Drive folder named `Main_High_CallCost`.
+
+| Deliverable | Requirement |
+| --- | --- |
+| Project description | 250 words |
+| AI usage explanation | 250 words |
+| Slides | PDF |
+| Presentation video | 3 minutes |
+| Demo video | 3 minutes |
+
+| Rubric category | Points |
+| --- | ---: |
+| AI | 25 |
+| Technical skills | 25 |
+| Problem | 10 |
+| Design | 10 |
+| Ethics | 10 |
+| Presentation | 10 |
+| Originality | 10 |
+
+Codex wrote the code. The owner must be able to explain it during Q&A, including the implementation, measurement choices and limitations.
 
 Do not build the abandoned configurator, add user-defined tasks, extend long-context/tool-use evaluation, integrate Fairy code, support Windows/Linux, download models automatically, estimate cloud-server energy or implement full SCI. Do not treat vendor benchmarks as CallCost measurements, change initial scores/frozen rules, auto-publish raw runs or credentials, infer missing observations, or claim a universal local/cloud winner. No additional features are included by this reorganisation.
