@@ -1,69 +1,21 @@
-# Refocus documentation review, 17 October 2026
+# CallCost history
 
-The owner supersedes the configurator plan with the energy/memory-first single-call plan copied to [plan-2026-10-17.md](archive/plan-2026-10-17.md). This turn covers offline inventory and documentation only. Drafts: [cost inventory](../results/2026-10-17-initial/cost-inventory.md), README presentation refocus and prospective quality-policy amendment, and [judge pre-registration](judge-preregistration.md). No judge code, app code, calls, downloads or system changes; owner review now authorizes small documentation commits/pushes after the requested corrections. Initial scores, raw data, frozen experiment rules and published aggregate are unchanged. New derived metrics and app recommendations are exploratory, not pre-registered. Judge validation is not yet performed. Provider billing and actual Fairy decision criterion 2 remain pending. CI budget mode and SCI units are deferred until after December.
+Current state lives in [PLAN.md](../PLAN.md). Historical sections below retain their wording and former authorization context; they do not authorize new work. File references were updated only where relocation required it.
 
-- Owner corrections: drop all 930 automatic-criterion G-Eval checks; the revised proposal is 1,380 physical requests (480 development, 900 held-out). The monetary hard cap remains unset until the owner checks the prepaid balance and confirms it; no calls may start.
-- PrismML Ternary Bonsai 2 27B is an app-demo candidate only, outside the initial benchmark and knee sequence. Compatibility with LM Studio/PTQ1_0 or MLX, a possible PrismML server adapter and thinking controls are unverified planning items. No download or adapter code is authorized; vendor benchmarks are never CallCost results. See the updated plan.
+# Decisions log, 2026-10-15
 
-# Current state at chat close, 17 October 2026
+- 2026-10-15: Independently convert official `Qwen/Qwen3.5-9B` weights to text-only MLX at 3/4/6/8 bit. Source revision: `c202236235762e1c871ad0ccb60c8ee5ba337b9a`; mlx-lm 0.32.0; affine quantisation; group size 64. Exact commands and provenance are in the model-preparation docs.
+- 2026-10-15: Fairy's existing production MLX 4-bit model is a fifth local reference, outside the four-level knee sequence. It retains vision weights, so memory and load comparisons require that caveat.
+- 2026-10-15: Thinking is off locally. Verify zero reasoning tokens and no reasoning content or `<think>` tags, not just the requested setting.
+- 2026-10-15: Cloud reference is `gemini-3.8-flash`, `thinking_level: low`. Thinking cannot be disabled for this model. Record thinking tokens separately and count them once in billable output; free-tier usage is reported at configured list-price equivalent.
+- 2026-10-15: Dataset is 30 GSM8K test problems with pinned revision, original row IDs and reproducible selection, plus 10 invented-text summaries. N=5 measured repeats; temperature 0; pilots and warm-ups are additional and excluded.
+- 2026-10-15: Descriptive memory metric is exact encoded tensor payload bytes in the loaded safetensors files, excluding headers and support files. It is not runtime peak memory. Measured physical footprint and RSS are secondary labelled observations.
+- 2026-10-15: Knee amended to quality-only. Cost is reported per step, not a gate. Exact criteria and reasons are in the README.
 
-- Results, aggregate snapshot, both task charts, plotting code and README are committed and pushed together in 70aab5d. Latest verification: 113 tests and Ruff pass. Raw answers, checkpoints and review artifacts remain private and ignored.
-- Summary blind review is complete, performed by the project author with configuration labels hidden. Exported scores were imported and independently checked; both reports and the scored audit include primary and without-max_words sensitivity scores. Do not repeat the import or alter the original prompts/responses.
-- The all-history Gemini cost ledger in runs/gemini-cost-ledger-20261017 awaits the provider billing figure/export. Known list-price cost is USD 0.23373225 across 204 successful calls; 18 failed attempts have unknown usage/cost. Reconcile a matching provider scope before explaining any difference. VAT applicability remains unconfirmed.
-- Quality-only knee: maths 4→3 bit; summaries no knee found. Findings are consistent with the registered hypothesis on this task set, not proof; roughly steady latency savings are not established. Kill criterion 1 is not triggered under the registered rules.
-- Kill criterion 2 remains unmet: no actual Fairy model, quantisation or local/cloud deployment decision has changed. A Fairy-style maths test is pending to assess practical usefulness. This is a next step to scope with the owner, not authorization for model calls, a rerun or Fairy integration. Record an actual owner-confirmed decision before changing criterion 2's assessment.
-- Next actions: reconcile the provider billing figure when supplied, then agree the Fairy-style maths test and obtain explicit model-call approval before execution. No further inference, downloads or system changes are authorized.
+# Decisions log, 2026-10-16
 
-Earlier dated sections below retain historical context; this current-state section supersedes their pending-work descriptions.
-
-# Published charts and Results, 17 October 2026
-
-- Owner specified one chart per task: a connected 8→6→4→3 sequence at median all-call latency and primary quality, p50-to-p95 horizontal whiskers, bit labels, unconnected Fairy/cloud markers and sample sizes in captions.
-- Owner explicitly selected README results, results/2026-10-17-initial/data.json and SVG/PDF/PNG figures in results/2026-10-17-initial/figures for commit and push together on 17 October. Only selected aggregate benchmark results are published; raw run artifacts remain private. No raw answers or review identity are exported. No model calls or reruns occurred.
-- Offline generator: scripts/plot_results.py. Export from saved reports with --local-run and --cloud-run plus --export-only; render saved aggregate data with --data results/2026-10-17-initial/data.json --output results/2026-10-17-initial/figures using the optional plots dependency. SVG/PDF are native outputs; PNG previews were rasterised from SVG using existing bundled sharp, without downloads.
-- Results retain primary max_words scoring, dated deviation, registered per-step variance and task knees, measurement limitations and kill criterion 2 currently unmet. Owner-requested additions include the In short paragraph, qualified hypothesis outcome and criterion 1 not triggered, swap shares, cloud retry/local response reliability, author-reviewer and AI-assisted prompt limitations, and current Status/Milestones. Provider billing reconciliation remains outstanding.
-
-# Scored summary audit update, 17 October 2026
-
-- Owner exported Downloads/summary-scores.json and authorized import plus full summary audit. Strict import completed into both original pass directories. Private exact export copy and import-provenance.json are in runs/blind-review-20261017. Do not import again or overwrite the review.
-- Updated combined scored results: runs/audit-20261017-scored/audit.md and audit.json. Independent arithmetic/variance/knee/checkpoint-integrity verification is in independent-summary-checks.json beside them. Primary and length-sensitivity scores, exact text variation, all/swap-free p50/p95 and counts are present for every configuration. Both pass reports are regenerated; cloud remains outside the knee sequence.
-- No actual Fairy production decision change is recorded. The scored audit compares the complete task-set picture and keeps practical usefulness criterion 2 explicitly unmet. Only an actual owner-confirmed change can alter that assessment.
-- Original prompt file, responses and checkpoints are unchanged. No inference, reruns, billing/account changes, downloads or system changes occurred. Selected aggregate results and charts are published in 70aab5d; raw review data remain ignored and uncommitted. Provider-billing reconciliation remains outstanding.
-
-# Summary protocol deviation update, 17 October 2026
-
-- Owner identified that the intended later relaxed-length revision was never committed/run. README records what ran (6f6de97 tight summary instructions and 50-90-word max_words scoring checks), what was intended and identical prompts/rubrics across all configurations.
-- Do not edit prompts/summarisation.yaml or rerun inference. Primary summary scores retain max_words; secondary quality_without_max_words drops only that automatic criterion and reweights the remaining criteria, retaining equal prompt weights. Knee/variance remain primary-only.
-- Blind review is complete with its original packet and IDs unchanged. Human scores have been imported; both score columns are populated in the regenerated reports.
-
-# Billing reconciliation update, 17 October 2026
-
-- Owner requests all saved Gemini usage across the repo, tax clarification and a provider-billed placeholder. No model calls are authorized or needed for this work.
-- Private all-history inventory: runs/gemini-cost-ledger-20261017/report.md and ledger.json, including smoke, separate cloud segments/retries and zero-Gemini local pre-checks. No double-counting resumed checkpoints. The ledger omits answer text to avoid interfering with blind review.
-- Provider billing remains pending: populate the ledger billing.json for all recorded usage, or the cloud run billing.json for this run only, from a matching export. Do not substitute the owner's approximate balance change for an invoiced amount. VAT applicability is explicitly uncertain; method documents Spain's 21% standard rate and account-dependent Google treatment. Do not label a numerical VAT fit as proof.
-- Blind review is in progress. Do not regenerate its packet, change anonymous IDs or inspect/reveal the hidden key. No model calls, billing/account changes or benchmark reruns were performed.
-
-# Current handoff update, 17 October 2026: collection finished, blind review pending
-
-- Both local and cloud passes are complete. Read LATEST-local / LATEST-cloud, each status.json and run.log. Do not resume or issue more model calls. Cloud was explicitly approved, --no-energy, with paid prepaid billing confirmed by the owner.
-- Cloud retry policy and initial resume were committed/pushed as 1b98743. Raw failure attempts and original checkpoints remain private. Every collected automatic retry was 503 UNAVAILABLE; source versions are retained per segment. Later hardening pins accepted source transitions and excludes standalone INTERNAL status outside HTTP 500/503.
-- Offline combined audit: runs/audit-20261017/audit.md and audit.json. Original measurements and reports remain in the pass directories. No raw benchmark results are committed.
-- Local energy audit: the local run's energy-audit.json replays available estimates from retained samples/baselines. Missing q6 timing observations remain unavailable, not reconstructed. No local rerun was performed or authorized.
-- Blind review is prepared at runs/blind-review-20261017/review.html, with a separate hidden key. Follow docs/blind-review.md. Automatic criteria are fixed; human criteria need owner scores. No LLM judges answers. Do not inspect key.json before finishing.
-- Import the exported scores with scripts/review_summaries.py import, regenerate both reports, then revisit summary quality, all three summary variance steps and the knee. No actual Fairy production decision has yet been changed; do not claim usefulness criterion 2 is met.
-- Current task authorization: code/docs/tests and small commits/pushes; no further model calls, reruns, downloads or system changes without approval. Preserve the frozen pre-registration.
-
-# Authorization update, 17 October 2026: cloud retries and audit
-
-- Owner authorizes HTTP 500/503 or UNAVAILABLE retries, four additional attempts with 10/30/90/270-second backoff; auth/quota/billing stop immediately. Owner approves resume of the retained cloud pass with --no-energy after this committed implementation. Completed checkpoints must not repeat. Source upgrade is explicit and recorded per segment.
-- After cloud collection, audit q3 parseability versus wrong answers, exact-text variation, all/swap-free latency, local missing energy, every variance step and kill criterion 2. Prepare blind summary review. No local rerun is authorized.
-
-# Current authorization update, 17 October 2026
-
-- Local collection completed: 1,015/1,015 calls in `20261016T213431.178691Z-local`. Preserve all artifacts; no repeat calls are authorized.
-- Owner now explicitly approves the separate cloud pass with `--no-energy`, without a clean restart. Owner reconfirmed Tier 1, prepaid balance, auto-reload off and considers the AI Studio warning resolved or a display issue. This supersedes the historical cloud block below. Prior key/project/tier verification remains recorded privately.
-- Cloud was launched in its own directory with --no-energy, then stopped on HTTP 503 UNAVAILABLE (provider high demand). LATEST-cloud identifies the retained partial run. No retry was made; obtain approval before new requests/resume, preserve completed checkpoints. Cloud client energy is deliberately unavailable due to background-noise attribution limits, documented in methodology.md. No benchmark results are committed; read private artifacts for counts and costs.
-- Audit follows cloud collection; owner will send the audit list. Do not change frozen pre-registration or auto-publish run results.
+- 2026-10-16: Superseding swap amendment: all completed calls contribute to quality/knee and the unchanged variance rule. All-call latency is primary; swap-free latency is secondary. Record swap-in/out bytes, before/after vm.swapusage and compressor memory; report swapped share, unknown counts and median swap volume. Swap is a configuration cost on this 16 GB Mac, with whole-machine attribution limits.
+- 2026-10-16: Local (five configurations) and cloud (one reference) are independently resumable passes. Cloud quota/rate-limit errors stop without automatic retries. Confirm paid-tier evidence after the owner enables billing and before cloud collection.
 
 # Current handoff, 16 October 2026
 
@@ -143,3 +95,92 @@ cd /Users/andreyryzhanskiy/Documents/CallCost/callcost && sudo -v && ./scripts/r
 ```
 
 - Local has 1,015 scheduled calls. Reserve roughly 12 to 14 hours as a planning allowance, not a measured full-workload prediction. Longer prompts, output lengths and swapping can extend it. Cloud is separate and blocked; no Gemini key/billing is needed locally. Neither full pass was started here.
+# Decisions log, 2026-10-17
+
+- 2026-10-17: Cloud HTTP 500/503 calls may retry the same call up to four times with 10/30/90/270-second backoff. Log every failed attempt; latency covers only the successful attempt. Quota, billing, exhausted balance and auth errors stop immediately without retries; exhausted transient retries also stop cleanly with checkpoints preserved.
+- 2026-10-17: Summary deviation handling: the 6f6de97 tight instructions and 50-90-word max_words checks actually ran; the intended longer-limit revision did not. Preserve identical collected prompts/responses, disclose the dated deviation, retain max_words in primary scoring and report excluding-only-max_words sensitivity separately. No reruns; primary scores alone determine knees and variance.
+- 2026-10-17: Blind human summary review was completed by the project author with configuration labels hidden, then imported and checked. Disclose the single author-reviewer and AI-assisted summary prompt drafting; no independent reviewer or inter-rater measurement exists. No LLM was the primary quality judge.
+- 2026-10-17: Applying the frozen quality-only knee and variance rules gives maths a 4→3-bit knee and summaries no knee found. This is consistent with the registered hypothesis on this task set, not proof; cost reductions are not uniformly steady. Kill criterion 1 is not triggered. Kill criterion 2 remains unmet pending a Fairy-style maths test and an actual recorded production decision change; no new model calls are authorized by this log.
+- 2026-10-17: Owner selected aggregate results, charts and README for publication together in 70aab5d. Raw run/review artifacts stay private. Provider-billing reconciliation awaits the matching billed figure; VAT applicability is unconfirmed.
+- 2026-10-17: Owner refocuses CallCost on single-call energy first, then model GiB/swap, latency/money and secondary quality; the agreed plan is copied to docs/archive/plan-2026-10-17.md. The configurator plan is superseded. Initial human scores and frozen experiment rules remain unchanged. App recommendations and new derived metrics are exploratory, not pre-registered. DeepEval/Gemini judge policy is a draft prospective exception only; no code, inference, downloads or system changes are authorized. The owner reviewed the week-1 drafts and authorizes small documentation commits/pushes after the requested corrections; CI budget mode and SCI units wait until after December.
+- 2026-10-17: Owner removes automatic-criterion G-Eval calls: validation proposal is 1,380 physical requests, with a hard monetary cap still awaiting owner confirmation after a prepaid-balance check. PrismML Ternary Bonsai 2 27B is a demo-only candidate outside the initial benchmark/knee sequence; compatibility, thinking controls and runtime caveats are planning items in docs/archive/plan-2026-10-17.md. No download, model call or adapter code is authorized. Vendor benchmark numbers are not CallCost results.
+
+# Current authorization update, 17 October 2026
+
+- Local collection completed: 1,015/1,015 calls in `20261016T213431.178691Z-local`. Preserve all artifacts; no repeat calls are authorized.
+- Owner now explicitly approves the separate cloud pass with `--no-energy`, without a clean restart. Owner reconfirmed Tier 1, prepaid balance, auto-reload off and considers the AI Studio warning resolved or a display issue. This supersedes the historical cloud block below. Prior key/project/tier verification remains recorded privately.
+- Cloud was launched in its own directory with --no-energy, then stopped on HTTP 503 UNAVAILABLE (provider high demand). LATEST-cloud identifies the retained partial run. No retry was made; obtain approval before new requests/resume, preserve completed checkpoints. Cloud client energy is deliberately unavailable due to background-noise attribution limits, documented in methodology.md. No benchmark results are committed; read private artifacts for counts and costs.
+- Audit follows cloud collection; owner will send the audit list. Do not change frozen pre-registration or auto-publish run results.
+
+# Authorization update, 17 October 2026: cloud retries and audit
+
+- Owner authorizes HTTP 500/503 or UNAVAILABLE retries, four additional attempts with 10/30/90/270-second backoff; auth/quota/billing stop immediately. Owner approves resume of the retained cloud pass with --no-energy after this committed implementation. Completed checkpoints must not repeat. Source upgrade is explicit and recorded per segment.
+- After cloud collection, audit q3 parseability versus wrong answers, exact-text variation, all/swap-free latency, local missing energy, every variance step and kill criterion 2. Prepare blind summary review. No local rerun is authorized.
+
+# Current handoff update, 17 October 2026: collection finished, blind review pending
+
+- Both local and cloud passes are complete. Read LATEST-local / LATEST-cloud, each status.json and run.log. Do not resume or issue more model calls. Cloud was explicitly approved, --no-energy, with paid prepaid billing confirmed by the owner.
+- Cloud retry policy and initial resume were committed/pushed as 1b98743. Raw failure attempts and original checkpoints remain private. Every collected automatic retry was 503 UNAVAILABLE; source versions are retained per segment. Later hardening pins accepted source transitions and excludes standalone INTERNAL status outside HTTP 500/503.
+- Offline combined audit: runs/audit-20261017/audit.md and audit.json. Original measurements and reports remain in the pass directories. No raw benchmark results are committed.
+- Local energy audit: the local run's energy-audit.json replays available estimates from retained samples/baselines. Missing q6 timing observations remain unavailable, not reconstructed. No local rerun was performed or authorized.
+- Blind review is prepared at runs/blind-review-20261017/review.html, with a separate hidden key. Follow docs/blind-review.md. Automatic criteria are fixed; human criteria need owner scores. No LLM judges answers. Do not inspect key.json before finishing.
+- Import the exported scores with scripts/review_summaries.py import, regenerate both reports, then revisit summary quality, all three summary variance steps and the knee. No actual Fairy production decision has yet been changed; do not claim usefulness criterion 2 is met.
+- Current task authorization: code/docs/tests and small commits/pushes; no further model calls, reruns, downloads or system changes without approval. Preserve the frozen pre-registration.
+
+# Billing reconciliation update, 17 October 2026
+
+- Owner requests all saved Gemini usage across the repo, tax clarification and a provider-billed placeholder. No model calls are authorized or needed for this work.
+- Private all-history inventory: runs/gemini-cost-ledger-20261017/report.md and ledger.json, including smoke, separate cloud segments/retries and zero-Gemini local pre-checks. No double-counting resumed checkpoints. The ledger omits answer text to avoid interfering with blind review.
+- Provider billing remains pending: populate the ledger billing.json for all recorded usage, or the cloud run billing.json for this run only, from a matching export. Do not substitute the owner's approximate balance change for an invoiced amount. VAT applicability is explicitly uncertain; method documents Spain's 21% standard rate and account-dependent Google treatment. Do not label a numerical VAT fit as proof.
+- Blind review is in progress. Do not regenerate its packet, change anonymous IDs or inspect/reveal the hidden key. No model calls, billing/account changes or benchmark reruns were performed.
+
+# Summary protocol deviation update, 17 October 2026
+
+- Owner identified that the intended later relaxed-length revision was never committed/run. README records what ran (6f6de97 tight summary instructions and 50-90-word max_words scoring checks), what was intended and identical prompts/rubrics across all configurations.
+- Do not edit prompts/summarisation.yaml or rerun inference. Primary summary scores retain max_words; secondary quality_without_max_words drops only that automatic criterion and reweights the remaining criteria, retaining equal prompt weights. Knee/variance remain primary-only.
+- Blind review is complete with its original packet and IDs unchanged. Human scores have been imported; both score columns are populated in the regenerated reports.
+
+# Scored summary audit update, 17 October 2026
+
+- Owner exported Downloads/summary-scores.json and authorized import plus full summary audit. Strict import completed into both original pass directories. Private exact export copy and import-provenance.json are in runs/blind-review-20261017. Do not import again or overwrite the review.
+- Updated combined scored results: runs/audit-20261017-scored/audit.md and audit.json. Independent arithmetic/variance/knee/checkpoint-integrity verification is in independent-summary-checks.json beside them. Primary and length-sensitivity scores, exact text variation, all/swap-free p50/p95 and counts are present for every configuration. Both pass reports are regenerated; cloud remains outside the knee sequence.
+- No actual Fairy production decision change is recorded. The scored audit compares the complete task-set picture and keeps practical usefulness criterion 2 explicitly unmet. Only an actual owner-confirmed change can alter that assessment.
+- Original prompt file, responses and checkpoints are unchanged. No inference, reruns, billing/account changes, downloads or system changes occurred. Selected aggregate results and charts are published in 70aab5d; raw review data remain ignored and uncommitted. Provider-billing reconciliation remains outstanding.
+
+# Published charts and Results, 17 October 2026
+
+- Owner specified one chart per task: a connected 8→6→4→3 sequence at median all-call latency and primary quality, p50-to-p95 horizontal whiskers, bit labels, unconnected Fairy/cloud markers and sample sizes in captions.
+- Owner explicitly selected README results, results/2026-10-17-initial/data.json and SVG/PDF/PNG figures in results/2026-10-17-initial/figures for commit and push together on 17 October. Only selected aggregate benchmark results are published; raw run artifacts remain private. No raw answers or review identity are exported. No model calls or reruns occurred.
+- Offline generator: scripts/plot_results.py. Export from saved reports with --local-run and --cloud-run plus --export-only; render saved aggregate data with --data results/2026-10-17-initial/data.json --output results/2026-10-17-initial/figures using the optional plots dependency. SVG/PDF are native outputs; PNG previews were rasterised from SVG using existing bundled sharp, without downloads.
+- Results retain primary max_words scoring, dated deviation, registered per-step variance and task knees, measurement limitations and kill criterion 2 currently unmet. Owner-requested additions include the In short paragraph, qualified hypothesis outcome and criterion 1 not triggered, swap shares, cloud retry/local response reliability, author-reviewer and AI-assisted prompt limitations, and current Status/Milestones. Provider billing reconciliation remains outstanding.
+
+# Current state at chat close, 17 October 2026
+
+- Results, aggregate snapshot, both task charts, plotting code and README are committed and pushed together in 70aab5d. Latest verification: 113 tests and Ruff pass. Raw answers, checkpoints and review artifacts remain private and ignored.
+- Summary blind review is complete, performed by the project author with configuration labels hidden. Exported scores were imported and independently checked; both reports and the scored audit include primary and without-max_words sensitivity scores. Do not repeat the import or alter the original prompts/responses.
+- The all-history Gemini cost ledger in runs/gemini-cost-ledger-20261017 awaits the provider billing figure/export. Known list-price cost is USD 0.23373225 across 204 successful calls; 18 failed attempts have unknown usage/cost. Reconcile a matching provider scope before explaining any difference. VAT applicability remains unconfirmed.
+- Quality-only knee: maths 4→3 bit; summaries no knee found. Findings are consistent with the registered hypothesis on this task set, not proof; roughly steady latency savings are not established. Kill criterion 1 is not triggered under the registered rules.
+- Kill criterion 2 remains unmet: no actual Fairy model, quantisation or local/cloud deployment decision has changed. A Fairy-style maths test is pending to assess practical usefulness. This is a next step to scope with the owner, not authorization for model calls, a rerun or Fairy integration. Record an actual owner-confirmed decision before changing criterion 2's assessment.
+- Next actions: reconcile the provider billing figure when supplied, then agree the Fairy-style maths test and obtain explicit model-call approval before execution. No further inference, downloads or system changes are authorized.
+
+Earlier dated sections below retain historical context; this current-state section supersedes their pending-work descriptions.
+
+# Refocus documentation review, 17 October 2026
+
+The owner supersedes the configurator plan with the energy/memory-first single-call plan copied to [plan-2026-10-17.md](archive/plan-2026-10-17.md). This turn covers offline inventory and documentation only. Drafts: [cost inventory](../results/2026-10-17-initial/cost-inventory.md), README presentation refocus and prospective quality-policy amendment, and [judge pre-registration](judge-preregistration.md). No judge code, app code, calls, downloads or system changes; owner review now authorizes small documentation commits/pushes after the requested corrections. Initial scores, raw data, frozen experiment rules and published aggregate are unchanged. New derived metrics and app recommendations are exploratory, not pre-registered. Judge validation is not yet performed. Provider billing and actual Fairy decision criterion 2 remain pending. CI budget mode and SCI units are deferred until after December.
+
+- Owner corrections: drop all 930 automatic-criterion G-Eval checks; the revised proposal is 1,380 physical requests (480 development, 900 held-out). The monetary hard cap remains unset until the owner checks the prepaid balance and confirms it; no calls may start.
+- PrismML Ternary Bonsai 2 27B is an app-demo candidate only, outside the initial benchmark and knee sequence. Compatibility with LM Studio/PTQ1_0 or MLX, a possible PrismML server adapter and thinking controls are unverified planning items. No download or adapter code is authorized; vendor benchmarks are never CallCost results. See the updated plan.
+
+
+# Repository reorganisation, 17 October 2026
+
+The owner requested one current plan, one code area and one results folder. `PLAN.md` is the single current plan; history stays here. Existing code, configurations, prompts, datasets, scores and private raw runs are unchanged. The published 17 October snapshot, figures and cost inventory moved to `results/2026-10-17-initial/`. Preparation evidence and the retry-upgrade runtime record remain in `docs/data/`.
+
+[plan-refocus-original-2026-10-17.md](archive/plan-refocus-original-2026-10-17.md) is the first agreed version, copied unchanged from the parent folder. [plan-2026-10-17.md](archive/plan-2026-10-17.md) holds the same-day revisions, including the reduced judge budget and Bonsai candidate. Both are historical; current decisions are maintained in PLAN.md.
+
+Parent cleanup was explicitly approved after inventory: the parent repository had no commits or populated branches; its only Git references were Codex snapshot trees. The owner confirmed they contained no owner work and requested deletion without preservation. All other substantive parent files were identical to current clone files or preserved in clone Git history. The original plan was preserved before deleting the old `.git` and all other parent contents except `callcost/`.
+
+The frozen pre-registration and dated blocks retain matching SHA-256 values before and after relocation; [preregistration.md](preregistration.md#frozen-text-relocation-verification-17-october-2026) records each hash. Compatibility symlinks preserve its original relative-link bytes. No model calls, downloads or measurement behaviour changes occurred.
+
+Reorganisation verification: 113 tests passed, Ruff reported zero violations, and all 71 internal Markdown links resolved. Six frozen blocks, the original copied plan, unchanged implementation/input files and all 5,398 private run files passed hash checks. The saved plotting script read the relocated aggregate successfully; the checkout runtime retry record still resolves.

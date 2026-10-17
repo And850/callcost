@@ -1,6 +1,6 @@
 # Measurement method
 
-Collection, exact-answer variation, automatic and imported human checklist scoring, percentile aggregation and saved-run reports are implemented. The blind summary review export was imported on 17 October 2026 using the strict [offline workflow](blind-review.md). Raw observations remain unchanged. Held-out sudo-backed energy validation passed before collection; saved full-run timing and process-coverage gaps remain unavailable with reasons. The combined scored audit covers primary and length-sensitivity scores, all registered adjacent variance steps, knee findings and actual evidence for the practical-usefulness criterion. See [HANDOFF.md](log.md) for current private artifact paths and remaining work.
+Collection, exact-answer variation, automatic and imported human checklist scoring, percentile aggregation and saved-run reports are implemented. The blind summary review export was imported on 17 October 2026 using the strict [offline workflow](blind-review.md). Raw observations remain unchanged. Held-out sudo-backed energy validation passed before collection; saved full-run timing and process-coverage gaps remain unavailable with reasons. The combined scored audit covers primary and length-sensitivity scores, all registered adjacent variance steps, knee findings and actual evidence for the practical-usefulness criterion. See [PLAN.md](../PLAN.md) for current private artifact paths and remaining work.
 
 ## Timing and tokens
 
@@ -66,7 +66,7 @@ Use the ordinary median for p50 and nearest-rank p95. Display the number of vali
 
 The four independently converted mlx-lm configurations form the quantisation sequence. `comparison_role: production_reference` identifies Fairy's existing model, whose conversion retains vision support. Preserve its label and exclude it from that sequence, alongside the Gemini cloud reference.
 
-Apply the README's knee and indistinguishability rules without selecting thresholds after seeing outcomes. Keep cache strata visible; do not silently select the stratum producing the strongest claim. Any remaining analysis conventions must be committed before a full run.
+Apply docs/preregistration.md's knee and indistinguishability rules without selecting thresholds after seeing outcomes. Keep cache strata visible; do not silently select the stratum producing the strongest claim. Any remaining analysis conventions must be committed before a full run.
 
 ## Answer variation across repeats
 
@@ -114,7 +114,7 @@ For local safetensors models, inspect headers without loading arrays. Sum encode
 
 The knee is the first step after the baseline step where task quality falls by at least 10 percentage points and at least twice the previous step's drop. The first step establishes the baseline drop and cannot qualify. Cost is not a gate. Report each step's weight-byte memory saving and p50 and p95 latency savings, with measured physical footprint as a secondary column.
 
-The original memory and latency gates were removed before scored benchmark data and before the unattended launcher smoke test. Every adjacent weight-byte saving exceeds 20%, making the original memory gate unsatisfiable for this series. A measured-footprint gate would depend on fixed overhead, and memory bandwidth may make latency fall proportionally with weight size. These are design reasons, not findings from the task dataset. Earlier excluded instrumentation pilots exist. The revised hypothesis is nearly flat quality followed by a sharp drop, while cost falls by a roughly steady amount per step. The variance rule and both kill criteria in the README are unchanged.
+The original memory and latency gates were removed before scored benchmark data and before the unattended launcher smoke test. Every adjacent weight-byte saving exceeds 20%, making the original memory gate unsatisfiable for this series. A measured-footprint gate would depend on fixed overhead, and memory bandwidth may make latency fall proportionally with weight size. These are design reasons, not findings from the task dataset. Earlier excluded instrumentation pilots exist. The revised hypothesis is nearly flat quality followed by a sharp drop, while cost falls by a roughly steady amount per step. The variance rule and both kill criteria in docs/preregistration.md are unchanged.
 
 Superseded on 16 October 2026: the earlier exclusion of swap-active/unknown calls no longer applies. All completed answers enter quality and the knee. Whole-machine swap-in/out volumes, swap storage and compressor memory describe configuration cost on this 16 GB Mac; unknown metrics remain unavailable with reasons. Missing completed prompts or pending human scores cannot establish either a knee or no knee.
 
@@ -175,7 +175,7 @@ Google's [Gemini billing documentation](https://ai.google.dev/gemini-api/docs/bi
 
 ## Summary length sensitivity, 17 October 2026
 
-See the [dated README deviation note](preregistration.md#summarisation-protocol-deviation-17-october-2026). Collection used the committed tight prompt/rubric version, not the intended later revision with longer allowances. Preserve `prompts/summarisation.yaml`, saved requests, outputs and blind-review packet unchanged.
+See the [dated pre-registration deviation note](preregistration.md#summarisation-protocol-deviation-17-october-2026). Collection used the committed tight prompt/rubric version, not the intended later revision with longer allowances. Preserve `prompts/summarisation.yaml`, saved requests, outputs and blind-review packet unchanged.
 
 For every summary configuration, `quality` remains the primary pre-registered checklist score including `max_words`. `quality_without_max_words` is a separately labelled post-collection sensitivity analysis: validate the full original human/automatic checklist first, remove only automatic criteria whose type is `max_words`, then average retained criteria per answer, repeats per prompt and prompts equally. Keep other constraints, including sentence-related criteria. Missing human criteria or an empty retained checklist make the score unavailable, never zero. Knee and variance calculations continue to read only the primary score. Import the existing blind review as usual; regenerating reports will populate both versions from the same decisions without changing the review packet or issuing inference.
 
@@ -187,3 +187,35 @@ Import the owner's exported boolean checklist decisions only after validating pa
 Regenerate both pass reports and the combined offline audit. Check primary and max_words-excluded scores by independently averaging checklist decisions within each answer, repeats within each prompt and prompts equally. Recompute every registered adjacent step using primary summary quality and all-call latency IQRs; preserve the first-step exclusion and exact percentage-point thresholds. Reference-only passes have no local quantisation knee, rather than pending human scores. Imported scores do not change exact-answer variation, timings or which calls are swap-free.
 
 The practical-usefulness assessment compares the production reference with local and cloud task-set findings, but remains conditional on evidence of an actual owner decision. Do not count benchmark collection, a score advantage, a possible recommendation or unchanged deployment as an actual model/quantisation/local-cloud change. No changes to Fairy code or deployment are authorized by importing review scores. Human checklist scores reflect the imported review; no inter-rater agreement estimate is supplied.
+
+## Reproduction
+
+Use Python 3.12 or newer on macOS:
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install '.[dev]'
+PYTHONPATH=src .venv/bin/python -m callcost models
+PYTHONPATH=src .venv/bin/python -m callcost validate --prompts datasets/gsm8k/prompts.json --config configs/private/experiment.yaml
+PYTHONPATH=src .venv/bin/python -m callcost run --prompts datasets/gsm8k/prompts.json --config configs/private/experiment.yaml --output runs/pilot-001 --pilot-only
+PYTHONPATH=src .venv/bin/python -m callcost run --prompts prompts/private/dataset.yaml --config configs/private/experiment.yaml --output runs/experiment-001
+.venv/bin/pytest -q
+```
+
+See the [pilot validation record](archive/pilot-validation.md) for what has and has not been exercised on this Mac.
+
+Commands above use the current checkout source. A previously installed `.venv/bin/callcost` can contain an older packaged version; the launcher also explicitly uses checkout source.
+
+Copy `configs/example.yaml` to `configs/private/experiment.yaml` and fill every placeholder. Quote `"off"` in YAML. Supply exact LM Studio keys and quantisation names from `callcost models`; list all model weight, configuration, tokenizer and template files so they can be hashed. Relative file paths resolve against the config directory. The REST API does not prove that this supplied file list belongs to the selected model; check that mapping against the installed directory before a run.
+
+The output directory must not exist. Each run saves `calls.csv`, `metadata.json`, exact request/response bodies and instrument samples under `raw/`. It prints progress and the answer-variation count per configuration/task. Saved-run reports include p50/p95 costs, quality across all completed answers and adjacent step comparisons; human checklist scores remain pending until imported from blind review. Pilot and warm-up rows are retained but excluded from measured repeats. Any provider or thinking-verification failure stops the run, preserves partial evidence and returns non-zero; calls are never retried silently.
+
+LM Studio must already be running with its local server enabled and existing model instances unloaded. CallCost only unloads the instance it loaded. Set the configured Gemini credential environment variable before running; credentials are not written to run artifacts. Input and output text are saved locally, so treat run directories as private unless deliberately publishing them.
+
+Energy is optional by default. If you want power measurement, run `sudo -v` yourself immediately before the benchmark. CallCost invokes only the collector through `sudo -n`; it never prompts for a password and the benchmark stays unprivileged. Without access or supported samples, energy remains unavailable. `required_powermetrics` stops the run when collection cannot start or establish a baseline. See [measurement details](methodology.md) for coverage and scope limits.
+
+Before a full run, review the [completed preparation and its measurement limits](model-preparation.md), use the registered weight proxy and check 8-bit headroom, fill in exact model identifiers and verified Gemini prices, fix the thinking setting, complete owner review of the ten invented-text summaries and their checklists, and validate the complete 40-prompt dataset. Credentials are read from environment variables and never committed.
+
+The committed [GSM8K sample](../datasets/gsm8k/prompts.json) records original zero-based test-row indices. Rebuild it with `python3 scripts/prepare_gsm8k.py`. The [selection manifest](../datasets/gsm8k/selection.json) pins the source commit, source SHA-256, row indices and stable hash-ranking procedure using seed 2027. Its upstream licence is retained alongside the sample. The ten Fairy-style prompts written for the benchmark (invented texts) are in `prompts/summarisation.yaml`. Owner review was confirmed on 15 October 2026. The ignored `prompts/private/full.yaml` contains all 40 approved prompts and passes the full-dataset guard, including pinned maths identity. The launcher validates this input; it does not merge files. Collection and imported-review status are recorded in PLAN.md; selected aggregate results are published below, while raw run artifacts remain private.
+
+Run artifacts and private prompt files are ignored by Git by default. Publish only deliberately selected artifacts.
