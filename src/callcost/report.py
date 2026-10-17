@@ -10,6 +10,7 @@ from decimal import Decimal, localcontext
 from fractions import Fraction
 from pathlib import Path
 
+from callcost.billing import gemini_attempts, reconcile_billing
 from callcost.storage import write_json
 
 METRICS = ('latency_s', 'ttft_s', 'decode_tokens_per_second', 'memory_peak_footprint_bytes',
@@ -258,7 +259,9 @@ def report_run(directory):
                                   failed_http_attempts=sum(x['status'] != 'completed' for a in records for x in a),
                                   usage_cost_unknown_attempts=sum(x['status'] != 'completed' and x.get('list_price_cost') is None
                                                                 for a in records for x in a)))
-    result = dict(human_review=human_review, retry_summary=retry_summary, run_status=metadata['status'], run_pass=metadata.get('run_pass'), collection=collection,
+    billing_attempts = gemini_attempts(directory)
+    billing = reconcile_billing(directory, billing_attempts) if billing_attempts else None
+    result = dict(billing_reconciliation=billing, human_review=human_review, retry_summary=retry_summary, run_status=metadata['status'], run_pass=metadata.get('run_pass'), collection=collection,
                   precheck=metadata.get('precheck', False), smoke=metadata.get('smoke', False),
                   diagnostic_windows=metadata.get('diagnostic_windows', []),
                   precheck_validation=metadata.get('precheck_validation'),
@@ -351,6 +354,17 @@ def report_run(directory):
             rate = w['swap_volume_bytes'] / w['duration_s'] if w.get('swap_volume_bytes') is not None and w['duration_s'] else None
             lines.append(f'| {w.get("configuration_id") or "unloaded"} | {w["label"]} | {w["duration_s"]:.2f} | '
                          f'{w.get("swapins_bytes")} | {w.get("swapouts_bytes")} | {rate} |')
+    if billing is not None:
+        lines += ['', 'Provider billing reconciliation (list price excludes tax):',
+                  '| Field | Value |', '| --- | --- |',
+                  f'| Known list-price cost excluding tax | {billing["known_list_price_cost_excluding_tax"]} {billing["currency"]} |',
+                  f'| Billed amount from provider | {billing["billed_amount_from_provider"] if billing["billed_amount_from_provider"] is not None else "pending provider export"} |',
+                  f'| Difference: billed minus known list price | {billing["difference"] if billing["difference"] is not None else "unavailable"} |',
+                  f'| Unexplained difference after documented adjustments | {billing["unexplained_difference"] if billing["unexplained_difference"] is not None else "unavailable"} |',
+                  f'| Reconciliation status | {billing["status"]} |',
+                  f'| Unknown-cost HTTP attempts | {billing["unknown_cost_attempts"]} |',
+                  'Documented adjustments: ' + json.dumps(billing['explained_adjustments'], ensure_ascii=False),
+                  'Fill billing.json from a scope-matched provider export. Unexplained differences remain explicit.']
     if human_review:
         lines += ['', 'Human checklist review: ' + json.dumps(human_review)]
     lines += ['', 'Cloud HTTP retry attempts (successful-attempt latency only):']

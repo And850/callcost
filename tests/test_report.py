@@ -198,9 +198,9 @@ def test_report_counts_durable_http_retries_by_configuration(tmp_path):
     (tmp_path / 'metadata.json').write_text(json.dumps(dict(status='failed', schedule=[],
         config={'configurations': [{'id': 'cloud', 'comparison_role': 'cloud_reference'}]}, dataset={'prompts': []})))
     (tmp_path / 'raw/c.attempts.json').write_text(json.dumps([
-        dict(configuration_id='cloud', status='error', list_price_cost=None),
-        dict(configuration_id='cloud', status='error', list_price_cost=None),
-        dict(configuration_id='cloud', status='completed', list_price_cost='0.01')]))
+        dict(call_id='c', configuration_id='cloud', status='error', list_price_cost=None, currency='USD'),
+        dict(call_id='c', configuration_id='cloud', status='error', list_price_cost=None, currency='USD'),
+        dict(call_id='c', configuration_id='cloud', status='completed', list_price_cost='0.01', currency='USD')]))
     text = report_run(tmp_path)
     record = json.loads((tmp_path / 'report.json').read_text())['retry_summary'][0]
     assert record['retries'] == 2 and record['calls_retried'] == 1

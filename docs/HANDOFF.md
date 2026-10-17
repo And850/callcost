@@ -1,3 +1,10 @@
+# Billing reconciliation update, 17 October 2026
+
+- Owner requests all saved Gemini usage across the repo, tax clarification and a provider-billed placeholder. No model calls are authorized or needed for this work.
+- Private all-history inventory: runs/gemini-cost-ledger-20261017/report.md and ledger.json, including smoke, separate cloud segments/retries and zero-Gemini local pre-checks. No double-counting resumed checkpoints. The ledger omits answer text to avoid interfering with blind review.
+- Provider billing remains pending: populate the ledger billing.json for all recorded usage, or the cloud run billing.json for this run only, from a matching export. Do not substitute the owner's approximate balance change for an invoiced amount. VAT applicability is explicitly uncertain; method documents Spain's 21% standard rate and account-dependent Google treatment. Do not label a numerical VAT fit as proof.
+- Blind review is in progress. Do not regenerate its packet, change anonymous IDs or inspect/reveal the hidden key. No model calls, billing/account changes or benchmark reruns were performed.
+
 # Current handoff update, 17 October 2026: collection finished, blind review pending
 
 - Both local and cloud passes are complete. Read LATEST-local / LATEST-cloud, each status.json and run.log. Do not resume or issue more model calls. Cloud was explicitly approved, --no-energy, with paid prepaid billing confirmed by the owner.
