@@ -2,7 +2,7 @@
 
 - Local collection completed: 1,015/1,015 calls in `20261016T213431.178691Z-local`. Preserve all artifacts; no repeat calls are authorized.
 - Owner now explicitly approves the separate cloud pass with `--no-energy`, without a clean restart. Owner reconfirmed Tier 1, prepaid balance, auto-reload off and considers the AI Studio warning resolved or a display issue. This supersedes the historical cloud block below. Prior key/project/tier verification remains recorded privately.
-- Start only the cloud pass in its own directory. Stop on quota/billing errors without retries. Report completed calls, usage-derived list-price equivalent and errors. Cloud client energy is deliberately unavailable due to background-noise attribution limits, documented in methodology.md.
+- Cloud was launched in its own directory with --no-energy, then stopped on HTTP 503 UNAVAILABLE (provider high demand). LATEST-cloud identifies the retained partial run. No retry was made; obtain approval before new requests/resume, preserve completed checkpoints. Cloud client energy is deliberately unavailable due to background-noise attribution limits, documented in methodology.md. No benchmark results are committed; read private artifacts for counts and costs.
 - Audit follows cloud collection; owner will send the audit list. Do not change frozen pre-registration or auto-publish run results.
 
 # Current handoff, 16 October 2026
