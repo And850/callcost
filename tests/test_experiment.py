@@ -252,3 +252,17 @@ def test_cloud_quota_stops_with_checkpoint_and_no_retry(tmp_path, config_data, p
     row = json.loads(next((tmp_path/'run/checkpoints').glob('*.json')).read_text())
     assert row['http_status'] == http_status and row['provider_error_status'] == error_status
     assert row['status'] == 'error'
+
+
+def test_cloud_retry_upgrade_is_explicit_and_narrow():
+    from callcost.experiment import validate_runtime_resume
+    old = {'providers/gemini.py': 'a', 'experiment.py': 'a', 'schemas.py': 'a'}
+    new = dict(old, **{'providers/gemini.py': 'b'})
+    import pytest
+    with pytest.raises(ValueError):
+        validate_runtime_resume(old, new, 'cloud', False)
+    validate_runtime_resume(old, new, 'cloud', True)
+    with pytest.raises(ValueError):
+        validate_runtime_resume(old, new, 'local', True)
+    with pytest.raises(ValueError):
+        validate_runtime_resume(old, dict(new, **{'schemas.py': 'b'}), 'cloud', True)

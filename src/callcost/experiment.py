@@ -155,8 +155,15 @@ def build_schedule(config, dataset, *, pilot_only=False, smoke=False, precheck=F
     return settings, schedule
 
 
+def validate_runtime_resume(old, new, run_pass, approved):
+    changed = {key for key in old.keys() | new.keys() if old.get(key) != new.get(key)}
+    allowed = {'providers/gemini.py', 'experiment.py', 'report.py', 'unattended.py'}
+    if changed and not (approved and run_pass == 'cloud' and changed <= allowed):
+        raise ValueError('Resume refused: runtime_identity changed since this run started')
+
+
 def run_experiment(config, dataset, directory, *, pilot_only=False, client=None, input_files=None,
-                   progress=print, resume=False, smoke=False, launch_metadata=None, energy_mode=None, run_pass=None, precheck=False):
+                   progress=print, resume=False, smoke=False, launch_metadata=None, energy_mode=None, run_pass=None, precheck=False, accept_cloud_retry_upgrade=False):
     files = preflight(config)
     components = {s.id: inspect_weights(s.model_files)
                   for s in config.configurations if isinstance(s, LocalConfig)}
@@ -184,7 +191,8 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
                 'thinking_verification': {}, 'loads': [], 'energy_blocks': [], 'errors': [], 'segments': []}
     if resume:
         previous = json.loads((directory / 'metadata.json').read_text())
-        for key in ('config', 'dataset', 'model_files', 'input_files', 'runtime_identity', 'schedule', 'smoke', 'pilot_only', 'software', 'run_pass', 'precheck'):
+        validate_runtime_resume(previous.get('runtime_identity', {}), runtime_identity, run_pass, accept_cloud_retry_upgrade)
+        for key in ('config', 'dataset', 'model_files', 'input_files', 'schedule', 'smoke', 'pilot_only', 'software', 'run_pass', 'precheck'):
             if previous.get(key) != metadata.get(key):
                 raise ValueError(f'Resume refused: {key} changed since this run started')
         for key in ('chip', 'ram_bytes', 'macos_build', 'lmstudio_version'):
@@ -201,6 +209,8 @@ def run_experiment(config, dataset, directory, *, pilot_only=False, client=None,
     done = {r['schedule_index'] for r in rows if r['status'] == 'completed'}
     segment = {'id': uuid.uuid4().hex, 'started_at': datetime.now(timezone.utc).isoformat(),
                'resumed': resume, 'conditions': launch_metadata,
+               'runtime_identity': runtime_identity, 'git_commit': command(['git', 'rev-parse', 'HEAD']),
+               'cloud_retry_upgrade_approved': accept_cloud_retry_upgrade,
                'energy_mode': energy_mode or config.measurement.energy.mode,
                'cache_note': 'A resumed segment reloads models; exposure labels do not prove cache state'}
     metadata['segments'].append(segment)

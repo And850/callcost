@@ -203,3 +203,55 @@ def test_gemini_level_is_sent_without_budget_and_thoughts_are_billed(config_data
     assert result.answer == 'Answer: 4' and result.reasoning_content_observed
     assert result.thinking_tokens == 6 and result.billable_output_tokens == 10
     assert result.list_price_cost == '0.000045'
+
+
+@pytest.mark.parametrize('code', [500, 503])
+def test_cloud_transient_retries_preserve_attempts(config_data, prompt_data, tmp_path, monkeypatch, code):
+    import time
+    waits = []
+    monkeypatch.setattr(time, 'sleep', waits.append)
+    count = 0
+    def handle(request):
+        nonlocal count
+        count += 1
+        if count < 3:
+            return httpx.Response(code, stream=Fragments(b'busy'))
+        return httpx.Response(200, stream=Fragments(sse([{'candidates': [{'finishReason': 'STOP', 'content': {'parts': [{'text': 'Answer: 4'}]}}], 'usageMetadata': {'promptTokenCount': 2, 'candidatesTokenCount': 3, 'thoughtsTokenCount': 1}}])))
+    config = Config.model_validate(config_data)
+    with httpx.Client(transport=httpx.MockTransport(handle)) as client:
+        result = GeminiProvider(config.configurations[0], config.run, client, 'key').generate(
+            Dataset.model_validate(prompt_data).prompts[0], tmp_path, 'retry-call')
+    assert result.status == 'completed' and count == 3
+    assert waits == [10, 30]
+    attempts = json.loads((tmp_path / 'retry-call.attempts.json').read_text())
+    assert len(attempts) == 3 and attempts[0]['error'] and attempts[0]['started_at']
+    assert attempts[-1]['latency_s'] == result.latency_s
+    assert (tmp_path / 'retry-call.attempt-1.response.bin').exists()
+
+
+def test_cloud_retry_exhaustion(config_data, prompt_data, tmp_path, monkeypatch):
+    import time
+    waits = []
+    monkeypatch.setattr(time, 'sleep', waits.append)
+    config = Config.model_validate(config_data)
+    with httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(503, stream=Fragments(b'busy')))) as client:
+        result = GeminiProvider(config.configurations[0], config.run, client, 'key').generate(
+            Dataset.model_validate(prompt_data).prompts[0], tmp_path, 'exhausted')
+    assert result.status == 'error'
+    assert waits == [10, 30, 90, 270]
+    assert len(json.loads((tmp_path / 'exhausted.attempts.json').read_text())) == 5
+
+
+@pytest.mark.parametrize('http_status,error_status', [(401,'UNAUTHENTICATED'),(403,'PERMISSION_DENIED'),(402,'PAYMENT_REQUIRED'),(429,'RESOURCE_EXHAUSTED'),(503,'RESOURCE_EXHAUSTED')])
+def test_cloud_never_retries_auth_billing_quota(config_data, prompt_data, tmp_path, monkeypatch, http_status, error_status):
+    import time
+    waits, calls = [], []
+    monkeypatch.setattr(time, 'sleep', waits.append)
+    def handle(request):
+        calls.append(request)
+        return httpx.Response(http_status, stream=Fragments(json.dumps({'error': {'status': error_status}}).encode()))
+    config = Config.model_validate(config_data)
+    with httpx.Client(transport=httpx.MockTransport(handle)) as client:
+        result = GeminiProvider(config.configurations[0], config.run, client, 'key').generate(
+            Dataset.model_validate(prompt_data).prompts[0], tmp_path, 'forbidden')
+    assert result.status == 'error' and len(calls) == 1 and waits == []

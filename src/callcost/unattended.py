@@ -267,6 +267,7 @@ def main(argv=None):
     parser.add_argument('--resume', action='store_true', help='Resume runs/LATEST using its saved inputs')
     parser.add_argument('--smoke', action='store_true', help='One held-out call/configuration; no benchmark evidence')
     parser.add_argument('--precheck', action='store_true', help='Six held-out local calls with idle windows and required energy')
+    parser.add_argument('--accept-cloud-retry-upgrade', action='store_true', help='Explicitly accept the recorded cloud retry source upgrade on resume')
     parser.add_argument('--no-energy', action='store_true', help='Decline sudo and record energy unavailable')
     args = parser.parse_args(argv)
     runs = ROOT / 'runs'
@@ -362,7 +363,8 @@ def main(argv=None):
             print(message, **kwargs)
         metadata = run_experiment(config, dataset, directory, resume=args.resume, smoke=smoke,
                                   input_files=inputs, launch_metadata=launch,
-                                  energy_mode=None if energy else 'off', progress=progress, run_pass=run_pass, precheck=precheck)
+                                  energy_mode=None if energy else 'off', progress=progress, run_pass=run_pass, precheck=precheck,
+                                  accept_cloud_retry_upgrade=args.accept_cloud_retry_upgrade)
         print(f'Run {metadata["status"]}: {directory}')
         for error in metadata['errors']:
             print(error)

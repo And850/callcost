@@ -136,3 +136,12 @@ Pre-check requires sudo-backed powermetrics. Missing startup/baseline prevents c
 ## Cloud collection energy decision, 17 October 2026
 
 The owner approved the separate cloud pass with `--no-energy`. Cloud client-side energy is not reported because background activity dominates the small client-side signal; this is an attribution limitation, not a measured numerical noise ratio. No cloud-server energy is measured or inferred. This reporting decision follows local collection and changes no frozen quality, knee or variance rule. Cloud energy is unavailable, never zero.
+
+
+## Cloud transient retry policy, 17 October 2026
+
+After the first cloud segment stopped on provider HTTP 503, the owner approved a collection-procedure change for the resumed cloud reference: retry HTTP 500/503 or streaming INTERNAL/UNAVAILABLE at most four additional times, waiting 10, 30, 90 and 270 seconds. Auth (401/403, UNAUTHENTICATED/PERMISSION_DENIED), quota (429/RESOURCE_EXHAUSTED) and billing (402/PAYMENT_REQUIRED) take precedence and stop immediately. Other errors and exhausted retries stop with retained evidence. This is a dated post-local-data procedure change, not a retrospective pre-registration amendment; quality, knee and variance rules are unchanged.
+
+Every HTTP attempt has raw request/response evidence and an atomic attempts manifest with timestamp, error, usage and latency. Failed bodies are retained separately before the next attempt. Reported successful-call latency and TTFT cover only that attempt, excluding backoff and earlier failures. Reports show additional retries and calls retried per configuration. Usage-based costs must include any reported usage from failed attempts; missing failed-attempt usage is unknown, not zero. An explicit resume after a prior failed checkpoint is distinct from an automatic in-call retry. Completed schedule slots are never repeated.
+
+The owner approved the source upgrade required for this resume. `--accept-cloud-retry-upgrade` admits only changes in the provider, runner, launcher and report files for a cloud resume; input/config/software checks remain. Original runtime identity is retained, with new source hashes and commit recorded per segment.

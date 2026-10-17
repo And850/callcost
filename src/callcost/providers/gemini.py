@@ -1,9 +1,12 @@
 """Gemini generateContent streaming with explicit thinking and list prices."""
 
+import time
+from dataclasses import asdict
 from decimal import Decimal
 
 from callcost.providers.streaming import append_answer, stream_request
 from callcost.schemas import render_prompt, token_count
+from callcost.storage import write_json
 
 
 class GeminiProvider:
@@ -22,6 +25,27 @@ class GeminiProvider:
         pass
 
     def generate(self, prompt, raw_directory, call_id):
+        attempts = []
+        for number in range(5):
+            result = self._generate_once(prompt, raw_directory, call_id)
+            attempts.append(dict(asdict(result), configuration_id=self.configuration.id,
+                                 call_id=call_id, attempt=number + 1))
+            write_json(raw_directory / f'{call_id}.attempts.json', attempts)
+            forbidden = result.http_status in (401, 403, 402, 429) or result.provider_error_status in (
+                'RESOURCE_EXHAUSTED', 'PAYMENT_REQUIRED', 'UNAUTHENTICATED', 'PERMISSION_DENIED')
+            transient = result.http_status in (500, 503) or result.provider_error_status in ('UNAVAILABLE', 'INTERNAL')
+            if result.status == 'completed' or forbidden or not transient or number == 4:
+                return result
+            for suffix in ('request.json', 'response.bin'):
+                source = raw_directory / f'{call_id}.{suffix}'
+                if source.exists():
+                    source.rename(raw_directory / f'{call_id}.attempt-{number + 1}.{suffix}')
+            delay = (10, 30, 90, 270)[number]
+            print(f'{self.configuration.id}: transient error {result.http_status or result.provider_error_status}; '
+                  f'retry {number + 1}/4 in {delay}s; attempt retained', flush=True)
+            time.sleep(delay)
+
+    def _generate_once(self, prompt, raw_directory, call_id):
         setting = self.configuration.thinking
         thinking = ({'thinkingLevel': setting.thinking_level} if setting.thinking_level is not None
                     else {'thinkingBudget': setting.budget})
@@ -70,7 +94,7 @@ class GeminiProvider:
     @staticmethod
     def _consume(event, now, result):
         if event.get('error'):
-            if event['error'].get('status') in ('RESOURCE_EXHAUSTED', 'PAYMENT_REQUIRED'):
+            if event['error'].get('status'):
                 result.provider_error_status = event['error']['status']
             elif event['error'].get('code') == 402:
                 result.provider_error_status = 'PAYMENT_REQUIRED'

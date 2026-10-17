@@ -221,7 +221,16 @@ def report_run(directory):
             finding.update(finding='insufficient data: collection incomplete', knee=None)
             for step in finding['steps']:
                 step['qualifies'] = None
-    result = dict(run_status=metadata['status'], run_pass=metadata.get('run_pass'), collection=collection,
+    retry_summary = []
+    manifests = [json.loads(p.read_text()) for p in (directory / 'raw').glob('*.attempts.json')]
+    for c in metadata['config']['configurations']:
+        records = [a for a in manifests if a and a[0]['configuration_id'] == c['id']]
+        retry_summary.append(dict(configuration_id=c['id'], retries=sum(len(a) - 1 for a in records),
+                                  calls_retried=sum(len(a) > 1 for a in records),
+                                  failed_http_attempts=sum(x['status'] != 'completed' for a in records for x in a),
+                                  usage_cost_unknown_attempts=sum(x['status'] != 'completed' and x.get('list_price_cost') is None
+                                                                for a in records for x in a)))
+    result = dict(retry_summary=retry_summary, run_status=metadata['status'], run_pass=metadata.get('run_pass'), collection=collection,
                   precheck=metadata.get('precheck', False), smoke=metadata.get('smoke', False),
                   diagnostic_windows=metadata.get('diagnostic_windows', []),
                   precheck_validation=metadata.get('precheck_validation'),
@@ -314,6 +323,8 @@ def report_run(directory):
             rate = w['swap_volume_bytes'] / w['duration_s'] if w.get('swap_volume_bytes') is not None and w['duration_s'] else None
             lines.append(f'| {w.get("configuration_id") or "unloaded"} | {w["label"]} | {w["duration_s"]:.2f} | '
                          f'{w.get("swapins_bytes")} | {w.get("swapouts_bytes")} | {rate} |')
+    lines += ['', 'Cloud HTTP retry attempts (successful-attempt latency only):']
+    lines += [json.dumps(x) for x in retry_summary]
     text = '\n'.join(lines) + '\n'
     (directory / 'report.md').write_text(text)
     return text

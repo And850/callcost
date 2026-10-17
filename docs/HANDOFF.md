@@ -1,3 +1,8 @@
+# Authorization update, 17 October 2026: cloud retries and audit
+
+- Owner authorizes HTTP 500/503 or UNAVAILABLE retries, four additional attempts with 10/30/90/270-second backoff; auth/quota/billing stop immediately. Owner approves resume of the retained cloud pass with --no-energy after this committed implementation. Completed checkpoints must not repeat. Source upgrade is explicit and recorded per segment.
+- After cloud collection, audit q3 parseability versus wrong answers, exact-text variation, all/swap-free latency, local missing energy, every variance step and kill criterion 2. Prepare blind summary review. No local rerun is authorized.
+
 # Current authorization update, 17 October 2026
 
 - Local collection completed: 1,015/1,015 calls in `20261016T213431.178691Z-local`. Preserve all artifacts; no repeat calls are authorized.
