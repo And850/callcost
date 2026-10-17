@@ -1,3 +1,14 @@
+# Current state at chat close, 17 October 2026
+
+- Results, aggregate snapshot, both task charts, plotting code and README are committed and pushed together in 70aab5d. Latest verification: 113 tests and Ruff pass. Raw answers, checkpoints and review artifacts remain private and ignored.
+- Summary blind review is complete, performed by the project author with configuration labels hidden. Exported scores were imported and independently checked; both reports and the scored audit include primary and without-max_words sensitivity scores. Do not repeat the import or alter the original prompts/responses.
+- The all-history Gemini cost ledger in runs/gemini-cost-ledger-20261017 awaits the provider billing figure/export. Known list-price cost is USD 0.23373225 across 204 successful calls; 18 failed attempts have unknown usage/cost. Reconcile a matching provider scope before explaining any difference. VAT applicability remains unconfirmed.
+- Quality-only knee: maths 4→3 bit; summaries no knee found. Findings are consistent with the registered hypothesis on this task set, not proof; roughly steady latency savings are not established. Kill criterion 1 is not triggered under the registered rules.
+- Kill criterion 2 remains unmet: no actual Fairy model, quantisation or local/cloud deployment decision has changed. A Fairy-style maths test is pending to assess practical usefulness. This is a next step to scope with the owner, not authorization for model calls, a rerun or Fairy integration. Record an actual owner-confirmed decision before changing criterion 2's assessment.
+- Next actions: reconcile the provider billing figure when supplied, then agree the Fairy-style maths test and obtain explicit model-call approval before execution. No further inference, downloads or system changes are authorized.
+
+Earlier dated sections below retain historical context; this current-state section supersedes their pending-work descriptions.
+
 # Published charts and Results, 17 October 2026
 
 - Owner specified one chart per task: a connected 8→6→4→3 sequence at median all-call latency and primary quality, p50-to-p95 horizontal whiskers, bit labels, unconnected Fairy/cloud markers and sample sizes in captions.
@@ -10,13 +21,13 @@
 - Owner exported Downloads/summary-scores.json and authorized import plus full summary audit. Strict import completed into both original pass directories. Private exact export copy and import-provenance.json are in runs/blind-review-20261017. Do not import again or overwrite the review.
 - Updated combined scored results: runs/audit-20261017-scored/audit.md and audit.json. Independent arithmetic/variance/knee/checkpoint-integrity verification is in independent-summary-checks.json beside them. Primary and length-sensitivity scores, exact text variation, all/swap-free p50/p95 and counts are present for every configuration. Both pass reports are regenerated; cloud remains outside the knee sequence.
 - No actual Fairy production decision change is recorded. The scored audit compares the complete task-set picture and keeps practical usefulness criterion 2 explicitly unmet. Only an actual owner-confirmed change can alter that assessment.
-- Original prompt file, responses and checkpoints are unchanged. No inference, reruns, billing/account changes, downloads or system changes occurred. Numeric results and raw review data remain ignored and uncommitted. Charts and provider-billing reconciliation remain outstanding.
+- Original prompt file, responses and checkpoints are unchanged. No inference, reruns, billing/account changes, downloads or system changes occurred. Selected aggregate results and charts are published in 70aab5d; raw review data remain ignored and uncommitted. Provider-billing reconciliation remains outstanding.
 
 # Summary protocol deviation update, 17 October 2026
 
 - Owner identified that the intended later relaxed-length revision was never committed/run. README records what ran (6f6de97 tight summary instructions and 50-90-word max_words scoring checks), what was intended and identical prompts/rubrics across all configurations.
 - Do not edit prompts/summarisation.yaml or rerun inference. Primary summary scores retain max_words; secondary quality_without_max_words drops only that automatic criterion and reweights the remaining criteria, retaining equal prompt weights. Knee/variance remain primary-only.
-- Blind review remains in progress with its original packet and IDs unchanged. Both score columns stay unavailable until the human criteria are imported, then populate automatically on report regeneration.
+- Blind review is complete with its original packet and IDs unchanged. Human scores have been imported; both score columns are populated in the regenerated reports.
 
 # Billing reconciliation update, 17 October 2026
 

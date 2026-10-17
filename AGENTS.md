@@ -39,6 +39,13 @@ The hypothesis, knee definition, variance rule and both kill criteria live in [R
 - 2026-10-16: Superseding swap amendment: all completed calls contribute to quality/knee and the unchanged variance rule. All-call latency is primary; swap-free latency is secondary. Record swap-in/out bytes, before/after vm.swapusage and compressor memory; report swapped share, unknown counts and median swap volume. Swap is a configuration cost on this 16 GB Mac, with whole-machine attribution limits.
 - 2026-10-16: Local (five configurations) and cloud (one reference) are independently resumable passes. Cloud quota/rate-limit errors stop without automatic retries. Confirm paid-tier evidence after the owner enables billing and before cloud collection.
 
+
+- 2026-10-17: Cloud HTTP 500/503 calls may retry the same call up to four times with 10/30/90/270-second backoff. Log every failed attempt; latency covers only the successful attempt. Quota, billing, exhausted balance and auth errors stop immediately without retries; exhausted transient retries also stop cleanly with checkpoints preserved.
+- 2026-10-17: Summary deviation handling: the 6f6de97 tight instructions and 50-90-word max_words checks actually ran; the intended longer-limit revision did not. Preserve identical collected prompts/responses, disclose the dated deviation, retain max_words in primary scoring and report excluding-only-max_words sensitivity separately. No reruns; primary scores alone determine knees and variance.
+- 2026-10-17: Blind human summary review was completed by the project author with configuration labels hidden, then imported and checked. Disclose the single author-reviewer and AI-assisted summary prompt drafting; no independent reviewer or inter-rater measurement exists. No LLM was the primary quality judge.
+- 2026-10-17: Applying the frozen quality-only knee and variance rules gives maths a 4→3-bit knee and summaries no knee found. This is consistent with the registered hypothesis on this task set, not proof; cost reductions are not uniformly steady. Kill criterion 1 is not triggered. Kill criterion 2 remains unmet pending a Fairy-style maths test and an actual recorded production decision change; no new model calls are authorized by this log.
+- 2026-10-17: Owner selected aggregate results, charts and README for publication together in 70aab5d. Raw run/review artifacts stay private. Provider-billing reconciliation awaits the matching billed figure; VAT applicability is unconfirmed.
+
 ## Key paths
 
 - `configs/experiment.yaml`: experiment configurations, thinking controls and dated prices.
