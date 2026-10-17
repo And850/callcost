@@ -1,5 +1,6 @@
 """Read saved calls only. Missing observations never turn into zeros."""
 
+import hashlib
 import json
 import math
 import re
@@ -30,7 +31,7 @@ def distribution(values):
                 p95=values[math.ceil(.95 * len(values)) - 1], q1=quantile(.25), q3=quantile(.75))
 
 
-def score_answer(prompt, answer):
+def score_answer(prompt, answer, human_checks=None):
     rule = prompt['scoring']
     if rule['type'] == 'numeric_final_line':
         lines = answer.strip().splitlines()
@@ -64,6 +65,12 @@ def score_answer(prompt, answer):
                 except ValueError:
                     value = False
         checks[item['id']] = value
+    if human_checks is not None:
+        if set(human_checks) != set(checks) or not all(type(v) is bool for v in human_checks.values()):
+            raise ValueError('Human review must score every checklist criterion with a boolean')
+        if any(human_checks[k] != v for k, v in checks.items() if v is not None):
+            raise ValueError('Human review cannot override registered automatic checks')
+        checks.update(human_checks)
     exact = None if None in checks.values() else Fraction(sum(checks.values()), len(checks))
     return {'score': None if exact is None else float(exact), 'score_fraction': None if exact is None else str(exact),
             'parseable': None, 'checks': checks}
@@ -75,7 +82,7 @@ def quality(rows, prompts):
     grouped = defaultdict(list)
     scores = []
     for row in rows:
-        result = score_answer(prompts[row['prompt_id']], row['answer'])
+        result = score_answer(prompts[row['prompt_id']], row['answer'], row.get('human_checks'))
         scores.append(dict(call_id=row['call_id'], prompt_id=row['prompt_id'], **result))
         grouped[row['prompt_id']].append(None if result['score_fraction'] is None else Fraction(result['score_fraction']))
     complete = all(p in grouped and all(v is not None for v in grouped[p]) for p in prompts)
@@ -206,10 +213,31 @@ def collection_status(metadata, rows):
                          and metadata['status'] == 'completed')
 
 
+def load_human_scores(directory, rows, prompts):
+    path = directory / 'human_scores.json'
+    if not path.exists():
+        return None
+    review = json.loads(path.read_text())
+    by_id = {r['call_id']: r for r in rows}
+    for call_id, saved in review['calls'].items():
+        row = by_id.get(call_id)
+        if (row is None or row['status'] != 'completed' or row['phase'] != 'measured'
+                or row['prompt_id'] != saved['prompt_id']
+                or hashlib.sha256(row['answer'].encode()).hexdigest() != saved['answer_sha256']):
+            raise ValueError('Human score identity does not match saved completed answer')
+        prompt = prompts[row['prompt_id']]
+        if prompt['scoring']['type'] != 'checklist':
+            raise ValueError('Human checklist scores cannot change maths scoring')
+        score_answer(prompt, row['answer'], saved['checks'])
+        row['human_checks'] = saved['checks']
+    return {k: review.get(k) for k in ('packet_id', 'reviewer', 'reviewed_at')}
+
+
 def report_run(directory):
     directory = Path(directory)
     metadata = json.loads((directory / 'metadata.json').read_text())
     rows = [json.loads(p.read_text()) for p in sorted((directory / 'checkpoints').glob('*.json'))]
+    human_review = load_human_scores(directory, rows, {p['id']: p for p in metadata['dataset']['prompts']})
     phase = 'precheck' if metadata.get('precheck') else 'smoke' if metadata.get('smoke') else 'measured'
     groups = aggregate(rows, metadata['dataset']['prompts'] if phase == 'measured' else [], phase,
                        metadata['config']['configurations'])
@@ -230,7 +258,7 @@ def report_run(directory):
                                   failed_http_attempts=sum(x['status'] != 'completed' for a in records for x in a),
                                   usage_cost_unknown_attempts=sum(x['status'] != 'completed' and x.get('list_price_cost') is None
                                                                 for a in records for x in a)))
-    result = dict(retry_summary=retry_summary, run_status=metadata['status'], run_pass=metadata.get('run_pass'), collection=collection,
+    result = dict(human_review=human_review, retry_summary=retry_summary, run_status=metadata['status'], run_pass=metadata.get('run_pass'), collection=collection,
                   precheck=metadata.get('precheck', False), smoke=metadata.get('smoke', False),
                   diagnostic_windows=metadata.get('diagnostic_windows', []),
                   precheck_validation=metadata.get('precheck_validation'),
@@ -323,6 +351,8 @@ def report_run(directory):
             rate = w['swap_volume_bytes'] / w['duration_s'] if w.get('swap_volume_bytes') is not None and w['duration_s'] else None
             lines.append(f'| {w.get("configuration_id") or "unloaded"} | {w["label"]} | {w["duration_s"]:.2f} | '
                          f'{w.get("swapins_bytes")} | {w.get("swapouts_bytes")} | {rate} |')
+    if human_review:
+        lines += ['', 'Human checklist review: ' + json.dumps(human_review)]
     lines += ['', 'Cloud HTTP retry attempts (successful-attempt latency only):']
     lines += [json.dumps(x) for x in retry_summary]
     text = '\n'.join(lines) + '\n'

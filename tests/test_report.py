@@ -158,3 +158,51 @@ def test_configuration_swap_summary_includes_zero_volume_and_unknown_counts():
     assert result['swap_unknown_calls'] == 1
     assert result['swap_volume_bytes']['p50'] == 100
     assert result['swap_volume_bytes']['n'] == 3
+
+
+def test_human_checklist_review_completes_quality_without_changing_auto_defaults():
+    from callcost.report import score_answer
+    prompt = {'scoring': {'type': 'checklist', 'items': [
+        {'id': 'automatic', 'automatic': {'type': 'substring', 'value': 'Thursday'}},
+        {'id': 'faithful', 'human': True}]}}
+    assert score_answer(prompt, 'Thursday')['score'] is None
+    result = score_answer(prompt, 'Thursday', {'automatic': True, 'faithful': False})
+    assert result['score'] == .5 and result['checks'] == {'automatic': True, 'faithful': False}
+
+
+def test_saved_human_scores_bind_to_exact_answer_and_rubric(tmp_path):
+    import hashlib
+    import json
+
+    import pytest
+
+    from callcost.report import load_human_scores
+    prompt = {'scoring': {'type': 'checklist', 'items': [{'id': 'faithful', 'human': True}]}}
+    row = dict(call_id='c', prompt_id='p', status='completed', phase='measured', answer='text')
+    record = dict(reviewer='Human', calls={'c': dict(prompt_id='p', answer_sha256=hashlib.sha256(b'text').hexdigest(), checks={'faithful': True})})
+    (tmp_path / 'human_scores.json').write_text(json.dumps(record))
+    load_human_scores(tmp_path, [row], {'p': prompt})
+    assert row['human_checks'] == {'faithful': True}
+    record['calls']['c']['answer_sha256'] = 'different'
+    (tmp_path / 'human_scores.json').write_text(json.dumps(record))
+    with pytest.raises(ValueError):
+        load_human_scores(tmp_path, [row], {'p': prompt})
+
+
+def test_report_counts_durable_http_retries_by_configuration(tmp_path):
+    import json
+
+    from callcost.report import report_run
+    (tmp_path / 'raw').mkdir()
+    (tmp_path / 'checkpoints').mkdir()
+    (tmp_path / 'metadata.json').write_text(json.dumps(dict(status='failed', schedule=[],
+        config={'configurations': [{'id': 'cloud', 'comparison_role': 'cloud_reference'}]}, dataset={'prompts': []})))
+    (tmp_path / 'raw/c.attempts.json').write_text(json.dumps([
+        dict(configuration_id='cloud', status='error', list_price_cost=None),
+        dict(configuration_id='cloud', status='error', list_price_cost=None),
+        dict(configuration_id='cloud', status='completed', list_price_cost='0.01')]))
+    text = report_run(tmp_path)
+    record = json.loads((tmp_path / 'report.json').read_text())['retry_summary'][0]
+    assert record['retries'] == 2 and record['calls_retried'] == 1
+    assert record['failed_http_attempts'] == 2 and record['usage_cost_unknown_attempts'] == 2
+    assert 'retries' in text

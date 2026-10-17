@@ -1,3 +1,13 @@
+# Current handoff update, 17 October 2026: collection finished, blind review pending
+
+- Both local and cloud passes are complete. Read LATEST-local / LATEST-cloud, each status.json and run.log. Do not resume or issue more model calls. Cloud was explicitly approved, --no-energy, with paid prepaid billing confirmed by the owner.
+- Cloud retry policy and initial resume were committed/pushed as 1b98743. Raw failure attempts and original checkpoints remain private. Every collected automatic retry was 503 UNAVAILABLE; source versions are retained per segment. Later hardening pins accepted source transitions and excludes standalone INTERNAL status outside HTTP 500/503.
+- Offline combined audit: runs/audit-20261017/audit.md and audit.json. Original measurements and reports remain in the pass directories. No raw benchmark results are committed.
+- Local energy audit: the local run's energy-audit.json replays available estimates from retained samples/baselines. Missing q6 timing observations remain unavailable, not reconstructed. No local rerun was performed or authorized.
+- Blind review is prepared at runs/blind-review-20261017/review.html, with a separate hidden key. Follow docs/blind-review.md. Automatic criteria are fixed; human criteria need owner scores. No LLM judges answers. Do not inspect key.json before finishing.
+- Import the exported scores with scripts/review_summaries.py import, regenerate both reports, then revisit summary quality, all three summary variance steps and the knee. No actual Fairy production decision has yet been changed; do not claim usefulness criterion 2 is met.
+- Current task authorization: code/docs/tests and small commits/pushes; no further model calls, reruns, downloads or system changes without approval. Preserve the frozen pre-registration.
+
 # Authorization update, 17 October 2026: cloud retries and audit
 
 - Owner authorizes HTTP 500/503 or UNAVAILABLE retries, four additional attempts with 10/30/90/270-second backoff; auth/quota/billing stop immediately. Owner approves resume of the retained cloud pass with --no-energy after this committed implementation. Completed checkpoints must not repeat. Source upgrade is explicit and recorded per segment.

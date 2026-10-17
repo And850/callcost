@@ -1,6 +1,6 @@
 # Measurement method
 
-Collection, exact-answer variation, automatic quality checks, percentile aggregation and saved-run reports are implemented. Human checklist scores remain pending; blind review tooling is not implemented. Offline tests and source review do not establish unattended readiness. Held-out Gemini inference and six-configuration live interruption/resume passed on 15 October 2026. All completed smoke calls recorded swap activity. Privileged power validation remains pending; no benchmark prompts were used. See [HANDOFF.md](HANDOFF.md) for current state and [pilot validation](pilot-validation.md) for earlier evidence.
+Collection, exact-answer variation, automatic quality checks, percentile aggregation and saved-run reports are implemented. Human checklist scores remain pending; the offline blind review workflow is documented in [blind-review.md](blind-review.md). Offline tests and source review do not establish unattended readiness. Held-out Gemini inference and six-configuration live interruption/resume passed on 15 October 2026. All completed smoke calls recorded swap activity. Privileged power validation remains pending; no benchmark prompts were used. See [HANDOFF.md](HANDOFF.md) for current state and [pilot validation](pilot-validation.md) for earlier evidence.
 
 ## Timing and tokens
 
@@ -82,7 +82,7 @@ Output variation is independent of quality scoring. Two different answers may bo
 
 ## Run artifacts
 
-`calls.csv` contains per-attempt identity, prompt/configuration IDs, repeat and cache-stratum labels, status, answer, timing, token usage and cost measurements. `metadata.json` stores machine/software conditions, input hashes, model identity, load events, settings, pricing and the schedule. Raw memory and power samples preserve the basis of derived values. Later review decisions will reference anonymous answer IDs with a separate hidden identity mapping.
+`calls.csv` contains per-attempt identity, prompt/configuration IDs, repeat and cache-stratum labels, status, answer, timing, token usage and cost measurements. `metadata.json` stores machine/software conditions, input hashes, model identity, load events, settings, pricing and the schedule. Raw memory and power samples preserve the basis of derived values. Review decisions reference anonymous answer IDs with a separate hidden identity mapping; exact duplicate prompt/answer pairs share one review and map back to all original calls.
 
 Record chip, CPU/GPU cores, RAM, macOS, LM Studio version, model file and quantisation, charger state, timestamp and readable thermal state. Missing thermal readings mean unavailable, not nominal. Secrets and machine serial numbers are not needed in run metadata.
 
@@ -140,8 +140,15 @@ The owner approved the separate cloud pass with `--no-energy`. Cloud client-side
 
 ## Cloud transient retry policy, 17 October 2026
 
-After the first cloud segment stopped on provider HTTP 503, the owner approved a collection-procedure change for the resumed cloud reference: retry HTTP 500/503 or streaming INTERNAL/UNAVAILABLE at most four additional times, waiting 10, 30, 90 and 270 seconds. Auth (401/403, UNAUTHENTICATED/PERMISSION_DENIED), quota (429/RESOURCE_EXHAUSTED) and billing (402/PAYMENT_REQUIRED) take precedence and stop immediately. Other errors and exhausted retries stop with retained evidence. This is a dated post-local-data procedure change, not a retrospective pre-registration amendment; quality, knee and variance rules are unchanged.
+After the first cloud segment stopped on provider HTTP 503, the owner approved a collection-procedure change for the resumed cloud reference: retry HTTP 500/503 or streaming UNAVAILABLE at most four additional times, waiting 10, 30, 90 and 270 seconds. Auth (401/403, UNAUTHENTICATED/PERMISSION_DENIED), quota (429/RESOURCE_EXHAUSTED) and billing (402/PAYMENT_REQUIRED) take precedence and stop immediately. Other errors and exhausted retries stop with retained evidence. This is a dated post-local-data procedure change, not a retrospective pre-registration amendment; quality, knee and variance rules are unchanged.
 
 Every HTTP attempt has raw request/response evidence and an atomic attempts manifest with timestamp, error, usage and latency. Failed bodies are retained separately before the next attempt. Reported successful-call latency and TTFT cover only that attempt, excluding backoff and earlier failures. Reports show additional retries and calls retried per configuration. Usage-based costs must include any reported usage from failed attempts; missing failed-attempt usage is unknown, not zero. An explicit resume after a prior failed checkpoint is distinct from an automatic in-call retry. Completed schedule slots are never repeated.
 
-The owner approved the source upgrade required for this resume. `--accept-cloud-retry-upgrade` admits only changes in the provider, runner, launcher and report files for a cloud resume; input/config/software checks remain. Original runtime identity is retained, with new source hashes and commit recorded per segment.
+The owner approved the source upgrade required for this resume. `--accept-cloud-retry-upgrade` admits only the pinned old/new source transitions in `docs/data/cloud-retry-upgrade-20261017.json`, limited to the provider, runner, launcher and report files for a cloud resume; input/config/software checks remain. Original runtime identity is retained, with new source hashes and commit recorded per segment.
+
+
+## Saved-run audit and blind scoring, 17 October 2026
+
+Run `PYTHONPATH=src .venv/bin/python scripts/audit_saved_runs.py --runs "runs/$(cat runs/LATEST-local)" "runs/$(cat runs/LATEST-cloud)" --output runs/audit-YYYYMMDD` for the private offline audit. It requires complete saved schedules, does not issue inference and does not change checkpoints. Costs include available failed-attempt usage; unknown failed-attempt costs remain explicit. Per-configuration variation counts exact text, including whitespace. Latency tables separate task types and show all-call and known swap-free distributions with counts. The audit applies the registered variance rule to every local adjacent step; summary conclusions remain pending human scores.
+
+Use [blind-review.md](blind-review.md) for preparation, browser scoring and strict score import. Human checks are bound to the original prompt, answer and rubric. Automatic criteria stay fixed. Rebuilding reports adds human scores without changing original checkpoint observations. Neither automated audit nor potential recommendations demonstrate that a production decision changed; assess the second kill criterion against actual owner decisions.
