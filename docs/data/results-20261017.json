@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "collection_dates": "2026-10-16 to 2026-10-17",
+  "sources": [
+    {
+      "run": "20261016T213431.178691Z-local",
+      "report_sha256": "32c0e3135c488d73f6bb3f5b2032befe235befb086866364110fc7cb3d6ee5b8"
+    },
+    {
+      "run": "20261017T082234.706092Z-cloud",
+      "report_sha256": "17301eb4256f349ed9c81469405436283900efa83f9df82ad24628220e903ec0"
+    }
+  ],
+  "cost_metric": "All-completed-call client latency, including swap-active calls; p50 points and p50-to-p95 whiskers",
+  "quality": "Primary registered score: mean repeats within prompt, then equal prompt weights. Summary includes max_words.",
+  "precision_order": [
+    "local-q8",
+    "local-q6",
+    "local-q4",
+    "local-q3"
+  ],
+  "tasks": {
+    "maths": {
+      "unique_prompts": 30,
+      "repeats": 5,
+      "calls_per_configuration": 150,
+      "points": [
+        {
+          "configuration_id": "local-q8",
+          "comparison_role": "quantisation_series",
+          "quality": 0.9,
+          "quality_fraction": "9/10",
+          "quality_without_max_words": null,
+          "latency_p50_s": 17.088508875000116,
+          "latency_p95_s": 33.694746832999954,
+          "calls": 150,
+          "swap_free_latency_p50_s": 15.923926542000117,
+          "swap_free_latency_p95_s": 29.42052529099965,
+          "swap_free_calls": 31
+        },
+        {
+          "configuration_id": "local-q6",
+          "comparison_role": "quantisation_series",
+          "quality": 0.9333333333333333,
+          "quality_fraction": "14/15",
+          "quality_without_max_words": null,
+          "latency_p50_s": 13.455828104000148,
+          "latency_p95_s": 28.70968054199966,
+          "calls": 150,
+          "swap_free_latency_p50_s": 12.688652625499799,
+          "swap_free_latency_p95_s": 27.926586458999736,
+          "swap_free_calls": 24
+        },
+        {
+          "configuration_id": "local-q4",
+          "comparison_role": "quantisation_series",
+          "quality": 0.9,
+          "quality_fraction": "9/10",
+          "quality_without_max_words": null,
+          "latency_p50_s": 10.48404189599978,
+          "latency_p95_s": 23.844196667000688,
+          "calls": 150,
+          "swap_free_latency_p50_s": 9.843503957999928,
+          "swap_free_latency_p95_s": 23.818214875000194,
+          "swap_free_calls": 109
+        },
+        {
+          "configuration_id": "local-q3",
+          "comparison_role": "quantisation_series",
+          "quality": 0.5666666666666667,
+          "quality_fraction": "17/30",
+          "quality_without_max_words": null,
+          "latency_p50_s": 10.575437208501171,
+          "latency_p95_s": 34.257147042000724,
+          "calls": 150,
+          "swap_free_latency_p50_s": 9.700945958999,
+          "swap_free_latency_p95_s": 34.09290545899967,
+          "swap_free_calls": 129
+        },
+        {
+          "configuration_id": "fairy-production",
+          "comparison_role": "production_reference",
+          "quality": 0.9333333333333333,
+          "quality_fraction": "14/15",
+          "quality_without_max_words": null,
+          "latency_p50_s": 10.450296062500456,
+          "latency_p95_s": 19.917619583000487,
+          "calls": 150,
+          "swap_free_latency_p50_s": 10.419520333000492,
+          "swap_free_latency_p95_s": 19.93444712499877,
+          "swap_free_calls": 132
+        },
+        {
+          "configuration_id": "cloud",
+          "comparison_role": "cloud_reference",
+          "quality": 0.98,
+          "quality_fraction": "49/50",
+          "quality_without_max_words": null,
+          "latency_p50_s": 3.8925229375017807,
+          "latency_p95_s": 9.152397083002143,
+          "calls": 150,
+          "swap_free_latency_p50_s": 3.877063915999315,
+          "swap_free_latency_p95_s": 8.975851000002876,
+          "swap_free_calls": 145
+        }
+      ]
+    },
+    "summarisation": {
+      "unique_prompts": 10,
+      "repeats": 5,
+      "calls_per_configuration": 50,
+      "points": [
+        {
+          "configuration_id": "local-q8",
+          "comparison_role": "quantisation_series",
+          "quality": 0.9019047619047619,
+          "quality_fraction": "947/1050",
+          "quality_without_max_words": 0.9233333333333333,
+          "latency_p50_s": 6.654041228999631,
+          "latency_p95_s": 9.631301958999757,
+          "calls": 50,
+          "swap_free_latency_p50_s": 6.366208875000666,
+          "swap_free_latency_p95_s": 9.077091958000892,
+          "swap_free_calls": 22
+        },
+        {
+          "configuration_id": "local-q6",
+          "comparison_role": "quantisation_series",
+          "quality": 0.8928571428571429,
+          "quality_fraction": "25/28",
+          "quality_without_max_words": 0.9233333333333333,
+          "latency_p50_s": 6.20961991650006,
+          "latency_p95_s": 8.152819208999972,
+          "calls": 50,
+          "swap_free_latency_p50_s": 6.140935041499915,
+          "swap_free_latency_p95_s": 8.104657791000136,
+          "swap_free_calls": 18
+        },
+        {
+          "configuration_id": "local-q4",
+          "comparison_role": "quantisation_series",
+          "quality": 0.8922619047619048,
+          "quality_fraction": "1499/1680",
+          "quality_without_max_words": 0.9233333333333333,
+          "latency_p50_s": 5.1481911250007215,
+          "latency_p95_s": 6.936702666000201,
+          "calls": 50,
+          "swap_free_latency_p50_s": 5.072877770499417,
+          "swap_free_latency_p95_s": 6.926091499999529,
+          "swap_free_calls": 40
+        },
+        {
+          "configuration_id": "local-q3",
+          "comparison_role": "quantisation_series",
+          "quality": 0.8261904761904761,
+          "quality_fraction": "347/420",
+          "quality_without_max_words": 0.81,
+          "latency_p50_s": 4.832911750000676,
+          "latency_p95_s": 7.39831333300026,
+          "calls": 50,
+          "swap_free_latency_p50_s": 4.83503704100076,
+          "swap_free_latency_p95_s": 7.39831333300026,
+          "swap_free_calls": 49
+        },
+        {
+          "configuration_id": "fairy-production",
+          "comparison_role": "production_reference",
+          "quality": 0.8946428571428572,
+          "quality_fraction": "501/560",
+          "quality_without_max_words": 0.929047619047619,
+          "latency_p50_s": 5.19124464549941,
+          "latency_p95_s": 6.804366125000342,
+          "calls": 50,
+          "swap_free_latency_p50_s": 5.16269120799916,
+          "swap_free_latency_p95_s": 6.804366125000342,
+          "swap_free_calls": 45
+        },
+        {
+          "configuration_id": "cloud",
+          "comparison_role": "cloud_reference",
+          "quality": 0.9457142857142857,
+          "quality_fraction": "331/350",
+          "quality_without_max_words": 0.9846666666666667,
+          "latency_p50_s": 3.4096394580010383,
+          "latency_p95_s": 8.016689999996743,
+          "calls": 50,
+          "swap_free_latency_p50_s": 3.4096394580010383,
+          "swap_free_latency_p95_s": 7.449210082995705,
+          "swap_free_calls": 48
+        }
+      ]
+    }
+  }
+}

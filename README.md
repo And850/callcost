@@ -6,7 +6,7 @@ CallCost is a Python command-line project comparing local models served by LM St
 
 ## Status
 
-Local and Gemini collection is complete, and exported blind human summary scores were imported on 17 October 2026. Saved-run reports include primary checklist quality, the separately labelled max_words sensitivity, answer variation, all-call and swap-free latency, and registered knee/variance checks. Measurement gaps and provider-billing reconciliation remain explicit. Numeric benchmark results and review artifacts remain private under runs/. Human review tooling is implemented; charts remain unfinished. Latest offline verification: 112 tests and Ruff pass. Follow [HANDOFF.md](docs/HANDOFF.md) for current state and permissions; no further inference is authorized.
+Local and Gemini collection, blind summary review and offline audit are complete. Results and two quality-versus-latency charts are published below using the registered scoring and knee rules. The maths knee is 4→3 bit; no summary knee was found. Practical usefulness criterion 2 remains unmet because no actual Fairy deployment decision has changed. Provider-billing reconciliation and the disclosed measurement gaps remain outstanding. Offline verification: 113 tests and Ruff pass. Follow [HANDOFF.md](docs/HANDOFF.md) for current state and permissions; no further inference is authorized. Raw answers and review artifacts remain private under runs/.
 
 The local family is Qwen3.5-9B in MLX format, with thinking off. The 3-, 4-, 6- and 8-bit variants have been independently converted from pinned official Qwen weights using mlx-lm 0.32.0 and group size 64. Each loads in LM Studio and passes a held-out thinking-off pilot. Fairy's existing 4-bit model is a fifth local configuration, labelled "Fairy's production model" and treated as a separate reference. See [model preparation](docs/model-preparation.md) for the inspected published candidates and conversion pins. The experiment config selects Gemini 3.8 Flash at thinking level low, with standard list prices checked on 15 October 2026. The 8-bit pilots had less than 1 GB available RAM, and sampled process RSS did not track total model memory; the collected run retains swapping as a configuration cost with explicit measurement limitations.
 
@@ -140,12 +140,56 @@ Energy is optional by default. If you want power measurement, run `sudo -v` your
 
 Before a full run, review the [completed preparation and its measurement limits](docs/model-preparation.md), use the registered weight proxy and check 8-bit headroom, fill in exact model identifiers and verified Gemini prices, fix the thinking setting, complete owner review of the ten invented-text summaries and their checklists, and validate the complete 40-prompt dataset. Credentials are read from environment variables and never committed.
 
-The committed [GSM8K sample](datasets/gsm8k/prompts.json) records original zero-based test-row indices. Rebuild it with `python3 scripts/prepare_gsm8k.py`. The [selection manifest](datasets/gsm8k/selection.json) pins the source commit, source SHA-256, row indices and stable hash-ranking procedure using seed 2027. Its upstream licence is retained alongside the sample. The ten Fairy-style prompts written for the benchmark (invented texts) are in `prompts/summarisation.yaml`. Owner review was confirmed on 15 October 2026. The ignored `prompts/private/full.yaml` contains all 40 approved prompts and passes the full-dataset guard, including pinned maths identity. The launcher validates this input; it does not merge files. Collection and imported-review status are recorded in HANDOFF.md; numeric results remain private.
+The committed [GSM8K sample](datasets/gsm8k/prompts.json) records original zero-based test-row indices. Rebuild it with `python3 scripts/prepare_gsm8k.py`. The [selection manifest](datasets/gsm8k/selection.json) pins the source commit, source SHA-256, row indices and stable hash-ranking procedure using seed 2027. Its upstream licence is retained alongside the sample. The ten Fairy-style prompts written for the benchmark (invented texts) are in `prompts/summarisation.yaml`. Owner review was confirmed on 15 October 2026. The ignored `prompts/private/full.yaml` contains all 40 approved prompts and passes the full-dataset guard, including pinned maths identity. The launcher validates this input; it does not merge files. Collection and imported-review status are recorded in HANDOFF.md; selected aggregate results are published below, while raw run artifacts remain private.
 
 Run artifacts and private prompt files are ignored by Git by default. Publish only deliberately selected artifacts.
 
+## Results (17 October 2026)
+
+**In short:** Maths quality drops sharply from 4 to 3 bit, while summaries show no registered knee. On this 16 GB Mac, 4 bit had lower median latency than 8 or 6 bit without the quality loss seen at 3 bit. Higher precision brought no meaningful quality gain on either task under the registered comparisons, while swapping occurred on most 8- and 6-bit calls. These findings are consistent with the registered hypothesis on this task set, but have not yet changed a real Fairy deployment decision.
+
+Collection on 16 and 17 October used one M1 Pro Mac with 16 GB RAM. Each configuration completed 150 measured maths calls (30 problems, five repeats) and 50 summary calls (10 invented texts, five repeats). Pilots and warm-ups are excluded. Repeated scores are averaged within each prompt before averaging across prompts; repeats do not increase the number of independent tasks.
+
+![Maths quality against all-call latency](docs/figures/quality-cost-maths.png)
+
+Maths: 30 independent problems × five repeats = 150 calls per configuration. The line connects 8→6→4→3 bit at median latency; each horizontal whisker runs from p50 to p95, not a confidence interval. Fairy and cloud are separate reference points outside the knee calculation. All completed calls, including swapping, contribute. The quality axis starts at 50%.
+
+![Summary quality against all-call latency](docs/figures/quality-cost-summarisation.png)
+
+Summaries: 10 independent prompts × five repeats = 50 calls per configuration, scored using one blinded human review and the automatic checklist checks. The primary score includes `max_words`. The line and whiskers use the same conventions as maths; the quality axis starts at 75%. Local thinking is off; cloud thinking is low. Cloud latency measures successful attempts and excludes failed attempts and retry waits.
+
+| Configuration | Maths accuracy | Summary primary, including max_words | Summary sensitivity, excluding max_words |
+| --- | ---: | ---: | ---: |
+| 8 bit | 90.00% | 90.19% | 92.33% |
+| 6 bit | 93.33% | 89.29% | 92.33% |
+| 4 bit | 90.00% | 89.23% | 92.33% |
+| 3 bit | 56.67% | 82.62% | 81.00% |
+| Fairy's production model | 93.33% | 89.46% | 92.90% |
+| Cloud reference | 98.00% | 94.57% | 98.47% |
+
+For maths, the registered quality-only knee is **4→3 bit**: accuracy drops 33.33 percentage points, compared with 3.33 points at the preceding step. Under the registered variance rule, 8→6 and 6→4 are indistinguishable: their latency interquartile ranges overlap and their quality gaps are under five points. The 4→3 step is distinguishable. Its median latency rises slightly, from 10.48 to 10.58 seconds, while encoded weight bytes fall 22.21%. Cost is not a knee gate, and these observations do not establish a roughly steady latency saving at every step. Of 150 measured 3-bit maths answers, 85 are correct, 20 are parseable but wrong and 45 have unparseable final answers; unparseable answers are not all demonstrated mathematical errors.
+
+For summaries, **no knee found** under the registered rule. Primary quality drops by 0.90, 0.06 and 6.61 percentage points across the three adjacent steps. The first two are indistinguishable under the variance rule; the last is distinguishable but does not reach the ten-point knee threshold. These are task-specific findings, not a general ranking of local and cloud inference.
+
+The registered hypothesis predicted task-dependent knees. Maths shows a knee at 4→3 bit, while summaries show none at the same step or elsewhere in this sequence. This is **consistent with the registered hypothesis on this task set**, not proof; the roughly steady cost-reduction part is not established. **Kill criterion 1 is not triggered:** the data do not show only smooth quality/cost declines without a knee, and the registered variance rule does not erase the maths knee. The indistinguishable higher-precision steps remain explicitly reported above.
+
+On this 16 GB Mac, 8- and 6-bit median latency exceeded 4 bit on both tasks, with no meaningful quality gain under the registered adjacent comparisons. Whole-machine swap activity occurred during **147/200 (73.5%)** measured 8-bit calls and **158/200 (79.0%)** 6-bit calls, compared with **51/200 (25.5%)** at 4 bit; all counters were known. By task, the shares were 79.3% maths / 56.0% summaries for 8 bit and 84.0% / 64.0% for 6 bit. Among the 8-, 6- and 4-bit levels, 4 bit had the lowest median latency on both tasks without the 3-bit quality loss. Three bit was faster on summaries but lost quality; its maths median was slightly slower than 4 bit. Swapping is part of the configuration cost on this Mac, but these whole-machine counters cannot prove that inference alone caused it or the latency difference.
+
+Cloud reliability: **16 of 203 completed cloud calls needed automatic retries for HTTP 503**, requiring 17 retry attempts. An earlier HTTP 503 also stopped the pass before the retry policy was added; that checkpoint was completed after resume. Thus there were 18 failed HTTP attempts in total, all retained, and all 203 slots ultimately completed (200 measured, one pilot and two warm-ups). None of the 1,015 local calls failed to respond (1,000 measured, five pilots and ten warm-ups). These are response-reliability counts, separate from answer correctness.
+
+Exact answer text varies across repeats despite temperature 0. No local configuration varies on the 30 maths problems; cloud varies on all 30. For summaries, the numbers of prompts with varying text are 2, 1, 3 and 0 out of 10 for 8, 6, 4 and 3 bit, respectively; Fairy varies on 0 and cloud on 10. Text variation does not necessarily change correctness. The saved audit reports all-call and swap-free latency side by side; the charts use the registered all-call view.
+
+**Prompt deviation, recorded 17 October:** the summary file from `6f6de97` ran with tight short-form instructions (mostly two or three sentences) and automatic length checks of 50 to 90 words. A longer-limit revision was intended but never committed or run. Every configuration received identical prompt content and checklist rules. The pre-registered score including `max_words` remains primary; the secondary column removes only that check and reweights the remaining criteria. It rescores existing answers and does not estimate answers to the intended longer prompts. No reruns were made.
+
+Interpretation is limited by 30 public maths problems, 10 invented summary texts, one human summary review by the project author without an inter-rater check, one device and separate local/cloud collection windows. Public GSM8K questions may have appeared in training. Thinking settings differ between local and cloud. Whole-machine swap can include background activity, and thermal conditions can affect latency. Energy is unavailable for 114 of 1,000 measured local calls because the timing-drift guard rejected samples during the long run; the shorter pre-check had valid samples. Sampled process memory is unavailable for 255 local calls because coverage was incomplete. These are measurement gaps, not zero costs. Cloud client energy was deliberately not reported because background noise dominates attribution; cloud server energy is outside scope. List-price costs exclude tax; provider billing and VAT applicability remain unreconciled.
+
+**Kill criterion 2 is currently unmet.** The registered criterion says: “If running the tool on Andrii's own projects changes no decision, with no model swapped, no quantisation changed and nothing moved between local and cloud, the tool has failed at its purpose and the README will say so.” No actual Fairy model, quantisation or local/cloud deployment decision has changed in the recorded evidence. The benchmark findings alone do not satisfy this practical-usefulness criterion.
+
+Chart sources are the [aggregate snapshot](docs/data/results-20261017.json), with saved-report hashes, and [offline plotting script](scripts/plot_results.py). Vector exports: [maths SVG](docs/figures/quality-cost-maths.svg), [summary SVG](docs/figures/quality-cost-summarisation.svg); print exports: [maths PDF](docs/figures/quality-cost-maths.pdf), [summary PDF](docs/figures/quality-cost-summarisation.pdf).
+
 ## Limitations
 
+- Review and prompt authorship: the single human summary reviewer is the project author, blinded to configuration labels during review. The summary prompts were drafted with an AI assistant. There is no independent reviewer or inter-rater agreement measurement.
 - Sample size: 30 maths problems and 10 summaries are a small task sample, and five repeats do not create five times as many independent problems.
 - Single device: results describe this Mac and do not support generalisation to other hardware.
 - Thermal throttling: a laptop's thermal and power state can change performance during a run despite controlled ordering and logged conditions.
@@ -167,16 +211,16 @@ API references: [LM Studio REST](https://lmstudio.ai/docs/developer/rest), [Gemi
 
 ## Milestones
 
-| Target | Deliverable |
+| Target | Deliverable and status |
 | --- | --- |
-| 25 October 2026 | LM Studio and Gemini runners, per-call CSV and run conditions. |
-| 8 November 2026 | p50/p95 aggregation, terminal table and blind review. |
-| 22 November 2026 | First real dataset results and charts. |
+| 25 October 2026 | Complete: LM Studio and Gemini runners, per-call CSV and run conditions, by 17 October. |
+| 8 November 2026 | Complete: p50/p95 aggregation, terminal table, blind review and offline audit, by 17 October. |
+| 22 November 2026 | Complete: first dataset results and charts, published 17 October. Provider-billing reconciliation remains pending. |
 | 29 November 2026 | WAICY submission deadline supplied by the project owner. |
 | 4 to 6 December 2026 | Finals and live Q&A dates supplied by the project owner. |
 | 15 December 2026 | Repository and chart freeze, with CI budget mode as the final implementation milestone. |
 
-Later charts will show quality against a named cost metric, with quantisation points connected within each model and a separate cloud reference point. Later CI mode will compare with a stored baseline from the previous commit and fail when a configured cost budget is exceeded.
+The published charts show quality against all-call latency, with the quantisation sequence connected and Fairy and cloud as separate reference points. Later CI mode will compare with a stored baseline from the previous commit and fail when a configured cost budget is exceeded.
 
 Non-goals: routing, Fairy integration, a GUI, multi-device support, cloud energy estimates and a full SCI implementation.
 

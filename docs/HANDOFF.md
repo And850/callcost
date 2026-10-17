@@ -1,3 +1,10 @@
+# Published charts and Results, 17 October 2026
+
+- Owner specified one chart per task: a connected 8→6→4→3 sequence at median all-call latency and primary quality, p50-to-p95 horizontal whiskers, bit labels, unconnected Fairy/cloud markers and sample sizes in captions.
+- Owner explicitly selected README results, docs/data/results-20261017.json and SVG/PDF/PNG figures in docs/figures for commit and push together on 17 October. Only selected aggregate benchmark results are published; raw run artifacts remain private. No raw answers or review identity are exported. No model calls or reruns occurred.
+- Offline generator: scripts/plot_results.py. Export from saved reports with --local-run and --cloud-run plus --export-only; render saved aggregate data with --data docs/data/results-20261017.json --output docs/figures using the optional plots dependency. SVG/PDF are native outputs; PNG previews were rasterised from SVG using existing bundled sharp, without downloads.
+- Results retain primary max_words scoring, dated deviation, registered per-step variance and task knees, measurement limitations and kill criterion 2 currently unmet. Owner-requested additions include the In short paragraph, qualified hypothesis outcome and criterion 1 not triggered, swap shares, cloud retry/local response reliability, author-reviewer and AI-assisted prompt limitations, and current Status/Milestones. Provider billing reconciliation remains outstanding.
+
 # Scored summary audit update, 17 October 2026
 
 - Owner exported Downloads/summary-scores.json and authorized import plus full summary audit. Strict import completed into both original pass directories. Private exact export copy and import-provenance.json are in runs/blind-review-20261017. Do not import again or overwrite the review.
