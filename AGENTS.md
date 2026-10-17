@@ -19,7 +19,7 @@ CallCost is a Python CLI that measures what one language-model call costs on And
 - Describe the summaries as "Fairy-style prompts written for the benchmark (invented texts)", not real Fairy usage. Do not send them to any model until Andrii confirms review.
 - Fairy is a separate project. Do not touch its code or build an integration here.
 - Missing observations are unavailable with reasons, never zero. Preserve failed/interrupted attempts and trace reported values to raw calls.
-- Do not use an LLM as the primary quality judge. Human scores remain pending until reviewed.
+- Initial 17 October results keep human scores primary permanently. The draft prospective exception in `docs/judge-preregistration.md` is not effective until owner approval, commit/push and held-out validation; only later-collected runs may then use an LLM as primary judge. Human scores stay pending until reviewed where that exception does not apply.
 - Temperature 0 does not guarantee GPU determinism. Retain and report answer variation across repeats.
 - Read credentials from the environment. Never print or commit API keys. Prices come from config, not provider-code constants.
 
@@ -45,6 +45,10 @@ The hypothesis, knee definition, variance rule and both kill criteria live in [R
 - 2026-10-17: Blind human summary review was completed by the project author with configuration labels hidden, then imported and checked. Disclose the single author-reviewer and AI-assisted summary prompt drafting; no independent reviewer or inter-rater measurement exists. No LLM was the primary quality judge.
 - 2026-10-17: Applying the frozen quality-only knee and variance rules gives maths a 4→3-bit knee and summaries no knee found. This is consistent with the registered hypothesis on this task set, not proof; cost reductions are not uniformly steady. Kill criterion 1 is not triggered. Kill criterion 2 remains unmet pending a Fairy-style maths test and an actual recorded production decision change; no new model calls are authorized by this log.
 - 2026-10-17: Owner selected aggregate results, charts and README for publication together in 70aab5d. Raw run/review artifacts stay private. Provider-billing reconciliation awaits the matching billed figure; VAT applicability is unconfirmed.
+
+- 2026-10-17: Owner refocuses CallCost on single-call energy first, then model GiB/swap, latency/money and secondary quality; the agreed plan is copied to docs/plan-2026-10-17.md. The configurator plan is superseded. Initial human scores and frozen experiment rules remain unchanged. App recommendations and new derived metrics are exploratory, not pre-registered. DeepEval/Gemini judge policy is a draft prospective exception only; no code, inference, downloads or system changes are authorized. The owner reviewed the week-1 drafts and authorizes small documentation commits/pushes after the requested corrections; CI budget mode and SCI units wait until after December.
+
+- 2026-10-17: Owner removes automatic-criterion G-Eval calls: validation proposal is 1,380 physical requests, with a hard monetary cap still awaiting owner confirmation after a prepaid-balance check. PrismML Ternary Bonsai 2 27B is a demo-only candidate outside the initial benchmark/knee sequence; compatibility, thinking controls and runtime caveats are planning items in docs/plan-2026-10-17.md. No download, model call or adapter code is authorized. Vendor benchmark numbers are not CallCost results.
 
 ## Key paths
 

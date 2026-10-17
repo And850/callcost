@@ -1,3 +1,10 @@
+# Refocus documentation review, 17 October 2026
+
+The owner supersedes the configurator plan with the energy/memory-first single-call plan copied to [plan-2026-10-17.md](plan-2026-10-17.md). This turn covers offline inventory and documentation only. Drafts: [cost inventory](cost-inventory-2026-10-17.md), README presentation refocus and prospective quality-policy amendment, and [judge pre-registration](judge-preregistration.md). No judge code, app code, calls, downloads or system changes; owner review now authorizes small documentation commits/pushes after the requested corrections. Initial scores, raw data, frozen experiment rules and published aggregate are unchanged. New derived metrics and app recommendations are exploratory, not pre-registered. Judge validation is not yet performed. Provider billing and actual Fairy decision criterion 2 remain pending. CI budget mode and SCI units are deferred until after December.
+
+- Owner corrections: drop all 930 automatic-criterion G-Eval checks; the revised proposal is 1,380 physical requests (480 development, 900 held-out). The monetary hard cap remains unset until the owner checks the prepaid balance and confirms it; no calls may start.
+- PrismML Ternary Bonsai 2 27B is an app-demo candidate only, outside the initial benchmark and knee sequence. Compatibility with LM Studio/PTQ1_0 or MLX, a possible PrismML server adapter and thinking controls are unverified planning items. No download or adapter code is authorized; vendor benchmarks are never CallCost results. See the updated plan.
+
 # Current state at chat close, 17 October 2026
 
 - Results, aggregate snapshot, both task charts, plotting code and README are committed and pushed together in 70aab5d. Latest verification: 113 tests and Ruff pass. Raw answers, checkpoints and review artifacts remain private and ignored.
@@ -97,7 +104,7 @@ Local: 1,015 calls (1,000 measured + five pilots + ten warm-ups), overnight. Clo
 
 Cloud smoke usage was 27 input, five visible output and 28 thinking tokens, 33 billable output. At configured USD 0.75/3.75 per million input/output, that is USD 0.000144 per smoke-size call, **USD 0.029232 for 203 such calls**. Actual benchmark inputs/answers are longer; this is a tiny-prompt list-price extrapolation, not the real cost or a spending cap. Owner confirmed paid prepaid billing. Tier 1 and model limits were verified in AI Studio, but a contradictory outstanding-balance warning remains a cloud-readiness blocker.
 
-Resume with `./scripts/run_full.sh --pass local --resume` or `--pass cloud --resume`; read the matching pointer/status/log first. `LATEST` tracks only the most recently touched run. Input/source changes refuse resume; completed checkpoints are never repeated. A cloud quota/rate-limit stop retains the attempt; resolve quota and obtain new-request approval before explicit resume. No automatic retry loop exists.
+Resume with `./scripts/run_full.sh --pass local --resume` or `--pass cloud --resume`; read the matching pointer/status/log first. `LATEST` tracks only the most recently touched run. Input/source changes refuse resume; completed checkpoints are never repeated. A cloud quota/rate-limit stop retains the attempt; resolve quota and obtain new-request approval before explicit resume. Historical 16 October policy, superseded by the 17 October HTTP 500/503 decision in `1b98743` above: quota/billing/auth failures still stop without retry; transient 500/503 may retry four times with 10/30/90/270-second waits.
 
 ## Existing evidence and caveats
 
@@ -107,7 +114,7 @@ Resume with `./scripts/run_full.sh --pass local --resume` or `--pass cloud --res
 - Four converted models had usable secondary samples in smoke; physical-footprint validation previously lacked complete 8-bit coverage. Exact encoded weights remain descriptive memory. Missing secondary metrics are valid unavailable observations with reasons.
 - `.venv/bin/callcost` contains an older installed package. Use current source with `PYTHONPATH=src .venv/bin/python -m callcost`; launcher sets this itself. No packages/downloads/system settings were changed.
 - Last known LM Studio mode was app `--run-as-service`. Standalone llmster discovery is tested offline but not live. Resume checks RAM before owned-instance recovery; explicitly unload a recorded leftover instance if needed, never someone else's model.
-- Real results target: 22 November 2026; WAICY submission: 29 November. Human summary review and charts remain needed after raw collection. CI budget mode is a later milestone.
+- Historical 16 October targets, updated 17 October: human summary review and charts are complete. The new 22 November target is the macOS WAICY app and recorded demo; submission remains 29 November. CI budget mode and SCI units are deferred until after December.
 
 - Exhausted prepaid balance now stops the whole cloud pass through the same durable `rate_limited`/no-retry path as quota errors, including HTTP 402 and PAYMENT_REQUIRED. Regression coverage includes depleted-balance responses. Verified: 86 tests and Ruff.
 - Tier verification via AI Studio is complete, but the Rate Limit page reports an outstanding-balance warning despite positive prepaid credit. Do not make payment/change billing automatically; cloud approval remains pending resolution. Browser used for verification was quit before the pre-check.

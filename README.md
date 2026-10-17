@@ -1,16 +1,28 @@
 # CallCost for LLMs
 
-Measure the cost of an LLM call on your own Mac alongside answer quality on your own tasks.
+Measure the hidden energy and memory cost of one LLM call on a constrained laptop.
 
-CallCost is a Python command-line project comparing local models served by LM Studio with a Google Gemini API reference. Each configuration identifies a model, an installed quantisation variant and where it runs. Costs remain separate quantities: latency, memory, payload bytes, list-price money and on-device energy.
+CallCost measures single calls on a 16 GB Mac, comparing installed LM Studio configurations with a Google Gemini reference. The priority is on-device energy per call, then model GiB and swap, then latency and money. Answer quality is a secondary constraint on useful work. Energy is an estimate, whole-machine delta for CPU + GPU + ANE, not per-process or cloud-server energy.
 
 ## Status
 
-Local and Gemini collection, blind summary review and offline audit are complete. Results and two quality-versus-latency charts are published below using the registered scoring and knee rules. The maths knee is 4→3 bit; no summary knee was found. Practical usefulness criterion 2 remains unmet because no actual Fairy deployment decision has changed. Provider-billing reconciliation and the disclosed measurement gaps remain outstanding. Offline verification: 113 tests and Ruff pass. Follow [HANDOFF.md](docs/HANDOFF.md) for current state and permissions; no further inference is authorized. Raw answers and review artifacts remain private under runs/.
+The initial 17 October collection, blind human summary review, offline audit and published charts are complete. Those human scores remain primary and will never be rescored. The registered maths knee is 4→3 bit; no summary knee was found. Kill criterion 2 remains unmet because no actual Fairy deployment decision has changed. Provider-billing reconciliation and disclosed measurement gaps remain outstanding. Last recorded offline verification: 113 tests and Ruff pass.
+
+**Presentation refocus, 17 October 2026, draft for review:** energy and memory now lead the presentation. This is not an amendment to the initial experiment. New priorities, recommendation rules and newly derived analyses are exploratory, not pre-registered. See the [agreed plan](docs/plan-2026-10-17.md), [saved-call cost inventory](docs/cost-inventory-2026-10-17.md) and [draft prospective judge protocol](docs/judge-preregistration.md). Week 1 is documentation and offline analysis here; no judge validation or app implementation has run. The WAICY target is a macOS local web app demo by 22 November. No model calls, downloads or system changes are authorized by this note; raw answers and review artifacts remain private under runs/.
 
 The local family is Qwen3.5-9B in MLX format, with thinking off. The 3-, 4-, 6- and 8-bit variants have been independently converted from pinned official Qwen weights using mlx-lm 0.32.0 and group size 64. Each loads in LM Studio and passes a held-out thinking-off pilot. Fairy's existing 4-bit model is a fifth local configuration, labelled "Fairy's production model" and treated as a separate reference. See [model preparation](docs/model-preparation.md) for the inspected published candidates and conversion pins. The experiment config selects Gemini 3.8 Flash at thinking level low, with standard list prices checked on 15 October 2026. The 8-bit pilots had less than 1 GB available RAM, and sampled process RSS did not track total model memory; the collected run retains swapping as a configuration cost with explicit measurement limitations.
 
 Fairy is a separate project. The initial summaries are Fairy-style prompts written for the benchmark (invented texts), not real Fairy usage. Fairy code and integration are outside this repository.
+
+## Scope
+
+Single calls in a fresh, empty chat: no conversation history, tools or context-length experiment. Existing requests do not carry earlier turns; conversation storage being off does not prove an empty server cache. These measurements represent single-task use. Longer chats may require more energy and memory, but were not measured; treating these results as a lower bound for chat use is a scope assumption, not an established numerical bound.
+
+The planned WAICY app reads this Mac's chip, RAM, available memory and swap; uses the existing maths or summary tasks and installed LM Studio models; probes and recommends a local model. It is not implemented yet. Planned modes are Quick (5 prompts × 2 repeats, labelled rough), Standard (10 × 3) and Full (30 × 5); Full requires a task set with 30 distinct prompts, so the current ten-summary set cannot fill it. Recommendations use quality within five percentage points of the best local candidate, then the lowest median energy; warn above 50% swapped calls. These defaults were chosen after seeing the 17 October data: exploratory, not pre-registered, and user-adjustable. Missing energy must be disclosed rather than treated as zero. Probes take minutes and energy needs sudo-backed powermetrics; the video will use an earlier or sped-up recording.
+
+New-run quality work is planned with DeepEval and a Gemini 3.8 Flash judge, subject to the prospective amendment and held-out validation below. Maths keeps deterministic exact-match scoring. The initial summaries were Fairy-style prompts written for the benchmark (invented texts); existing summary datasets and evaluation frameworks such as DeepEval were not used in those results.
+
+**Dated operational clarification, 17 October 2026:** the 16 October separate-pass amendment below stops quota/rate-limit errors without retries. The later decision in `1b98743`, also recorded in AGENTS.md and HANDOFF.md, permits four extra HTTP 500/503 attempts with 10/30/90/270-second waits. Auth, billing and quota errors still stop immediately. This note clarifies operations without rewriting the frozen pre-registration text.
 
 ## Hypothesis
 
@@ -146,9 +158,31 @@ Run artifacts and private prompt files are ignored by Git by default. Publish on
 
 ## Results (17 October 2026)
 
-**In short:** Maths quality drops sharply from 4 to 3 bit, while summaries show no registered knee. On this 16 GB Mac, 4 bit had lower median latency than 8 or 6 bit without the quality loss seen at 3 bit. Higher precision brought no meaningful quality gain on either task under the registered comparisons, while swapping occurred on most 8- and 6-bit calls. These findings are consistent with the registered hypothesis on this task set, but have not yet changed a real Fairy deployment decision.
+**In short:** On this 16 GB Mac, 8-bit and 6-bit swapped on 73.5% and 79.0% of measured calls, compared with 25.5% at 4 bit, and were slower than 4 bit without a meaningful quality gain under the registered adjacent comparisons. Whole-machine counters cannot prove inference alone caused the swapping or latency differences. Four bit has the lowest observed median energy among quality-eligible local configurations for both tasks, but missing 6-bit energy prevents a definitive full-data recommendation. These are initial single-call results, with unchanged human summary scores; no real Fairy deployment decision has changed.
 
 Collection on 16 and 17 October used one M1 Pro Mac with 16 GB RAM. Each configuration completed 150 measured maths calls (30 problems, five repeats) and 50 summary calls (10 invented texts, five repeats). Pilots and warm-ups are excluded. Repeated scores are averaged within each prompt before averaging across prompts; repeats do not increase the number of independent tasks.
+
+On this 16 GB Mac, 8- and 6-bit median latency exceeded 4 bit on both tasks, with no meaningful quality gain under the registered adjacent comparisons. Whole-machine swap activity occurred during **147/200 (73.5%)** measured 8-bit calls and **158/200 (79.0%)** 6-bit calls, compared with **51/200 (25.5%)** at 4 bit; all counters were known. By task, the shares were 79.3% maths / 56.0% summaries for 8 bit and 84.0% / 64.0% for 6 bit. Among the 8-, 6- and 4-bit levels, 4 bit had the lowest median latency on both tasks without the 3-bit quality loss. Three bit was faster on summaries but lost quality; its maths median was slightly slower than 4 bit. Swapping is part of the configuration cost on this Mac, but these whole-machine counters cannot prove that inference alone caused it or the latency difference.
+
+Cloud reliability: **16 of 203 completed cloud calls needed automatic retries for HTTP 503**, requiring 17 retry attempts. An earlier HTTP 503 also stopped the pass before the retry policy was added; that checkpoint was completed after resume. Thus there were 18 failed HTTP attempts in total, all retained, and all 203 slots ultimately completed (200 measured, one pilot and two warm-ups). None of the 1,015 local calls failed to respond (1,000 measured, five pilots and ten warm-ups). These are response-reliability counts, separate from answer correctness.
+
+### Energy and memory first, exploratory presentation on 17 October 2026
+
+The [cost inventory](docs/cost-inventory-2026-10-17.md) gives energy p50/p95, availability and reasons, weight GiB and sampled footprint coverage, per-task swap, all-call/swap-free latency, payloads and money for all six configurations, with source file paths. The metrics retain their original measurement definitions; the new presentation and recommendation are exploratory, not pre-registered.
+
+| Local configuration | Weight GiB | Maths energy median / p95 J (available / 150) | Summary energy median / p95 J (available / 50) |
+| --- | ---: | ---: | ---: |
+| 8 bit | 8.8610 | 263.42 / 507.74 (150) | 119.12 / 162.93 (50) |
+| 6 bit | 6.7765 | 316.88 / 654.02 (65) | 149.51 / 197.92 (21) |
+| 4 bit | 4.6920 | 213.47 / 481.93 (150) | 109.41 / 141.38 (50) |
+| 3 bit | 3.6498 | 231.60 / 761.11 (150) | 107.91 / 163.52 (50) |
+| Fairy's production model | 5.5414 | 225.26 / 425.55 (150) | 112.74 / 147.51 (50) |
+
+Energy is **estimate, whole-machine delta**, CPU + GPU + ANE above a loaded idle baseline. Cloud energy and local weight/footprint are unavailable, not zero; cloud-server energy is outside scope. Q6 lost 85 maths and 29 summary energy observations to the collector guard. GiB is an exploratory conversion of descriptive encoded weight bytes, not runtime peak memory; Fairy includes vision weights. Footprint coverage and uncertainty are in the inventory.
+
+Applying the app's post-data rule selects 4 bit on observed energy for both tasks; 3 bit falls outside the five-point quality band. Four bit has no >50% swap warning on either task. Excluding incomplete q6 energy leaves that observed pick unchanged, but the missing majority could change q6's full-sample median. This is a provisional check, not an actual Fairy deployment decision or a satisfied kill criterion 2.
+
+### Registered secondary quality and knee findings, unchanged
 
 ![Maths quality against all-call latency](docs/figures/quality-cost-maths.png)
 
@@ -173,10 +207,6 @@ For summaries, **no knee found** under the registered rule. Primary quality drop
 
 The registered hypothesis predicted task-dependent knees. Maths shows a knee at 4→3 bit, while summaries show none at the same step or elsewhere in this sequence. This is **consistent with the registered hypothesis on this task set**, not proof; the roughly steady cost-reduction part is not established. **Kill criterion 1 is not triggered:** the data do not show only smooth quality/cost declines without a knee, and the registered variance rule does not erase the maths knee. The indistinguishable higher-precision steps remain explicitly reported above.
 
-On this 16 GB Mac, 8- and 6-bit median latency exceeded 4 bit on both tasks, with no meaningful quality gain under the registered adjacent comparisons. Whole-machine swap activity occurred during **147/200 (73.5%)** measured 8-bit calls and **158/200 (79.0%)** 6-bit calls, compared with **51/200 (25.5%)** at 4 bit; all counters were known. By task, the shares were 79.3% maths / 56.0% summaries for 8 bit and 84.0% / 64.0% for 6 bit. Among the 8-, 6- and 4-bit levels, 4 bit had the lowest median latency on both tasks without the 3-bit quality loss. Three bit was faster on summaries but lost quality; its maths median was slightly slower than 4 bit. Swapping is part of the configuration cost on this Mac, but these whole-machine counters cannot prove that inference alone caused it or the latency difference.
-
-Cloud reliability: **16 of 203 completed cloud calls needed automatic retries for HTTP 503**, requiring 17 retry attempts. An earlier HTTP 503 also stopped the pass before the retry policy was added; that checkpoint was completed after resume. Thus there were 18 failed HTTP attempts in total, all retained, and all 203 slots ultimately completed (200 measured, one pilot and two warm-ups). None of the 1,015 local calls failed to respond (1,000 measured, five pilots and ten warm-ups). These are response-reliability counts, separate from answer correctness.
-
 Exact answer text varies across repeats despite temperature 0. No local configuration varies on the 30 maths problems; cloud varies on all 30. For summaries, the numbers of prompts with varying text are 2, 1, 3 and 0 out of 10 for 8, 6, 4 and 3 bit, respectively; Fairy varies on 0 and cloud on 10. Text variation does not necessarily change correctness. The saved audit reports all-call and swap-free latency side by side; the charts use the registered all-call view.
 
 **Prompt deviation, recorded 17 October:** the summary file from `6f6de97` ran with tight short-form instructions (mostly two or three sentences) and automatic length checks of 50 to 90 words. A longer-limit revision was intended but never committed or run. Every configuration received identical prompt content and checklist rules. The pre-registered score including `max_words` remains primary; the secondary column removes only that check and reweights the remaining criteria. It rescores existing answers and does not estimate answers to the intended longer prompts. No reruns were made.
@@ -189,6 +219,7 @@ Chart sources are the [aggregate snapshot](docs/data/results-20261017.json), wit
 
 ## Limitations
 
+- Initial summary evaluation: the texts were invented; existing summary datasets and evaluation frameworks such as DeepEval were not used. DeepEval has not yet been installed or validated for new runs.
 - Review and prompt authorship: the single human summary reviewer is the project author, blinded to configuration labels during review. The summary prompts were drafted with an AI assistant. There is no independent reviewer or inter-rater agreement measurement.
 - Sample size: 30 maths problems and 10 summaries are a small task sample, and five repeats do not create five times as many independent problems.
 - Single device: results describe this Mac and do not support generalisation to other hardware.
@@ -218,11 +249,13 @@ API references: [LM Studio REST](https://lmstudio.ai/docs/developer/rest), [Gemi
 | 22 November 2026 | Complete: first dataset results and charts, published 17 October. Provider-billing reconciliation remains pending. |
 | 29 November 2026 | WAICY submission deadline supplied by the project owner. |
 | 4 to 6 December 2026 | Finals and live Q&A dates supplied by the project owner. |
-| 15 December 2026 | Repository and chart freeze, with CI budget mode as the final implementation milestone. |
+| 18 to 24 October 2026 | Refocus documentation and judge pre-registration; validation requires separate approval. |
+| 22 November 2026 | New target: macOS web app, slides and recorded WAICY demo. |
+| 15 December 2026 | Repository and chart freeze. CI budget mode and SCI units are deferred until after December. |
 
-The published charts show quality against all-call latency, with the quantisation sequence connected and Fairy and cloud as separate reference points. Later CI mode will compare with a stored baseline from the previous commit and fail when a configured cost budget is exceeded.
+The published charts show quality against all-call latency, with the quantisation sequence connected and Fairy and cloud as separate reference points. CI budget mode and SCI units are outside the current plan until after December.
 
-Non-goals: routing, Fairy integration, a GUI, multi-device support, cloud energy estimates and a full SCI implementation.
+Current non-goals: self-built configurator, Fairy integration, model downloads, Windows/Linux support, tool use, long contexts, user-defined tasks, cloud energy estimates and a full SCI implementation. A local macOS web page recommending installed models is planned; it is not automatic production routing.
 
 ## Licence
 
@@ -248,7 +281,7 @@ The configured standard prices are USD 0.75 per million input tokens and USD 3.7
 
 ## Resuming after a run
 
-Read `runs/LATEST`, then the named run's `status.json`, then `run.log`. The held-out launcher smoke and interruption/resume test passed; follow [HANDOFF.md](docs/HANDOFF.md) before the first full run. LATEST may not exist yet. Resume local with `./scripts/run_full.sh --pass local --resume`, or cloud with `./scripts/run_full.sh --pass cloud --resume`. Read `runs/LATEST-local` or `runs/LATEST-cloud` first; `runs/LATEST` is only the most recently touched run. To produce a saved-run report without inference, from the repository root run:
+The initial local and cloud passes are complete; do not resume them or repeat completed calls. For any separately authorized future resume, read the matching `runs/LATEST-local` or `runs/LATEST-cloud`, then that run's `status.json` and `run.log`; follow [HANDOFF.md](docs/HANDOFF.md). Resume local with `./scripts/run_full.sh --pass local --resume`, or cloud with `./scripts/run_full.sh --pass cloud --resume`. Read `runs/LATEST-local` or `runs/LATEST-cloud` first; `runs/LATEST` is only the most recently touched run. To produce a saved-run report without inference, from the repository root run:
 
 ```sh
 PYTHONPATH=src .venv/bin/python -m callcost report --run "runs/$(cat runs/LATEST)"
@@ -267,6 +300,12 @@ The cloud reference smoke used 27 input tokens, five visible output tokens and 2
 
 After the owner says billing is enabled, verify in Google AI Studio that the environment key belongs to the intended project, that project's paid plan/usage tier and active model limits, and the actual spend-cap setting. Record the project/tier/limits, evidence source and check time without storing the secret key before cloud approval. A model-metadata GET or a successful inference is not proof of a paid tier. See [Google billing](https://ai.google.dev/gemini-api/docs/billing), [key/project association](https://ai.google.dev/gemini-api/docs/api-key) and [active rate limits](https://ai.google.dev/gemini-api/docs/rate-limits). An [alerts-only budget](https://docs.cloud.google.com/billing/docs/how-to/budgets) does not itself cap spending; verify an actual [spend-cap budget](https://docs.cloud.google.com/billing/docs/how-to/budgets-spend-caps) if available for the project/account.
 
-HTTP 402/429 or `PAYMENT_REQUIRED`/`RESOURCE_EXHAUSTED` (including exhausted prepaid balance) stops cloud collection with `rate_limited` status and a retained failed checkpoint/raw response. There is no automatic retry loop. Resolve quota/billing/rate limits, obtain approval for any new request, then resume explicitly. Never rerun completed checkpoints.
+HTTP 402/429 or `PAYMENT_REQUIRED`/`RESOURCE_EXHAUSTED` (including exhausted prepaid balance) stops cloud collection with `rate_limited` status and a retained failed checkpoint/raw response. These errors are not retried. The 17 October decision in `1b98743` separately permits up to four retries for HTTP 500/503, with retained attempts and 10/30/90/270-second waits. Resolve quota/billing/rate limits, obtain approval for any new request, then resume explicitly. Never rerun completed checkpoints.
 
 The authorized pre-check after the owner's clean restart is `sudo -v && ./scripts/run_full.sh --precheck`. It performs only three held-out calls each on local-q8/local-q3, idle swap diagnostics and required energy validation. It cannot start a full pass or send any benchmark prompt. Keep the Terminal and lid open; enter the sudo password only in Terminal. Pre-check and full-pass permissions remain separate.
+
+## Prospective quality-policy amendment, 17 October 2026 (draft, not effective)
+
+For runs collected after this amendment is approved, committed and pushed, an LLM judge may become the primary evaluator of human-type summary checklist items only after held-out validation under [judge-preregistration.md](docs/judge-preregistration.md). Required unweighted Cohen's kappa is at least 0.6; raw agreement is secondary. Cloud-answer agreement is assessed separately because Gemini 3.8 Flash also generated the cloud reference answers. If that stratum fails, it remains human-scored. Failed or undefined metric validation means summaries remain human-scored and the app demo uses maths only.
+
+This prospective exception supersedes the no-primary-LLM-judge rule only for eligible future runs. It does not change the original pre-registration, hypothesis, knee, variance or kill criteria. The 17 October initial results and human scores will never be rescored or replaced. Using copies of those answers to validate a judge is a separate validation experiment, not a new score for the initial results. Exact maths and existing automatic checks remain deterministic. No model calls are authorized by this draft.
