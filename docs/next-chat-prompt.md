@@ -1,0 +1,17 @@
+We are continuing CallCost after the session of 17 October 2026.
+
+Work only in `/Users/andreyryzhanskiy/Documents/CallCost/callcost`, GitHub `And850/callcost`, branch `main`. The parent folder now contains only this clone.
+
+Read `AGENTS.md` first, then `PLAN.md`, then the files they point to that establish the current state and next task: `docs/preregistration.md`, `docs/judge-preregistration.md`, the latest dated entries in `docs/log.md`, `results/README.md`, `results/2026-10-17-initial/README.md` and `results/2026-10-17-initial/cost-inventory.md`. Read the linked methodology, model-preparation and blind-review documents before making related changes. Archived plans are history; PLAN.md is the single current plan.
+
+Verify live HEAD, branch, origin/main and working-tree status. The reviewed baseline before the handoff commit was `97011111d993022ea7604a1c62da0e55355396b3`; the docs-only handoff commit is identified by `git log -1 --format=%H -- docs/next-chat-prompt.md`. Last verified: 113 tests passed, zero Ruff violations. A new chat must distinguish saved verification from checks it runs itself.
+
+CallCost's thesis is single-call energy first, then memory (GiB and swap), latency and money, with quality secondary. Scope is fresh, empty chats. The initial 17 October human scores, raw data, registered rules and knee findings are frozen. No rescoring, reruns or reconstruction of missing measurements. New post-data analyses are exploratory, not pre-registered. Preserve the compatibility symlinks in `docs/docs/`.
+
+Pending: the matching billed Gemini figure and VAT reconciliation; the judge hard monetary cap is unset; judge validation awaits explicit approval and has not run; no judge implementation or pinned executable manifest exists; the probe/recommendation engine and macOS web app have not started; Bonsai compatibility/thinking/runtime checks are plan only, with no download approved. Kill criterion 2 remains unmet. The owner is considering a dated deferral note, but none is adopted; do not change the frozen criterion or claim it is met.
+
+Current authorizations: docs and code edits, short offline checks, and small commits and pushes using normal git commands are allowed. No model calls, downloads, installs, system-setting changes or runs longer than a few minutes without explicit owner approval. Never publish private runs or credentials automatically. A plan or handoff command does not authorize execution.
+
+The next task, once the owner says to proceed, is to prepare the pinned judge manifest and implementation plan for review before any call. Follow `docs/judge-preregistration.md`: Gemini 3.8 Flash, low thinking, temperature 0; G-Eval on human-type criteria only; Hallucination compared with faithful; fixed prompt-level development/held-out split; held-out Cohen's kappa >= 0.6 and separate cloud checks. The proposal is 1,380 physical requests, not authorization to spend. Fix and hash the exact templates, settings, dependencies and split before approved evaluation. Do not invent package or prompt hashes; if downloads/installs are needed to finish pinning, obtain approval first. Keep judge outputs separate from the original benchmark scores.
+
+For this opening turn, read and report a short status first: completed work, pending items, any contradictions, and live Git state. Do not edit files, implement the judge, commit, push or make model calls yet. Then wait for the owner's next instruction.
