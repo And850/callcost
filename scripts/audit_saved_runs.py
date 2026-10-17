@@ -23,6 +23,7 @@ def audit(runs, output):
     lines = ['# Saved-run audit', '', 'Preliminary until blind summary review and measurement audit are complete.', '',
              '| Configuration | Maths correct / 150 | Wrong, parseable | Unparseable | Varying maths / 30 | Varying summaries / 10 |',
              '| --- | --- | --- | --- | --- | --- |']
+    summary_scores = []
     latency = []
     q3_format_cases = defaultdict(list)
     for run in runs:
@@ -55,6 +56,9 @@ def audit(runs, output):
               failed_checkpoint_attempts=sum(r['status'] != 'completed' for r in rows),
               automatic_retry_attempts=retry_count, retry_summary=report.get('retry_summary'),
               historical_errors=meta['errors']))
+        summary_scores.extend(dict(configuration_id=g['configuration_id'], primary=g['quality'],
+                                   without_max_words=g['quality_without_max_words'])
+                              for g in report['groups'] if g['task_type'] == 'summarisation' and g['cache_stratum'] == 'all')
         for config in meta['config']['configurations']:
             cid = config['id']
             cr = [r for r in done if r['configuration_id'] == cid]
@@ -92,6 +96,17 @@ def audit(runs, output):
                 result['variance'].append(dict(task=finding['task_type'], **step,
                     upper_latency_iqr=[a['latency_s']['q1'], a['latency_s']['q3']],
                     lower_latency_iqr=[b['latency_s']['q1'], b['latency_s']['q3']]))
+    result['summary_length_sensitivity'] = summary_scores
+    lines += ['', 'Summary scores: primary and post-collection max_words sensitivity.',
+              'Primary including max_words alone supplies registered knee/variance quality. '
+              'Secondary excludes only max_words and retains equal prompt weights. Human scores remain pending where unavailable.', '',
+              '| Configuration | Primary, including max_words | Secondary, excluding max_words |',
+              '| --- | --- | --- |']
+    for summary in summary_scores:
+        def quality_cell(q):
+            return 'pending human review / unavailable' if q['score'] is None else f'{100*q["score"]:.1f}%'
+        lines.append(f'| {summary["configuration_id"]} | {quality_cell(summary["primary"])} | '
+                     f'{quality_cell(summary["without_max_words"])} |')
     lines += ['', 'Latency: all completed measured calls versus known swap-free calls, seconds.', '',
               '| Configuration | Task | All p50 / p95 (n) | Swap-free p50 / p95 (n) |', '| --- | --- | --- | --- |']
     for cid, task, a, b in latency:

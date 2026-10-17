@@ -77,13 +77,21 @@ def score_answer(prompt, answer, human_checks=None):
             'parseable': None, 'checks': checks}
 
 
-def quality(rows, prompts):
+def quality(rows, prompts, *, exclude_max_words=False):
     if not prompts:
         return {'score': None, 'reason': 'Scoring rules unavailable'}
     grouped = defaultdict(list)
     scores = []
     for row in rows:
         result = score_answer(prompts[row['prompt_id']], row['answer'], row.get('human_checks'))
+        if exclude_max_words and prompts[row['prompt_id']]['scoring']['type'] == 'checklist':
+            excluded = {item['id'] for item in prompts[row['prompt_id']]['scoring']['items']
+                        if (item.get('automatic') or {}).get('type') == 'max_words'}
+            checks = {key: value for key, value in result['checks'].items() if key not in excluded}
+            exact = None if not checks or None in checks.values() else Fraction(sum(checks.values()), len(checks))
+            result = dict(result, checks=checks, excluded_checks=sorted(excluded),
+                          score=None if exact is None else float(exact),
+                          score_fraction=None if exact is None else str(exact))
         scores.append(dict(call_id=row['call_id'], prompt_id=row['prompt_id'], **result))
         grouped[row['prompt_id']].append(None if result['score_fraction'] is None else Fraction(result['score_fraction']))
     complete = all(p in grouped and all(v is not None for v in grouped[p]) for p in prompts)
@@ -140,7 +148,9 @@ def aggregate(rows, prompts=None, phase='measured', configurations=None):
                            **{k: v for k, v in swap_summary(calls).items() if k != 'swap_volume_bytes'},
                            swap_free_latency_s=dict(distribution(r.get('latency_s') for r in swap_free),
                                                    unavailable_reason=None if swap_free else 'No calls with known zero swap-in and swap-out'),
-                           quality=quality(calls, task_prompts), **summary(calls),
+                           quality=quality(calls, task_prompts),
+                           quality_without_max_words=quality(calls, task_prompts, exclude_max_words=True)
+                               if task == 'summarisation' else None, **summary(calls),
                            knee_eligible=dict(calls=len(eligible), quality=quality(eligible, task_prompts), **summary(eligible)),
                            call_ids=[r['call_id'] for r in calls],
                            knee_eligible_call_ids=[r['call_id'] for r in eligible]))
@@ -270,6 +280,7 @@ def report_run(directory):
                   energy_scope='estimate, whole-machine delta; CPU + GPU + ANE; client device only',
                   failed_attempts=sum(r['status'] != 'completed' for r in rows), groups=groups,
                   knee=findings, variation=metadata.get('variation'),
+                  summary_scoring_policy='Primary: pre-registered checklist including max_words. Secondary: post-collection sensitivity excluding max_words only; all other criteria and equal prompt weights retained. Knee/variance use primary only.',
                   analysis_policy='2026-10-16: all completed calls; all-call latency primary; swap-free latency secondary',
                   configuration_swap=[dict(configuration_id=c['id'], **swap_summary(
                       [r for r in rows if r['phase'] == phase and r['status'] == 'completed' and r['configuration_id'] == c['id']]))
@@ -307,6 +318,16 @@ def report_run(directory):
                      f'{pair(g,"latency_s")} | {pair(g,"swap_free_latency_s")} | {pair(g,"ttft_s")} | '
                      f'{pair(g,"loaded_weight_bytes",1e9)} | {pair(g,"memory_peak_footprint_bytes",1e9)} | '
                      f'{pair(g,"memory_peak_rss_bytes",1e9)} | {pair(g,"energy_j")} |')
+    summary_groups = [g for g in groups if g['task_type'] == 'summarisation' and g['cache_stratum'] == 'all']
+    if summary_groups:
+        lines += ['', 'Summary scores: primary and length-check sensitivity (deviation note, 17 October 2026).',
+                  'Primary includes the pre-registered max_words check and alone supplies knee/variance quality. '
+                  'Secondary removes only max_words, reweights remaining criteria within each prompt, then retains equal prompt weighting. '
+                  'Sentence instructions and all other checks remain. Both scores await any pending human checks.',
+                  '| Configuration | Primary, including max_words | Secondary, excluding max_words |',
+                  '| --- | --- | --- |']
+        for g in summary_groups:
+            lines.append(f'| {g["configuration_id"]} | {score(g["quality"])} | {score(g["quality_without_max_words"])} |')
     lines += ['', '| Configuration / task / cache | Input tokens | Visible output tokens | Thinking tokens | Billable output tokens | Decode tokens/s | Request bytes | Response bytes | List-price equivalent |',
               '| --- | --- | --- | --- | --- | --- | --- | --- | --- |']
     for g in groups:

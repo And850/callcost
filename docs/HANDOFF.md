@@ -1,3 +1,9 @@
+# Summary protocol deviation update, 17 October 2026
+
+- Owner identified that the intended later relaxed-length revision was never committed/run. README records what ran (6f6de97 tight summary instructions and 50-90-word max_words scoring checks), what was intended and identical prompts/rubrics across all configurations.
+- Do not edit prompts/summarisation.yaml or rerun inference. Primary summary scores retain max_words; secondary quality_without_max_words drops only that automatic criterion and reweights the remaining criteria, retaining equal prompt weights. Knee/variance remain primary-only.
+- Blind review remains in progress with its original packet and IDs unchanged. Both score columns stay unavailable until the human criteria are imported, then populate automatically on report regeneration.
+
 # Billing reconciliation update, 17 October 2026
 
 - Owner requests all saved Gemini usage across the repo, tax clarification and a provider-billed placeholder. No model calls are authorized or needed for this work.

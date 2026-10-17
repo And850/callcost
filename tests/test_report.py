@@ -206,3 +206,50 @@ def test_report_counts_durable_http_retries_by_configuration(tmp_path):
     assert record['retries'] == 2 and record['calls_retried'] == 1
     assert record['failed_http_attempts'] == 2 and record['usage_cost_unknown_attempts'] == 2
     assert 'retries' in text
+
+
+def test_summary_length_sensitivity_reweights_retained_checks_and_prompts():
+    from copy import deepcopy
+    from fractions import Fraction
+
+    prompts = {
+        'a': {'scoring': {'type': 'checklist', 'items': [
+            {'id': 'length', 'automatic': {'type': 'max_words', 'value': 1}},
+            {'id': 'mention', 'automatic': {'type': 'substring', 'value': 'two'}},
+            {'id': 'faithful', 'human': True}]}},
+        'b': {'scoring': {'type': 'checklist', 'items': [
+            {'id': 'length', 'automatic': {'type': 'max_words', 'value': 10}},
+            {'id': 'faithful', 'human': True}]}}}
+    rows = [dict(call_id=str(i), prompt_id='a', answer='two words',
+                 human_checks={'length': False, 'mention': True, 'faithful': True}) for i in range(3)]
+    rows.append(dict(call_id='b', prompt_id='b', answer='short', human_checks={'length': True, 'faithful': False}))
+    before = deepcopy((rows, prompts))
+    primary = quality(rows, prompts)
+    secondary = quality(rows, prompts, exclude_max_words=True)
+    assert primary['score_fraction'] == str(Fraction(7, 12))
+    assert secondary['score_fraction'] == '1/2'
+    assert 'length' not in secondary['call_scores'][0]['checks']
+    assert (rows, prompts) == before
+
+
+def test_summary_sensitivity_does_not_invent_pending_human_scores():
+    prompts = {'a': {'scoring': {'type': 'checklist', 'items': [
+        {'id': 'length', 'automatic': {'type': 'max_words', 'value': 1}},
+        {'id': 'faithful', 'human': True}]}}}
+    rows = [dict(call_id='c', prompt_id='a', answer='two words')]
+    assert quality(rows, prompts, exclude_max_words=True)['score'] is None
+    only_length = {'a': {'scoring': {'type': 'checklist', 'items': [prompts['a']['scoring']['items'][0]]}}}
+    assert quality(rows, only_length, exclude_max_words=True)['score'] is None
+
+
+def test_summary_group_keeps_primary_and_secondary_separate():
+    from callcost.report import aggregate
+    prompt = dict(id='s', task_type='summarisation', scoring={'type': 'checklist', 'items': [
+        {'id': 'length', 'automatic': {'type': 'max_words', 'value': 1}},
+        {'id': 'present', 'automatic': {'type': 'substring', 'value': 'two'}}]})
+    row = dict(call_id='c', phase='measured', status='completed', configuration_id='q4',
+               task_type='summarisation', prompt_id='s', cache_stratum='first_appearance', answer='two words')
+    group = next(g for g in aggregate([row], [prompt]) if g['cache_stratum'] == 'all')
+    assert group['quality']['score'] == .5
+    assert group['quality_without_max_words']['score'] == 1
+    assert group['knee_eligible']['quality']['score'] == .5

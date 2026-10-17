@@ -188,6 +188,14 @@ MIT. See [LICENSE](LICENSE). Third-party datasets retain their own licence notic
 
 `prompts/summarisation.yaml` contains ten Fairy-style prompts written for the benchmark (invented texts). Andrii confirmed review on 15 October 2026; the approved file is committed unchanged. These prompts have not been sent to any model. The full benchmark still requires separate approval. `max_words` counts whitespace-separated words with `len(answer.split())` and passes when the count is at most the integer limit. Regex checks accept `pattern` as an input alias for `value`. Automatic checks prefill only what they establish; human checklist items remain pending.
 
+### Summarisation protocol deviation, 17 October 2026
+
+What ran: `prompts/summarisation.yaml` as committed in `6f6de97`, with tight short-form instructions (mostly two or three sentences) and automatic `max_words` checklist limits of 50 to 90 words. These word limits are scoring criteria; the transmitted instructions retain their original wording. The prompt file and both runs' saved summary prompts/rubrics match. All five local configurations and the cloud reference received identical summary prompt content and were scored against the same checklist rules.
+
+What was intended: a later revision with longer length allowances. That revision never reached the committed prompt file or the collected runs. This note records the deviation after collection; it does not retrospectively amend the pre-registration or change any prompt or response.
+
+Summary results report both the **primary pre-registered score, including `max_words`**, and a **secondary post-collection sensitivity score, excluding only `max_words`**. For the secondary score, average the remaining checklist criteria within each answer, then average repeats within each prompt and give each prompt equal weight as before. Original sentence instructions and every other criterion remain unchanged. The primary score alone supplies registered quality, knee and variance conclusions. The secondary analysis rescores existing answers; it does not estimate responses to the intended longer prompts. Pending human criteria remain pending in both versions. No reruns are performed.
+
 ## Cloud reference configuration
 
 `configs/experiment.yaml` contains all five local configurations and `gemini-3.8-flash` with `thinking: {thinking_level: low}`. Cloud thinking cannot be disabled for this model, unlike the local models. Thinking tokens are logged separately and included once in billable output. The requested level is recorded; the API does not expose proof of its internal reasoning depth. This difference limits direct interpretation of the cloud reference. See Google's [thinking documentation](https://ai.google.dev/gemini-api/docs/thinking).
