@@ -10,17 +10,15 @@ from callcost.report import distribution, report_run, score_answer
 
 
 def audit(runs, output):
-    result = {'runs': [], 'configurations': [], 'variance': [], 'limitations': [
-        'Summary quality and summary variance decisions await blind human checklist scores.',
+    result = {'runs': [], 'configurations': [], 'variance': [], 'knee_findings': [], 'limitations': [
         'Five repeats are not five independent task samples; the maths task set has 30 problems.',
-        'No demonstrated Fairy production decision has changed. The tool has not yet met kill criterion 2. '
-        'Do not substitute a possible recommendation for an actual changed decision. If nothing changes after review, '
-        'the registered usefulness criterion fails.',
+        'No Fairy production decision change has been recorded. Kill criterion 2 is not met. '
+        'Benchmark comparisons or a possible recommendation do not establish an actual changed decision.',
         'Exact text variation includes whitespace and does not necessarily imply changed correctness.',
         'Swap is whole-machine traffic; collection order/background activity confound process attribution.',
         'Energy remains estimate, whole-machine delta for CPU + GPU + ANE, with receipt-anchor and baseline limitations.'
     ]}
-    lines = ['# Saved-run audit', '', 'Preliminary until blind summary review and measurement audit are complete.', '',
+    lines = ['# Saved-run audit', '', 'Saved-run audit with imported human scores where available; measurement limitations remain explicit.', '',
              '| Configuration | Maths correct / 150 | Wrong, parseable | Unparseable | Varying maths / 30 | Varying summaries / 10 |',
              '| --- | --- | --- | --- | --- | --- |']
     summary_scores = []
@@ -84,11 +82,12 @@ def audit(runs, output):
                 swap_free = distribution(r['latency_s'] for r in group if r.get('swapping_occurred') is False)
                 latency.append((cid, task, all_calls, swap_free))
             missing_energy = Counter(r.get('energy_missing_reason') for r in cr if r.get('energy_j') is None)
-            result['configurations'].append(dict(configuration_id=cid, maths=dict(maths), variation=variation,
+            result['configurations'].append(dict(configuration_id=cid, comparison_role=config.get('comparison_role'), maths=dict(maths), variation=variation,
                 missing_energy=dict(missing_energy), missing_memory=sum(r.get('memory_peak_rss_bytes') is None for r in cr)))
             lines.append(f'| {cid} | {maths["correct"]} | {maths["wrong_parseable"]} | {maths["unparseable"]} | '
                          f'{variation["maths"]["varying"]}/{variation["maths"]["prompts"]} | '
                          f'{variation["summarisation"]["varying"]}/{variation["summarisation"]["prompts"]} |')
+        result['knee_findings'].extend(report['knee'])
         for finding in report['knee']:
             for step in finding['steps']:
                 a = next(g for g in report['groups'] if g['configuration_id'] == step['upper'] and g['task_type'] == finding['task_type'] and g['cache_stratum'] == 'all')
@@ -96,6 +95,9 @@ def audit(runs, output):
                 result['variance'].append(dict(task=finding['task_type'], **step,
                     upper_latency_iqr=[a['latency_s']['q1'], a['latency_s']['q3']],
                     lower_latency_iqr=[b['latency_s']['q1'], b['latency_s']['q3']]))
+    result['summary_review_complete'] = bool(summary_scores) and all(s['primary']['score'] is not None and s['without_max_words']['score'] is not None for s in summary_scores)
+    if not result['summary_review_complete']:
+        result['limitations'].insert(0, 'Summary quality and summary variance decisions await blind human checklist scores.')
     result['summary_length_sensitivity'] = summary_scores
     lines += ['', 'Summary scores: primary and post-collection max_words sensitivity.',
               'Primary including max_words alone supplies registered knee/variance quality. '
@@ -127,6 +129,11 @@ def audit(runs, output):
         drop = 'pending' if s['quality_drop'] is None else f'{100*s["quality_drop"]:.2f}'
         lines.append(f'| {s["task"]}: {s["upper"]} to {s["lower"]} | {s["upper_latency_iqr"]} | '
                      f'{s["lower_latency_iqr"]} | {drop} | {s["indistinguishable"]} | {s["qualifies"]} |')
+    lines += ['']
+    for finding in result['knee_findings']:
+        step = finding['knee']
+        detail = f' ({step["upper"]} to {step["lower"]})' if step else ''
+        lines.append(f'{finding["task_type"]}: **{finding["finding"]}**{detail}.')
     lines += ['', '## Costs and collection', '']
     for run in result['runs']:
         lines.append(f'- {Path(run["directory"]).name}: {run["collection"]["completed_slots"]} completed slots; '
@@ -148,6 +155,35 @@ def audit(runs, output):
         'Local memory gaps include incomplete process coverage and the observed psutil permission/SystemError. '
         'These secondary gaps do not invalidate answers or the static weight metric.', '',
         '## Interpretation limits and kill criterion 2', '']
+    comparisons = []
+    for c in result['configurations']:
+        summary = next((s for s in summary_scores if s['configuration_id'] == c['configuration_id']), None)
+        timing = next((s for s in result['latency'] if s['configuration_id'] == c['configuration_id'] and s['task'] == 'summarisation'), None)
+        maths_total = sum(c['maths'].values())
+        comparisons.append(dict(configuration_id=c['configuration_id'], comparison_role=c['comparison_role'],
+            maths_accuracy=c['maths'].get('correct', 0)/maths_total if maths_total else None,
+            summary_primary=summary['primary']['score'] if summary else None,
+            summary_without_max_words=summary['without_max_words']['score'] if summary else None,
+            summary_latency_all_p50=timing['all']['p50'] if timing else None,
+            summary_latency_swap_free_p50=timing['swap_free']['p50'] if timing else None))
+    result['kill_criterion_2'] = dict(status='not_met_no_recorded_decision_change',
+        actual_owner_decision_change=None, comparison=comparisons,
+        assessment='No recorded change to Fairy model, quantisation or local/cloud deployment. '
+                   'The completed benchmark and human scores do not demonstrate the actual decision change required by kill criterion 2. '
+                   'These summaries are invented Fairy-style benchmark texts, not evidence from real Fairy production usage.')
+    lines += ['Kill criterion 2: **not met**. No Fairy model, quantisation or local/cloud deployment decision has changed in the record. '
+              'The full benchmark does not demonstrate the registered practical usefulness outcome.', '',
+              'The full comparison is below; it is evidence for the owner to consider, not a production change.', '',
+              '| Configuration | Maths accuracy | Summary primary | Summary excluding max_words | Summary p50 all / swap-free s |',
+              '| --- | --- | --- | --- | --- |']
+    def percentage(value):
+        return 'unavailable' if value is None else f'{100*value:.2f}%'
+    for c in comparisons:
+        all_time, free_time = c['summary_latency_all_p50'], c['summary_latency_swap_free_p50']
+        times = f'{all_time:.3f} / {free_time:.3f}' if all_time is not None and free_time is not None else 'unavailable'
+        lines.append(f'| {c["configuration_id"]} | {percentage(c["maths_accuracy"])} | '
+                     f'{percentage(c["summary_primary"])} | {percentage(c["summary_without_max_words"])} | {times} |')
+    lines += ['']
     lines += ['- ' + text for text in result['limitations']]
     output.mkdir(parents=True, exist_ok=False)
     (output / 'audit.json').write_text(json.dumps(result, indent=2) + '\n')

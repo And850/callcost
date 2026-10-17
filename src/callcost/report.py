@@ -160,6 +160,8 @@ def aggregate(rows, prompts=None, phase='measured', configurations=None):
 def knee_findings(groups, configurations, tasks):
     sequence = sorted((c for c in configurations if c.get('comparison_role') == 'quantisation_series'),
                       key=lambda c: int(re.search(r'\d+', c['expected_quantisation'])[0]), reverse=True)
+    if not sequence:
+        return []
     findings = []
     for task in tasks:
         levels = [next((g for g in groups if g['configuration_id'] == c['id'] and g['task_type'] == task
@@ -293,6 +295,7 @@ def report_run(directory):
              f'complete={collection["complete"]}.',
              'All completed answers enter quality/knee analysis, including swap-active and swap-unknown calls (amendment 2026-10-16).',
              'Memory: descriptive weight bytes; sampled physical footprint is secondary. Knee uses quality only.',
+             'Knee and variance cover the four converted local levels; cloud and Fairy are references outside that sequence.',
              'Energy: estimate, whole-machine delta; CPU + GPU + ANE; client device only.',
              'Values are p50/p95 with valid observation counts. GB uses 1e9 bytes.',
              'Step costs and variance use all completed observations; swap-free latency is secondary. Costs remain available while human quality is pending.',

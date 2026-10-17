@@ -1,6 +1,6 @@
 # Measurement method
 
-Collection, exact-answer variation, automatic quality checks, percentile aggregation and saved-run reports are implemented. Human checklist scores remain pending; the offline blind review workflow is documented in [blind-review.md](blind-review.md). Offline tests and source review do not establish unattended readiness. Held-out Gemini inference and six-configuration live interruption/resume passed on 15 October 2026. All completed smoke calls recorded swap activity. Privileged power validation remains pending; no benchmark prompts were used. See [HANDOFF.md](HANDOFF.md) for current state and [pilot validation](pilot-validation.md) for earlier evidence.
+Collection, exact-answer variation, automatic and imported human checklist scoring, percentile aggregation and saved-run reports are implemented. The blind summary review export was imported on 17 October 2026 using the strict [offline workflow](blind-review.md). Raw observations remain unchanged. Held-out sudo-backed energy validation passed before collection; saved full-run timing and process-coverage gaps remain unavailable with reasons. The combined scored audit covers primary and length-sensitivity scores, all registered adjacent variance steps, knee findings and actual evidence for the practical-usefulness criterion. See [HANDOFF.md](HANDOFF.md) for current private artifact paths and remaining work.
 
 ## Timing and tokens
 
@@ -120,7 +120,7 @@ Superseded on 16 October 2026: the earlier exclusion of swap-active/unknown call
 
 ## First summarisation dataset
 
-The ten summaries in `prompts/summarisation.yaml` are Fairy-style prompts written for the benchmark (invented texts), not real Fairy usage. Andrii confirmed review on 15 October 2026 and the approved file was committed unchanged. They have not been sent to a model; the full benchmark still requires separate approval. `max_words` splits on whitespace and compares the count with an inclusive integer maximum; regex `pattern` is an alias for `value`. All supplied scoring rules are retained. Human criteria remain pending until blind review.
+The ten summaries in `prompts/summarisation.yaml` are Fairy-style prompts written for the benchmark (invented texts), not real Fairy usage. Andrii confirmed review on 15 October 2026 and the approved file was committed unchanged. Collection and the authorized blind review import are complete; further inference requires separate approval. `max_words` splits on whitespace and compares the count with an inclusive integer maximum; regex `pattern` is an alias for `value`. All supplied scoring rules are retained. Human criteria are supplied only by the validated blind review import.
 
 ## Separate passes and held-out pre-check, 16 October 2026
 
@@ -178,3 +178,12 @@ Google's [Gemini billing documentation](https://ai.google.dev/gemini-api/docs/bi
 See the [dated README deviation note](../README.md#summarisation-protocol-deviation-17-october-2026). Collection used the committed tight prompt/rubric version, not the intended later revision with longer allowances. Preserve `prompts/summarisation.yaml`, saved requests, outputs and blind-review packet unchanged.
 
 For every summary configuration, `quality` remains the primary pre-registered checklist score including `max_words`. `quality_without_max_words` is a separately labelled post-collection sensitivity analysis: validate the full original human/automatic checklist first, remove only automatic criteria whose type is `max_words`, then average retained criteria per answer, repeats per prompt and prompts equally. Keep other constraints, including sentence-related criteria. Missing human criteria or an empty retained checklist make the score unavailable, never zero. Knee and variance calculations continue to read only the primary score. Import the existing blind review as usual; regenerating reports will populate both versions from the same decisions without changing the review packet or issuing inference.
+
+
+## Imported summary review and usefulness audit, 17 October 2026
+
+Import the owner's exported boolean checklist decisions only after validating packet identity, the original rubric and automatic checks, and saved prompt/answer hashes. Keep an exact private copy of the export and its SHA-256 provenance. Map exact duplicate prompt/answer decisions to their original calls; do not treat the unique-card count or repeated calls as independent task samples. All original checkpoints remain unchanged.
+
+Regenerate both pass reports and the combined offline audit. Check primary and max_words-excluded scores by independently averaging checklist decisions within each answer, repeats within each prompt and prompts equally. Recompute every registered adjacent step using primary summary quality and all-call latency IQRs; preserve the first-step exclusion and exact percentage-point thresholds. Reference-only passes have no local quantisation knee, rather than pending human scores. Imported scores do not change exact-answer variation, timings or which calls are swap-free.
+
+The practical-usefulness assessment compares the production reference with local and cloud task-set findings, but remains conditional on evidence of an actual owner decision. Do not count benchmark collection, a score advantage, a possible recommendation or unchanged deployment as an actual model/quantisation/local-cloud change. No changes to Fairy code or deployment are authorized by importing review scores. Human checklist scores reflect the imported review; no inter-rater agreement estimate is supplied.

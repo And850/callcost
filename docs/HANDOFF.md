@@ -1,3 +1,10 @@
+# Scored summary audit update, 17 October 2026
+
+- Owner exported Downloads/summary-scores.json and authorized import plus full summary audit. Strict import completed into both original pass directories. Private exact export copy and import-provenance.json are in runs/blind-review-20261017. Do not import again or overwrite the review.
+- Updated combined scored results: runs/audit-20261017-scored/audit.md and audit.json. Independent arithmetic/variance/knee/checkpoint-integrity verification is in independent-summary-checks.json beside them. Primary and length-sensitivity scores, exact text variation, all/swap-free p50/p95 and counts are present for every configuration. Both pass reports are regenerated; cloud remains outside the knee sequence.
+- No actual Fairy production decision change is recorded. The scored audit compares the complete task-set picture and keeps practical usefulness criterion 2 explicitly unmet. Only an actual owner-confirmed change can alter that assessment.
+- Original prompt file, responses and checkpoints are unchanged. No inference, reruns, billing/account changes, downloads or system changes occurred. Numeric results and raw review data remain ignored and uncommitted. Charts and provider-billing reconciliation remain outstanding.
+
 # Summary protocol deviation update, 17 October 2026
 
 - Owner identified that the intended later relaxed-length revision was never committed/run. README records what ran (6f6de97 tight summary instructions and 50-90-word max_words scoring checks), what was intended and identical prompts/rubrics across all configurations.

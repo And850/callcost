@@ -253,3 +253,8 @@ def test_summary_group_keeps_primary_and_secondary_separate():
     assert group['quality']['score'] == .5
     assert group['quality_without_max_words']['score'] == 1
     assert group['knee_eligible']['quality']['score'] == .5
+
+
+def test_reference_only_pass_has_no_quantisation_knee():
+    references = [dict(id='cloud', provider='gemini', comparison_role='cloud_reference')]
+    assert knee_findings([], references, ['maths', 'summarisation']) == []
